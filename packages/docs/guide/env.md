@@ -1,6 +1,6 @@
 # Environment
 
-nexgen uses a Zod-validated `.env` file at the project root. Copy `.env.example` to get started.
+nexwire uses a Zod-validated `.env` file at the project root. Copy `.env.example` to get started.
 
 ```bash
 cp .env.example .env
@@ -10,7 +10,7 @@ cp .env.example .env
 
 | Variable       | Default                 | Description                                                                                    |
 | -------------- | ----------------------- | ---------------------------------------------------------------------------------------------- |
-| `APP_NAME`     | `nexgen`                | Application name used in logging and email headers                                             |
+| `APP_NAME`     | `nexwire`                | Application name used in logging and email headers                                             |
 | `APP_ENV`      | `development`           | Runtime environment: `development`, `production`, or `test`                                    |
 | `APP_PORT`     | `3000`                  | HTTP server port                                                                               |
 | `APP_URL`      | `http://localhost:3000` | Public-facing URL of the application (required)                                                |
@@ -22,14 +22,14 @@ cp .env.example .env
 
 | Variable       | Default                                       | Description                                            |
 | -------------- | --------------------------------------------- | ------------------------------------------------------ |
-| `DATABASE_URL` | `sqlite:./src/storage/database/nexgen.sqlite` | Database connection string (SQLite, MySQL, PostgreSQL) |
+| `DATABASE_URL` | `sqlite:./src/storage/database/nexwire.sqlite` | Database connection string (SQLite, MySQL, PostgreSQL) |
 
 ## Redis
 
 | Variable       | Default                  | Description                          |
 | -------------- | ------------------------ | ------------------------------------ |
 | `REDIS_URL`    | `redis://127.0.0.1:6379` | Redis connection string              |
-| `REDIS_PREFIX` | `nexgen`                 | Key prefix for all Redis namespacing |
+| `REDIS_PREFIX` | `nexwire`                 | Key prefix for all Redis namespacing |
 
 ## JWT & Cookies
 

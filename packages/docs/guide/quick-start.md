@@ -8,30 +8,30 @@
 
 ## Create a Project
 
-Nexgen ships as a scaffolding CLI called [`create-nexgen`](https://www.npmjs.com/package/create-nexgen). It downloads the latest stable template from npm and sets up a ready-to-run project.
+nexwire ships as a scaffolding CLI called [`create-nexwire`](https://www.npmjs.com/package/create-nexwire). It downloads the latest stable template from npm and sets up a ready-to-run project.
 
 ::: code-group
 
 ```bash [npm]
-npm create nexgen@latest my-project
+npm create nexwire@latest my-project
 ```
 
 ```bash [pnpm]
-pnpm create nexgen@latest my-project
+pnpm create nexwire@latest my-project
 ```
 
 ```bash [yarn]
-yarn create nexgen@latest my-project
+yarn create nexwire@latest my-project
 ```
 
 ```bash [bun]
-bun create nexgen@latest my-project
+bun create nexwire@latest my-project
 ```
 
 :::
 
 ::: tip
-`npx nexgen@latest my-project` also works for npm users without the `create` prefix.
+`npx nexwire@latest my-project` also works for npm users without the `create` prefix.
 :::
 
 ### Choosing an HTTP engine
@@ -41,19 +41,19 @@ By default the project uses the **Hono** engine. To start with **Express** inste
 ::: code-group
 
 ```bash [npm]
-npm create nexgen@latest my-project -- --engine=express
+npm create nexwire@latest my-project -- --engine=express
 ```
 
 ```bash [pnpm]
-pnpm create nexgen@latest my-project --engine=express
+pnpm create nexwire@latest my-project --engine=express
 ```
 
 ```bash [yarn]
-yarn create nexgen@latest my-project --engine=express
+yarn create nexwire@latest my-project --engine=express
 ```
 
 ```bash [bun]
-bun create nexgen@latest my-project --engine=express
+bun create nexwire@latest my-project --engine=express
 ```
 
 :::
@@ -67,25 +67,25 @@ Use `.` as the project name to scaffold directly into the current directory inst
 ::: code-group
 
 ```bash [npm]
-npm create nexgen@latest .
+npm create nexwire@latest .
 ```
 
 ```bash [pnpm]
-pnpm create nexgen@latest .
+pnpm create nexwire@latest .
 ```
 
 ```bash [yarn]
-yarn create nexgen@latest .
+yarn create nexwire@latest .
 ```
 
 ```bash [bun]
-bun create nexgen@latest .
+bun create nexwire@latest .
 ```
 
 :::
 
 ::: tip
-`--engine=express` works the same way: `npm create nexgen@latest . -- --engine=express`, or `bun create nexgen@latest . --engine=express` for the other managers.
+`--engine=express` works the same way: `npm create nexwire@latest . -- --engine=express`, or `bun create nexwire@latest . --engine=express` for the other managers.
 :::
 
 The project name is derived from the current folder name.
@@ -167,13 +167,13 @@ Edit `.env` and set your `DATABASE_URL`:
 
 ```bash
 # MySQL
-DATABASE_URL=mysql://root:password@localhost:3306/nexgen
+DATABASE_URL=mysql://root:password@localhost:3306/nexwire
 
 # PostgreSQL
-DATABASE_URL=postgres://user:password@localhost:5432/nexgen
+DATABASE_URL=postgres://user:password@localhost:5432/nexwire
 
 # SQLite
-DATABASE_URL=sqlite:./src/storage/database/nexgen.sqlite
+DATABASE_URL=sqlite:./src/storage/database/nexwire.sqlite
 ```
 
 ## Setup Database

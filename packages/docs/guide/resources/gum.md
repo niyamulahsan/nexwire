@@ -1,6 +1,6 @@
 # Gum
 
-Gum is Nexgen's lightweight Inertia-style UI helper. It combines axios requests, Vue Router query updates, scroll preservation, form lifecycle state, and remembered UI state.
+Gum is nexwire's lightweight Inertia-style UI helper. It combines axios requests, Vue Router query updates, scroll preservation, form lifecycle state, and remembered UI state.
 
 Use Gum when a page needs SPA-style visits without replacing the Pinia store pattern.
 

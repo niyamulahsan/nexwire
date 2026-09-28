@@ -80,17 +80,17 @@ const icons = {
 const mi = (key, label) => navIcon(icons[key], label);
 
 export default defineConfig({
-  base: "/nexgen/",
-  title: "nexgen",
+  base: "/nexwire/",
+  title: "nexwire",
   description: "Full-stack TypeScript framework with Hono or Express, Vue 3, and Drizzle ORM",
   head: [
-    ["link", { rel: "icon", type: "image/svg+xml", href: "/nexgen/favicon.svg" }],
-    ["link", { rel: "icon", type: "image/png", sizes: "32x32", href: "/nexgen/nexgen-logo.png" }],
-    ["link", { rel: "icon", href: "/nexgen/favicon.ico", sizes: "any" }],
-    ["link", { rel: "apple-touch-icon", sizes: "180x180", href: "/nexgen/nexgen-logo.png" }],
+    ["link", { rel: "icon", type: "image/svg+xml", href: "/nexwire/favicon.svg" }],
+    ["link", { rel: "icon", type: "image/png", sizes: "32x32", href: "/nexwire/nexwire-logo.png" }],
+    ["link", { rel: "icon", href: "/nexwire/favicon.ico", sizes: "any" }],
+    ["link", { rel: "apple-touch-icon", sizes: "180x180", href: "/nexwire/nexwire-logo.png" }],
   ],
   themeConfig: {
-    logo: "/nexgen-logo.png",
+    logo: "/nexwire-logo.png",
     siteTitle: false,
     nav: [
       { text: mi("home", "Home"), link: "/" },
@@ -293,11 +293,11 @@ export default defineConfig({
       ],
     },
     socialLinks: [
-      { icon: "github", link: "https://github.com/niyamulahsan/nexgen" },
+      { icon: "github", link: "https://github.com/niyamulahsan/nexwire" },
     ],
     footer: {
       message: "Released under the MIT License.",
-      copyright: "Copyright © 2026-present nexgen",
+      copyright: "Copyright © 2026-present nexwire",
     },
     search: { provider: "local" },
     outline: { label: "On this page" },

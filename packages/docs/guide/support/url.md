@@ -36,7 +36,7 @@ urls.url("api/health");
 
 1. `appConfig.frontendUrl` — the SPA is a **separate build/origin** (dev Vite dev server, or a separately deployed SPA). The link points there. **Wins when set.**
 2. `appConfig.uiEnabled && hasUiBuild()` — the framework serves the **built SPA itself**, so the page resolves to the **app origin** (same as the browser). Single origin in dev-with-UI-built and production.
-3. `appConfig.uiEnabled && !hasUiBuild()` — the Vite dev server is still running (UI not built yet) — use the origin the maker-cli injected (`NEXGEN_FRONTEND_URL`, the dev Vite dev server, e.g. `http://localhost:5173`). Falls back to the app URL if the var is missing.
+3. `appConfig.uiEnabled && !hasUiBuild()` — the Vite dev server is still running (UI not built yet) — use the origin the maker-cli injected (`NEXWIRE_FRONTEND_URL`, the dev Vite dev server, e.g. `http://localhost:5173`). Falls back to the app URL if the var is missing.
 4. When both origin knobs are unset (API-only mode) there is no SPA to point at — fall back to the app URL so the link is at least valid.
 
 ```ts

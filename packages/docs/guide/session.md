@@ -10,7 +10,7 @@ A `sessionId` is automatically attached to every request via `sessionMiddleware`
 
 The `sessionMiddleware` runs on every request and is applied globally in `app.ts`. It:
 
-1. Checks for an existing `nexgen_session` cookie (configured in `src/config/session.ts`)
+1. Checks for an existing `nexwire_session` cookie (configured in `src/config/session.ts`)
 2. If absent — generates a new `randomUUID()`, sets an httpOnly cookie with the configured TTL
 3. Stores `sessionId` on the request context (`c.set`) Hono / `res.locals`) Express
 4. Refreshes the session TTL on every request
@@ -83,17 +83,17 @@ Session settings live in `src/config/session.ts`:
 
 ```ts
 export const sessionConfig = {
-  cookieName: `${cookieConfig.name}_session`, // "nexgen_session"
+  cookieName: `${cookieConfig.name}_session`, // "nexwire_session"
   ttlSeconds: 7200, // 2 hours, refreshed on each request
-  keyPrefix: `${redisConfig.prefix}:session`, // "nexgen:session"
+  keyPrefix: `${redisConfig.prefix}:session`, // "nexwire:session"
 };
 ```
 
 | Setting      | Default          | Description                                       |
 | ------------ | ---------------- | ------------------------------------------------- |
-| `cookieName` | `nexgen_session` | Name of the session cookie                        |
+| `cookieName` | `nexwire_session` | Name of the session cookie                        |
 | `ttlSeconds` | `7200`           | Session TTL in seconds, refreshed on each request |
-| `keyPrefix`  | `nexgen:session` | Redis key prefix for session storage              |
+| `keyPrefix`  | `nexwire:session` | Redis key prefix for session storage              |
 
 ### Destroy a session
 
@@ -112,12 +112,12 @@ Client                          Server
   │ ───────────────────────────>   │
   │                                │  sessionMiddleware:
   │                                │    no cookie → generate UUID
-  │                                │    set-cookie: nexgen_session=<uuid>
+  │                                │    set-cookie: nexwire_session=<uuid>
   │                                │    sessionId → c.set() (Hono)
   │                                │               → res.locals (Express)
   │                                │    session.refresh(<uuid>)
   │ <───────────────────────────   │
-  │  Set-Cookie: nexgen_session=…  │
+  │  Set-Cookie: nexwire_session=…  │
 ```
 
 Data is stored in Redis under the key `{REDIS_PREFIX}:session:{sessionId}` as a JSON document with the configured TTL.

@@ -146,7 +146,7 @@ Because each runtime is self-executing, a process can be started **and** hit a s
 
 ## Framework Structure
 
-**nexgen**'s framework is organized into self-contained subsystems under `src/framework/`:
+**nexwire**'s framework is organized into self-contained subsystems under `src/framework/`:
 
 ```
 src/framework/

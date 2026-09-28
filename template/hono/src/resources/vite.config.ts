@@ -21,7 +21,7 @@ export default defineConfig({
     __API_URL__: JSON.stringify(apiUrl)
   },
   root: "src/resources",
-  cacheDir: path.join(cacheBase, "nexgen", "vite-cache", "resources"),
+  cacheDir: path.join(cacheBase, "nexwire", "vite-cache", "resources"),
   plugins: [vue()],
   css: {
     preprocessorOptions: {

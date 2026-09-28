@@ -4,7 +4,7 @@ The UI lives under `src/resources/` and is served by the framework's Vite dev se
 
 ## Framework agnostic
 
-The nexgen backend is **UI-agnostic**. The default template ships with **Vue 3** + **Pinia** + **Vue Router**, but you can swap it for any Vite-compatible framework:
+The nexwire backend is **UI-agnostic**. The default template ships with **Vue 3** + **Pinia** + **Vue Router**, but you can swap it for any Vite-compatible framework:
 
 | Framework           | Plugin                                              | Notes                                          |
 | ------------------- | --------------------------------------------------- | ---------------------------------------------- |

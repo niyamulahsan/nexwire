@@ -5,7 +5,7 @@
 # src/config/*. Only app basics, secrets, and infra vars belong in this file.
 # ── App ────────────────────────────────────────────
 APP_ENV=production
-APP_NAME=nexgen
+APP_NAME=nexwire
 APP_HOST=localhost
 APP_PORT=3000
 

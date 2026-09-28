@@ -1,29 +1,29 @@
 <p align="center">
-  <a href="https://nexgen.dev">
-    <img alt="nexgen" src="https://raw.githubusercontent.com/niyamulahsan/nexgen/main/logo-favicon/nexgen.png" width="300">
+  <a href="https://nexwire.dev">
+    <img alt="nexwire" src="https://raw.githubusercontent.com/niyamulahsan/nexwire/main/logo-favicon/nexwire.png" width="300">
   </a>
 </p>
 
 <h3 align="center">Full-stack TypeScript framework for modern web applications</h3>
 
 <p align="center">
-  <a href="https://niyamulahsan.github.io/nexgen"><img src="https://img.shields.io/badge/docs-nexgen.dev-3b8eed" alt="Documentation"></a>
-  <a href="https://www.npmjs.com/package/create-nexgen"><img src="https://img.shields.io/npm/v/create-nexgen" alt="npm version"></a>
-  <a href="https://www.npmjs.com/package/create-nexgen"><img src="https://img.shields.io/npm/dt/create-nexgen" alt="npm downloads"></a>
-  <a href="https://github.com/niyamulahsan/nexgen/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"></a>
-  <a href="https://github.com/niyamulahsan/nexgen"><img src="https://img.shields.io/github/stars/niyamulahsan/nexgen?style=social" alt="GitHub Stars"></a>
+  <a href="https://niyamulahsan.github.io/nexwire"><img src="https://img.shields.io/badge/docs-nexwire.dev-3b8eed" alt="Documentation"></a>
+  <a href="https://www.npmjs.com/package/create-nexwire"><img src="https://img.shields.io/npm/v/create-nexwire" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/create-nexwire"><img src="https://img.shields.io/npm/dt/create-nexwire" alt="npm downloads"></a>
+  <a href="https://github.com/niyamulahsan/nexwire/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"></a>
+  <a href="https://github.com/niyamulahsan/nexwire"><img src="https://img.shields.io/github/stars/niyamulahsan/nexwire?style=social" alt="GitHub Stars"></a>
 </p>
 
 ---
 
-nexgen is a batteries-included TypeScript framework that combines modular backends (Hono, Express) with Drizzle ORM, BullMQ, Socket.IO, Redis, and a Vue 3 SPA frontend — all scaffolded with a single command and deployed with Docker Compose.
+nexwire is a batteries-included TypeScript framework that combines modular backends (Hono, Express) with Drizzle ORM, BullMQ, Socket.IO, Redis, and a Vue 3 SPA frontend — all scaffolded with a single command and deployed with Docker Compose.
 
 ## Quick Start
 
 ### Hono (default)
 
 ```bash
-npm create nexgen@latest my-app
+npm create nexwire@latest my-app
 cd my-app
 npm install
 npm run maker db:migrate --seed
@@ -33,7 +33,7 @@ npm run maker dev
 ### Express
 
 ```bash
-npm create nexgen@latest my-app -- --engine=express
+npm create nexwire@latest my-app -- --engine=express
 cd my-app
 npm install
 npm run maker db:migrate --seed
@@ -49,27 +49,27 @@ Requires **Node.js >= 24** or **Bun >= 1.3**.
 Scaffold directly into the current directory:
 
 ```bash
-npm create nexgen@latest .
-npm create nexgen@latest . -- --engine=express
+npm create nexwire@latest .
+npm create nexwire@latest . -- --engine=express
 ```
 
 Works with any package manager: `pnpm`, `yarn`, or `bun`.
 
 ### Package Manager
 
-All examples use `npm` as the default. nexgen works with any major package manager:
+All examples use `npm` as the default. nexwire works with any major package manager:
 
 | Manager  | Create project                     | Run commands          |
 | -------- | ---------------------------------- | --------------------- |
-| **npm**  | `npm create nexgen@latest my-app`  | `npm run maker <cmd>` |
-| **pnpm** | `pnpm create nexgen@latest my-app` | `pnpm maker <cmd>`    |
-| **yarn** | `yarn create nexgen@latest my-app` | `yarn maker <cmd>`    |
-| **bun**  | `bun create nexgen@latest my-app`  | `bun maker <cmd>`     |
-| **all**  | `npm create nexgen@latest .`       | current directory     |
+| **npm**  | `npm create nexwire@latest my-app`  | `npm run maker <cmd>` |
+| **pnpm** | `pnpm create nexwire@latest my-app` | `pnpm maker <cmd>`    |
+| **yarn** | `yarn create nexwire@latest my-app` | `yarn maker <cmd>`    |
+| **bun**  | `bun create nexwire@latest my-app`  | `bun maker <cmd>`     |
+| **all**  | `npm create nexwire@latest .`       | current directory     |
 
 ### Runtime
 
-nexgen runs on **Node.js** or **Bun** — pick whichever fits your deployment:
+nexwire runs on **Node.js** or **Bun** — pick whichever fits your deployment:
 
 | Runtime     | Minimum version | Notes                                                                 |
 | ----------- | --------------- | --------------------------------------------------------------------- |
@@ -171,7 +171,7 @@ import {
 
 ## Deployment
 
-nexgen includes a complete Docker deployment system out of the box.
+nexwire includes a complete Docker deployment system out of the box.
 
 ### Local (Docker Desktop)
 
@@ -196,16 +196,16 @@ The deploy system provisions:
 - **Process supervisor** — API server, queue worker, cron scheduler, auto-migration
 - **Two-layer architecture** — server infra runs once per host, app stack rebuilds per deploy
 
-See the [deploy documentation](https://niyamulahsan.github.io/nexgen/deploy/overview) for full details.
+See the [deploy documentation](https://niyamulahsan.github.io/nexwire/deploy/overview) for full details.
 
 ## Documentation
 
-Complete documentation is available at **[nexgen.dev](https://niyamulahsan.github.io/nexgen)**
+Complete documentation is available at **[nexwire.dev](https://niyamulahsan.github.io/nexwire)**
 
 ## Contributing
 
-Contributions are welcome. Open an issue or pull request on [GitHub](https://github.com/niyamulahsan/nexgen).
+Contributions are welcome. Open an issue or pull request on [GitHub](https://github.com/niyamulahsan/nexwire).
 
 ## License
 
-nexgen is open-sourced software licensed under the [MIT license](LICENSE).
+nexwire is open-sourced software licensed under the [MIT license](LICENSE).

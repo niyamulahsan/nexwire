@@ -10,7 +10,7 @@ function sqlitePathFromUrl(url: string) {
   return url;
 }
 
-const databaseUrl = process.env.DATABASE_URL || "sqlite:./src/storage/database/nexgen.sqlite";
+const databaseUrl = process.env.DATABASE_URL || "sqlite:./src/storage/database/nexwire.sqlite";
 const dialect = databaseUrl.startsWith("mysql") ? "mysql" : databaseUrl.startsWith("postgres") ? "postgresql" : "sqlite";
 
 export default defineConfig({

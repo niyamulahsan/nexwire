@@ -2,7 +2,7 @@
 
 ## Overview
 
-**nexgen** uses **BullMQ** (backed by **Redis**) for background job processing. The event dispatcher ties together realtime broadcasting and queueing in a single `dispatchEvent()` call.
+**nexwire** uses **BullMQ** (backed by **Redis**) for background job processing. The event dispatcher ties together realtime broadcasting and queueing in a single `dispatchEvent()` call.
 
 ### How It Works
 
@@ -30,7 +30,7 @@ The framework **gracefully degrades** — if Redis is unavailable, `queueJob()` 
 | -------------- | ------------------------ | ------------------------------------------- |
 | `REDIS`        | `false`                  | Master toggle for all Redis-backed features |
 | `REDIS_URL`    | `redis://127.0.0.1:6379` | Redis connection string                     |
-| `REDIS_PREFIX` | `nexgen`                 | Key prefix for BullMQ queues in Redis       |
+| `REDIS_PREFIX` | `nexwire`                 | Key prefix for BullMQ queues in Redis       |
 
 ## Queue Configuration
 

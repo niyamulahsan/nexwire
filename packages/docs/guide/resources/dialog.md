@@ -1,6 +1,6 @@
 # Dialog
 
-Dialog is Nexgen's lightweight, zero-dependency modal system. It provides `alert`, `confirm`, and `prompt` dialogs via DOM-injected Bootstrap-styled cards — no extra component imports needed.
+Dialog is nexwire's lightweight, zero-dependency modal system. It provides `alert`, `confirm`, and `prompt` dialogs via DOM-injected Bootstrap-styled cards — no extra component imports needed.
 
 The dialog system is built as a Vue plugin that registers `$dialog` on the global properties. Dialogs are rendered as absolutely-positioned card overlays appended to the `#modal-show` element, making them independent of your component tree.
 

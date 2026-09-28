@@ -78,7 +78,7 @@ The `deploy:init` command already created `deploy/workflow.remote.json`. Edit it
     "user": "deploy",
     "port": 22,
     "keyPath": "~/.ssh/id_rsa",
-    "targetPath": "/home/deploy/nexgen"
+    "targetPath": "/home/deploy/nexwire"
   },
   "upload": {
     "source": ".",
@@ -86,8 +86,8 @@ The `deploy:init` command already created `deploy/workflow.remote.json`. Edit it
   },
   "databaseImport": {
     "enabled": false,
-    "file": "deploy/nexgen.sql",
-    "database": "nexgen",
+    "file": "deploy/nexwire.sql",
+    "database": "nexwire",
     "container": "mysql-global",
     "user": "root"
   },
@@ -163,14 +163,14 @@ bun maker deploy:workflow:remote
 
 This single command:
 
-1. **Creates target directory** on the remote server: `ssh user@host mkdir -p /home/deploy/nexgen`
+1. **Creates target directory** on the remote server: `ssh user@host mkdir -p /home/deploy/nexwire`
 2. **Runs pre-deploy commands** on the remote host (if any are defined in `preDeployCommands`)
 3. **Uploads the project** via rsync (excludes `node_modules`, `.git`, `dist`, `.env*`, logs):
    ```bash
    rsync -avz --delete --exclude=node_modules --exclude=.git \
      --exclude=dist --exclude=/.env* --exclude=*.log \
      -e "ssh -p 22 -i ~/.ssh/id_rsa" \
-     ./ deploy@203.0.113.10:/home/deploy/nexgen/
+     ./ deploy@203.0.113.10:/home/deploy/nexwire/
    ```
 4. **Creates Docker networks** on remote (if missing):
    ```bash
@@ -197,25 +197,25 @@ Alternatively, run parts of the pipeline:
 ```bash [npm]
 npm run maker deploy:workflow:remote -- --server-only
 npm run maker deploy:workflow:remote -- --app-only
-npm run maker deploy:db:import:remote -- --file=deploy/nexgen.sql --database=nexgen
+npm run maker deploy:db:import:remote -- --file=deploy/nexwire.sql --database=nexwire
 ```
 
 ```bash [pnpm]
 pnpm maker deploy:workflow:remote --server-only
 pnpm maker deploy:workflow:remote --app-only
-pnpm maker deploy:db:import:remote --file=deploy/nexgen.sql --database=nexgen
+pnpm maker deploy:db:import:remote --file=deploy/nexwire.sql --database=nexwire
 ```
 
 ```bash [yarn]
 yarn maker deploy:workflow:remote --server-only
 yarn maker deploy:workflow:remote --app-only
-yarn maker deploy:db:import:remote --file=deploy/nexgen.sql --database=nexgen
+yarn maker deploy:db:import:remote --file=deploy/nexwire.sql --database=nexwire
 ```
 
 ```bash [bun]
 bun maker deploy:workflow:remote --server-only
 bun maker deploy:workflow:remote --app-only
-bun maker deploy:db:import:remote --file=deploy/nexgen.sql --database=nexgen
+bun maker deploy:db:import:remote --file=deploy/nexwire.sql --database=nexwire
 ```
 
 :::

@@ -5,7 +5,7 @@
 # src/config/*. Only app basics, secrets, and infra vars belong in this file.
 # ── App ────────────────────────────────────────────
 APP_ENV=production
-APP_NAME=nexgen
+APP_NAME=nexwire
 APP_HOST=localhost
 APP_PORT=3000
 
@@ -30,7 +30,7 @@ LETSENCRYPT_EMAIL=
 
 # ── Database ───────────────────────────────────────
 # Set the password and database name to match deploy/server/.env
-DATABASE_URL=mysql://root:change-me-root@mysql-global:3306/nexgen
+DATABASE_URL=mysql://root:change-me-root@mysql-global:3306/nexwire
 
 # ── JWT Auth (expiries live in src/config/jwt.ts) ──
 JWT_ACCESS_SECRET={{JWT_ACCESS_SECRET}}

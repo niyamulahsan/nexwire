@@ -4,7 +4,7 @@
     "user": "deploy",
     "port": 22,
     "keyPath": "~/.ssh/id_rsa",
-    "targetPath": "/home/deploy/nexgen"
+    "targetPath": "/home/deploy/nexwire"
   },
   "upload": {
     "source": ".",
@@ -12,8 +12,8 @@
   },
   "databaseImport": {
     "enabled": false,
-    "file": "deploy/nexgen.sql",
-    "database": "nexgen",
+    "file": "deploy/nexwire.sql",
+    "database": "nexwire",
     "container": "mysql-global",
     "user": "root"
   },

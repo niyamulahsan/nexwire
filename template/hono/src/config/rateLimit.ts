@@ -5,7 +5,7 @@ import { redisConfig } from "./redis.js";
  * When: Global and login-specific rate limiters are built.
  * Where: src/config/rateLimit.ts.
  * How: Limits are plain literals; `keyPrefix` is derived from the shared
- *      `REDIS_PREFIX` (`nexgen:rl:*` by default).
+ *      `REDIS_PREFIX` (`nexwire:rl:*` by default).
  */
 export const rateLimitConfig = {
   windowMs: 60000,

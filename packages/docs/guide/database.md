@@ -509,7 +509,7 @@ Drizzle model stubs use the correct types per dialect. Migration files are store
 
 ## Pagination
 
-Drizzle ORM does not include a built-in pagination helper. **nexgen** provides pagination utilities in `src/framework/database/paginate.ts` that wrap your Drizzle queries with page/per_page parsing, total count, and link generation.
+Drizzle ORM does not include a built-in pagination helper. **nexwire** provides pagination utilities in `src/framework/database/paginate.ts` that wrap your Drizzle queries with page/per_page parsing, total count, and link generation.
 
 > **Performance note**: All three use a **lean count subquery** (`SELECT count(*) FROM (SELECT 1 FROM ...) AS _inner`) instead of wrapping the full SELECT with all columns. This avoids materializing column data just for counting, giving significant speed improvements on wide tables or complex joins.
 

@@ -165,7 +165,7 @@ export const register = async (input: {
     title: "Welcome",
     body: "Your account is ready.",
     broadcast: true,
-    mail: { subject: "Welcome to nexgen" },
+    mail: { subject: "Welcome to nexwire" },
   });
 
   await dispatchEvent(

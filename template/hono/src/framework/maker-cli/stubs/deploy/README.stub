@@ -34,7 +34,7 @@ bun maker deploy:workflow --app-only
 Import SQL dump into local Docker container (auto-detects MySQL or PostgreSQL):
 
 ```bash
-bun maker deploy:db:import --file=deploy/nexgen.sql --database=nexgen
+bun maker deploy:db:import --file=deploy/nexwire.sql --database=nexwire
 ```
 
 PostgreSQL restores into a fresh database by default (drops and recreates the
@@ -43,7 +43,7 @@ target database first). Pass `--no-drop` to keep the existing database.
 Import SQL dump into remote Docker container (auto-detects MySQL or PostgreSQL):
 
 ```bash
-bun maker deploy:db:import:remote --config=deploy/workflow.remote.json --file=deploy/nexgen.sql --database=nexgen
+bun maker deploy:db:import:remote --config=deploy/workflow.remote.json --file=deploy/nexwire.sql --database=nexwire
 ```
 
 ## Runtime

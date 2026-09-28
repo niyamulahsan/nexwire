@@ -1,6 +1,6 @@
 # Unit Testing
 
-Nexgen uses [Vitest](https://vitest.dev/) as the built-in testing framework. Tests run on Node.js with globals enabled — you don't need to import `describe`, `it`, or `expect`.
+nexwire uses [Vitest](https://vitest.dev/) as the built-in testing framework. Tests run on Node.js with globals enabled — you don't need to import `describe`, `it`, or `expect`.
 
 ## Quick Start
 

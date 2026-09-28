@@ -12,7 +12,7 @@
     },
     {
       "name": "Import database dump (optional)",
-      "run": "deploy:db:import --file=deploy/nexgen.sql --database=nexgen",
+      "run": "deploy:db:import --file=deploy/nexwire.sql --database=nexwire",
       "enabled": false
     },
     {

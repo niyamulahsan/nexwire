@@ -24,7 +24,7 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 const app = createApp(App);
 const pinia = createPinia();
 const head = createHead({
-  titleTemplate: (title) => (title ? `${title} | Nexgen` : "Nexgen"),
+  titleTemplate: (title) => (title ? `${title} | nexwire` : "nexwire"),
 });
 
 app.use(pinia);
@@ -75,7 +75,7 @@ The root component is minimal:
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nexgen</title>
+    <title>nexwire</title>
   </head>
   <body>
     <div id="app"></div>

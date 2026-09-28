@@ -6,7 +6,7 @@ import { redisConfig } from "./redis.js";
  * Where: src/config/cache.ts.
  * How: `ttlSeconds` is a plain literal; `keyPrefix` is derived from the
  *      shared `REDIS_PREFIX` so cache keys stay in one namespace
- *      (`nexgen:cache:*` by default).
+ *      (`nexwire:cache:*` by default).
  */
 export const cacheConfig = {
   ttlSeconds: 3600,

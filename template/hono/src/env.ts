@@ -6,7 +6,7 @@ expand(config({ override: true }));
 
 const envSchema = z
   .object({
-    APP_NAME: z.string().default("nexgen"),
+    APP_NAME: z.string().default("nexwire"),
     APP_ENV: z.enum(["development", "production", "test"]).default("development"),
     APP_PORT: z.coerce.number().default(3000),
     APP_URL: z.string().trim().min(1, "APP_URL is required in .env"),
@@ -18,7 +18,7 @@ const envSchema = z
       .string()
       .optional()
       .transform((value) => value?.trim() || undefined),
-    DATABASE_URL: z.string().default("sqlite:./src/storage/database/nexgen.sqlite"),
+    DATABASE_URL: z.string().default("sqlite:./src/storage/database/nexwire.sqlite"),
     REDIS: z
       .string()
       .default("false")
@@ -26,7 +26,7 @@ const envSchema = z
     REDIS_URL: z.string().default("redis://127.0.0.1:6379"),
     REDIS_PREFIX: z
       .string()
-      .default("nexgen")
+      .default("nexwire")
       .transform((value) => value.trim()),
     JWT_ACCESS_SECRET: z.string(),
     JWT_REFRESH_SECRET: z.string(),

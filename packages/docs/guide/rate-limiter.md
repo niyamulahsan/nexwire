@@ -98,7 +98,7 @@ router.post("/upload", uploadLimiter, uploadHandler);
 | -------------- | ------------------------ | --------------------------------------------------------- |
 | `REDIS`        | `false`                  | Enable Redis for persistent rate limiting across restarts |
 | `REDIS_URL`    | `redis://127.0.0.1:6379` | Redis connection string                                   |
-| `REDIS_PREFIX` | `nexgen`                 | Key prefix for namespacing                                |
+| `REDIS_PREFIX` | `nexwire`                 | Key prefix for namespacing                                |
 
 ## How It Works
 

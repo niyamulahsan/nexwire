@@ -157,7 +157,7 @@ bun maker deploy:workflow --server-only
 Point your local `.env` to `localhost` so your dev server connects to Docker containers:
 
 ```bash
-DATABASE_URL=mysql://root:password@localhost:3306/nexgen
+DATABASE_URL=mysql://root:password@localhost:3306/nexwire
 REDIS=true
 REDIS_URL=redis://localhost:6379
 ```
@@ -165,7 +165,7 @@ REDIS_URL=redis://localhost:6379
 Or for PostgreSQL:
 
 ```bash
-DATABASE_URL=postgres://postgres:password@localhost:5432/nexgen
+DATABASE_URL=postgres://postgres:password@localhost:5432/nexwire
 ```
 
 #### Develop normally
@@ -245,19 +245,19 @@ If you have an existing SQL dump:
 ::: code-group
 
 ```bash [npm]
-npm run maker deploy:db:import -- --file=deploy/nexgen.sql --database=nexgen
+npm run maker deploy:db:import -- --file=deploy/nexwire.sql --database=nexwire
 ```
 
 ```bash [pnpm]
-pnpm maker deploy:db:import --file=deploy/nexgen.sql --database=nexgen
+pnpm maker deploy:db:import --file=deploy/nexwire.sql --database=nexwire
 ```
 
 ```bash [yarn]
-yarn maker deploy:db:import --file=deploy/nexgen.sql --database=nexgen
+yarn maker deploy:db:import --file=deploy/nexwire.sql --database=nexwire
 ```
 
 ```bash [bun]
-bun maker deploy:db:import --file=deploy/nexgen.sql --database=nexgen
+bun maker deploy:db:import --file=deploy/nexwire.sql --database=nexwire
 ```
 
 :::
@@ -266,12 +266,12 @@ The command auto-detects the database dialect (MySQL or PostgreSQL) from `deploy
 
 ```bash
 # MySQL
-docker exec -i mysql-global mysql -u root -p<password> -e "CREATE DATABASE IF NOT EXISTS nexgen"
-docker exec -i mysql-global mysql -u root -p<password> nexgen < deploy/nexgen.sql
+docker exec -i mysql-global mysql -u root -p<password> -e "CREATE DATABASE IF NOT EXISTS nexwire"
+docker exec -i mysql-global mysql -u root -p<password> nexwire < deploy/nexwire.sql
 
 # PostgreSQL (defaults to a clean restore — drops & recreates the database)
 docker exec -i postgres-global psql -U postgres -d postgres -v ON_ERROR_STOP=1 ...
-docker exec -i postgres-global psql -U postgres -d nexgen < deploy/nexgen.sql
+docker exec -i postgres-global psql -U postgres -d nexwire < deploy/nexwire.sql
 ```
 
 For PostgreSQL, pass `--no-drop` to keep the existing database instead of dropping it for a clean restore.
@@ -317,7 +317,7 @@ You can customize the steps by editing `deploy/workflow.local.json`:
     },
     {
       "name": "Import database dump (optional)",
-      "run": "deploy:db:import --file=deploy/nexgen.sql --database=nexgen",
+      "run": "deploy:db:import --file=deploy/nexwire.sql --database=nexwire",
       "enabled": false
     },
     {

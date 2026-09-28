@@ -27,6 +27,8 @@
 
 ### Changed
 
+- **Project renamed to `nexwire`** — the npm name `nexgen` was already taken by an unrelated package, so the framework was invisible to anyone searching for it. All 697 brand references across 206 files are now `nexwire`: root package `nexwire-monorepo`, scaffolder `create-nexwire` (directory `packages/create-nexgen/` renamed to `packages/create-nexwire/`), templates `nexwire-express` / `nexwire-hono`, and the `nexwireRouter` type. Install command is now `npm create nexwire@latest my-app` (unscoped, no rename collision). **`NEXGEN_*` environment variables are renamed to `NEXWIRE_*`** (29 tokens, e.g. `NEXWIRE_FRONTEND_URL`) across templates, scaffolder, `.env` files, and docs — this is a **breaking change** for any existing deployment, and was safe to do only because the package was never published. All `github.com/niyamulahsan/nexgen` URLs now point to `/nexwire` and 404 until the GitHub repo is renamed to match. Prior release notes above still say `nexgen`, which is historically accurate. Byte-identical across **express** and **hono** engines; the only engine-divergent shared file (`stubs/example/controller.ts.stub`) was already divergent before the rename.
+
 - **URL origin resolution is now three-knob and byte-identical across engines** — the origin decision in `framework/support/url.ts` (both engines) is: `frontendUrl` (explicit SPA origin — wins) → `uiEnabled` + built SPA (`hasUiBuild()`) (framework serves it — same/`APP_URL` origin) → `uiEnabled` + no build (dev Vite dev server still running — `process.env.NEXGEN_FRONTEND_URL`, injected by maker-cli, falls back to `APP_URL`) → API-only (`APP_URL`). Comment docs updated to document all three branches.
 
 ## [3.2.0] — 2026-09-22

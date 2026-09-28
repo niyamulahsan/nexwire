@@ -455,7 +455,7 @@ import { sendNotification } from "@/modules/shared/notifications.js";
 
 ## Auto-Discovery
 
-**nexgen** automatically discovers and registers:
+**nexwire** automatically discovers and registers:
 
 - **Routes** from `*/routes/*.ts`
 - **Jobs** from `*/jobs/*.ts` with `shouldQueue`

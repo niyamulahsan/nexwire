@@ -7,7 +7,7 @@ import type { Handler } from "hono";
 
 // POST /generate — create temp file
 export const generateCsv: Handler = async (c: any) => {
-  const csv = ["id,title", "1,nexgen report", "2,temporary file"].join("\n");
+  const csv = ["id,title", "1,nexwire report", "2,temporary file"].join("\n");
   const token = await storage.generateForDownload({
     prefix: "report",
     extension: "csv",
@@ -41,7 +41,7 @@ import type { Request, Response } from "express";
 
 // POST /generate — create temp file
 export const generateCsv = async (req: Request, res: Response) => {
-  const csv = ["id,title", "1,nexgen report", "2,temporary file"].join("\n");
+  const csv = ["id,title", "1,nexwire report", "2,temporary file"].join("\n");
   const token = await storage.generateForDownload({
     prefix: "report",
     extension: "csv",
@@ -97,7 +97,7 @@ export const generateExcel: Handler = async (c: any) => {
 
   // Data rows
   const rows = [
-    { id: 1, title: "nexgen framework" },
+    { id: 1, title: "nexwire framework" },
     { id: 2, title: "file generation" },
   ];
   for (const row of rows) {
@@ -154,7 +154,7 @@ export const generateExcel = async (req: Request, res: Response) => {
 
   // Data rows
   const rows = [
-    { id: 1, title: "nexgen framework" },
+    { id: 1, title: "nexwire framework" },
     { id: 2, title: "file generation" },
   ];
   for (const row of rows) {

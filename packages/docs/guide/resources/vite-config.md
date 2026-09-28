@@ -26,7 +26,7 @@ export default defineConfig({
     __API_URL__: JSON.stringify(apiUrl),
   },
   root: "src/resources",
-  cacheDir: path.join(cacheBase, "nexgen", "vite-cache", "resources"),
+  cacheDir: path.join(cacheBase, "nexwire", "vite-cache", "resources"),
   plugins: [vue()],
   css: {
     preprocessorOptions: {
@@ -82,7 +82,7 @@ Then rewrite `src/main.ts` for your framework's entry point.
 | `outDir`             | `../../public`                               | Build output goes to the framework's public directory                     |
 | `server.port`        | `5173`                                       | Dev server port                                                           |
 | `__SOCKET_ENABLED__` | `process.env.SOCKET`                         | Compile-time constant for Pulse availability (set via `SOCKET` in `.env`) |
-| `cacheDir`           | `%LOCALAPPDATA%/nexgen/vite-cache/resources` | Offloads cache from project directory                                     |
+| `cacheDir`           | `%LOCALAPPDATA%/nexwire/vite-cache/resources` | Offloads cache from project directory                                     |
 
 ## Proxy
 
