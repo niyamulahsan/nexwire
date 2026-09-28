@@ -125,7 +125,7 @@ async function main() {
     console.log("  npm create nexwire@latest <project-name> [--engine=<hono|express>]");
     console.log("  pnpm create nexwire@latest <project-name> [--engine=<hono|express>]");
     console.log("  bun create nexwire@latest <project-name> [--engine=<hono|express>]");
-    console.log("  npx nexwire@latest <project-name>");
+    console.log("  npx create-nexwire@latest <project-name> [--engine=<hono|express>]");
     console.log();
     console.log("Engines:");
     console.log("  hono     (default) Hono-based HTTP layer and OpenAPI");

@@ -1,9 +1,25 @@
 # Changelog
 
+## [4.0.0] — 2026-09-28
+
+> Successor to `create-nexgen@3.2.1`. The old package **stays published and is deprecated — do not delete it**, because existing installs would hard-fail. Deprecate it with:
+> `npm deprecate create-nexgen "Renamed to nexwire. Use: npm create nexwire@latest my-app"`
+
+### Breaking
+
+- **Project renamed to `nexwire`** — the unscoped npm name `nexgen` is owned by an unrelated package (`samwalshnz`, "Get the current song on a radio station", 2022), which made the framework effectively undiscoverable: searching "nexgen" surfaced that package, and `npx nexgen@latest` executed *its* binary rather than the scaffolder. The new name is uncontested — `nexwire`, `create-nexwire` and the `@nexwire` scope all return 0 registry hits. 697 brand references across 206 files: root package `nexwire-monorepo`, scaffolder `create-nexwire`, directory `packages/create-nexgen/` → `packages/create-nexwire/`, templates `nexwire-express` / `nexwire-hono`, and the `NexgenRouter` type → `NexwireRouter`. Install command is now `npm create nexwire@latest my-app`; the published bin also exposes the bare `nexwire` command.
+
+- **`NEXGEN_*` environment variables renamed to `NEXWIRE_*`** — 29 tokens across templates, scaffolder, `.env` files and docs (e.g. `NEXGEN_FRONTEND_URL` → `NEXWIRE_FRONTEND_URL`). **This breaks any existing deployment** — update your `.env` and deploy environment. Projects scaffolded from `create-nexgen@3.2.1` still use the `NEXGEN_` prefix and are unaffected, since the framework is copied into the project at scaffold time rather than installed as a dependency.
+
+- **GitHub repository renamed to `nexwire`** — all `github.com/niyamulahsan/nexgen` URLs now point to `/nexwire`.
+
+### Fixed
+
+- **Scaffolded README advertised the wrong engine** — the Features table said "Hono HTTP server", so a project scaffolded with `--engine=express` shipped a README claiming Hono. Now "Hono/Express HTTP server" across all six copies (root `README.md`, `template/{express,hono}/README.md`, `packages/create-nexwire/README.md`, `packages/create-nexwire/{express,hono}/README.md`). The four scaffolded copies are byte-identical and the table column alignment is preserved.
+
 ## [3.2.1] — 2026-09-24
 
 ### Fixed
-- **Scaffolded README advertised the wrong engine** — the Features table said "Hono HTTP server", so a project scaffolded with `--engine=express` shipped a README claiming Hono. Now "Hono/Express HTTP server" across all six copies (root `README.md`, `template/{express,hono}/README.md`, `packages/create-nexgen/README.md`, `packages/create-nexgen/{express,hono}/README.md`). The four scaffolded copies are byte-identical (blob `af0e791`) and the table column alignment is preserved.
 
 - **Scaffolder maker-cli runtime injects the dev UI origin into the spawned API** -- `create-nexgen`'s maker-cli runtime (`express`/`hono` `framework/maker-cli/runtime/core.mjs` and `core.mts`, line 214) sets `NEXGEN_FRONTEND_URL: "http://localhost:5173"` on the API child process it spawns when the UI is enabled but the built SPA is absent (Vite dev server still running) -- this is the dev-without-build branch the URL resolver consumes. Byte-identical across both engines; shipped via `create-nexgen@latest` / `nexgen@latest`.
 
@@ -26,8 +42,6 @@
 - **Guide intro "Self Deploy to VPS" showed only npm commands** — converted both deploy command blocks (init/remote and promote/import) into `::: code-group` tabs for **npm**, **pnpm**, **yarn**, and **bun**, matching the other guides. `--file=` flag syntax per package manager (`npm run maker` uses `-- --file=…`; direct `maker` calls use `--file=…`).
 
 ### Changed
-
-- **Project renamed to `nexwire`** — the npm name `nexgen` was already taken by an unrelated package, so the framework was invisible to anyone searching for it. All 697 brand references across 206 files are now `nexwire`: root package `nexwire-monorepo`, scaffolder `create-nexwire` (directory `packages/create-nexgen/` renamed to `packages/create-nexwire/`), templates `nexwire-express` / `nexwire-hono`, and the `nexwireRouter` type. Install command is now `npm create nexwire@latest my-app` (unscoped, no rename collision). **`NEXGEN_*` environment variables are renamed to `NEXWIRE_*`** (29 tokens, e.g. `NEXWIRE_FRONTEND_URL`) across templates, scaffolder, `.env` files, and docs — this is a **breaking change** for any existing deployment, and was safe to do only because the package was never published. All `github.com/niyamulahsan/nexgen` URLs now point to `/nexwire` and 404 until the GitHub repo is renamed to match. Prior release notes above still say `nexgen`, which is historically accurate. Byte-identical across **express** and **hono** engines; the only engine-divergent shared file (`stubs/example/controller.ts.stub`) was already divergent before the rename.
 
 - **URL origin resolution is now three-knob and byte-identical across engines** — the origin decision in `framework/support/url.ts` (both engines) is: `frontendUrl` (explicit SPA origin — wins) → `uiEnabled` + built SPA (`hasUiBuild()`) (framework serves it — same/`APP_URL` origin) → `uiEnabled` + no build (dev Vite dev server still running — `process.env.NEXGEN_FRONTEND_URL`, injected by maker-cli, falls back to `APP_URL`) → API-only (`APP_URL`). Comment docs updated to document all three branches.
 
