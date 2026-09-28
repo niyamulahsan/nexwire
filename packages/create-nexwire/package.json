@@ -16,7 +16,7 @@
     "prepublish": "node ../../scripts/sync-template.mjs"
   },
   "engines": {
-    "node": ">=24",
+    "node": ">=22.12.0",
     "bun": ">=1.3",
     "pnpm": ">=11",
     "yarn": ">=4"
@@ -35,7 +35,7 @@
     "type": "git",
     "url": "git+https://github.com/niyamulahsan/nexwire.git"
   },
-  "homepage": "https://nexwire.dev",
+  "homepage": "https://niyamulahsan.github.io/nexwire",
   "bugs": {
     "url": "https://github.com/niyamulahsan/nexwire/issues"
   },

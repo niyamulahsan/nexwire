@@ -42,7 +42,7 @@ function assertName(value, label) {
 
 function unsupported() {
   console.error(
-    'Drizzle Kit does not support Laravel-style rollback/refresh migrations. Use "bun maker db fresh --seed" for a SQLite development reset, or manage rollback SQL manually for production databases.'
+    'Drizzle Kit does not support Laravel-style rollback/refresh migrations. Use "npm run maker db:fresh -- --seed" (or "bun maker db:fresh --seed") for a SQLite development reset, or manage rollback SQL manually for production databases.'
   );
   process.exit(1);
 }
@@ -96,7 +96,7 @@ const handlers = {
       throw new Error(
         "Initial migration was generated, but the database already contains tables. " +
           "This usually means migration files were deleted while DB data still exists. " +
-          "Use 'bun maker db fresh --seed' to rebuild locally, or restore migration files before running db:migrate."
+          "Use 'npm run maker db:fresh -- --seed' (or 'bun maker db:fresh --seed') to rebuild locally, or restore migration files before running db:migrate."
       );
     }
     await runNodeScript(packageScript("drizzle-kit", "bin.cjs"), ["migrate"]);
@@ -189,9 +189,9 @@ export function registerDbCommands(program, rawArgs) {
 
   cmd("schema", "Generate src/database/schema.ts from module models");
   cmd("generate", "Generate Drizzle migrations after schema discovery");
-  cmd("migrate", "Generate then run Drizzle migrations", [{ flag: "--seed", description: "Run seeders after migration" }]);
+  cmd("migrate", "Generate then run Drizzle migrations", [{ flag: "--seed", description: "Run seeders after migration (npm: use `npm run maker db:migrate -- --seed`)" }]);
   cmd("migrate:run", "Run existing Drizzle migrations only");
-  cmd("fresh", "Reset database then generate, migrate, optionally seed", [{ flag: "--seed", description: "Run seeders after fresh" }]);
+  cmd("fresh", "Reset database then generate, migrate, optionally seed", [{ flag: "--seed", description: "Run seeders after fresh (npm: use `npm run maker db:fresh -- --seed`)" }]);
   cmd("seed", "Run all seeders or one module seeder set", [{ flag: "--module", description: "Optional module name" }]);
   cmd("status", "Show generated migration files");
   cmd("push", "Run drizzle-kit push after schema discovery");

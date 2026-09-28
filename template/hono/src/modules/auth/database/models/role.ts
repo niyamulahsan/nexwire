@@ -1,12 +1,12 @@
 import { relations } from "drizzle-orm";
-import { int, mysqlTable, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { users } from "@/modules/auth/database/models/user.js";
 
-export const roles = mysqlTable("roles", {
-  id: int("id").autoincrement().primaryKey(),
-  name: varchar("name", { length: 255 }).notNull().unique(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull().onUpdateNow()
+export const roles = sqliteTable("roles", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull().unique(),
+  createdAt: integer("created_at", { mode: "timestamp" }).defaultNow().notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).defaultNow().notNull()
 });
 
 export const rolesRelations = relations(roles, ({ many }) => ({

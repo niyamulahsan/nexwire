@@ -1,19 +1,19 @@
 import { relations } from "drizzle-orm";
-import { int, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { users } from "@/modules/auth/database/models/user.js";
 
-export const notifications = mysqlTable("notifications", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("user_id")
+export const notifications = sqliteTable("notifications", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id")
     .notNull()
     .references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
-  type: varchar("type", { length: 100 }).notNull(),
-  title: varchar("title", { length: 255 }).notNull(),
+  type: text("type").notNull(),
+  title: text("title").notNull(),
   body: text("body"),
   data: text("data"),
-  link: varchar("link", { length: 500 }),
-  readAt: timestamp("read_at"),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  link: text("link"),
+  readAt: integer("read_at", { mode: "timestamp" }),
+  createdAt: integer("created_at", { mode: "timestamp" }).defaultNow().notNull()
 });
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({

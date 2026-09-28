@@ -1,5 +1,6 @@
 import { closeDatabase, initDatabase } from "@/framework/database/connection.js";
 import { discoverModuleFiles, importFile } from "@/framework/modules/discover.js";
+import { readFile } from "node:fs/promises";
 
 const NAME_SYMBOL = Symbol.for("drizzle:Name");
 const FK_SYMBOLS = [
@@ -44,8 +45,14 @@ try {
   const seeders: SeederEntry[] = [];
 
   for (const file of files) {
+    const source = await readFile(file, "utf8");
+    const isUnfilledStub = !/^\s*export\s/m.test(source);
     const mod = await importFile(file);
     if (typeof mod.default !== "function") {
+      if (isUnfilledStub) {
+        console.log(`Skipped unfilled seeder ${file} (no exports yet)`);
+        continue;
+      }
       throw new Error(`Seeder file ${file} has no default export function`);
     }
     const table: any = mod.table;

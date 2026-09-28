@@ -35,7 +35,7 @@ export const register = async (req: Request, res: Response, _next: NextFunction)
       roleId: defaultRole?.id ?? null
     });
 
-    const insertedId = Number((insertResult as any)[0]?.insertId ?? (insertResult as any).insertId);
+    const insertedId = Number((insertResult as any)[0]?.insertId ?? (insertResult as any).insertId ?? (insertResult as any).lastInsertRowid);
     if (!insertedId) {
       throw new Error("Failed to resolve inserted user id");
     }

@@ -38,7 +38,8 @@ function syncEngine(name, { src, dest }) {
       return !parts.some((p) => skipDirs.has(p))
         && !skipDirs.has(basename_)
         && !(depth === 1 && skipRootDirs.has(basename_))
-        && !skipFiles.has(basename_);
+        && !skipFiles.has(basename_)
+        && !basename_.endsWith(".log");
     },
   });
 

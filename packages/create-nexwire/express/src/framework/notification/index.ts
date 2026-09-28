@@ -38,7 +38,7 @@ export async function notify(userId: number, options: NotificationOptions) {
     data: options.data ? JSON.stringify(options.data) : null
   });
 
-  const insertedId = Number((insertResult as any)[0]?.insertId ?? (insertResult as any).insertId);
+  const insertedId = Number((insertResult as any)[0]?.insertId ?? (insertResult as any).insertId ?? (insertResult as any).lastInsertRowid);
   if (!insertedId) throw new Error("Failed to create notification");
 
   const [row] = await db.select().from(notifications).where(eq(notifications.id, insertedId));

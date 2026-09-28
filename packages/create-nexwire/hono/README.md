@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://nexwire.dev">
+  <a href="https://github.com/niyamulahsan/nexwire">
     <img alt="nexwire" src="https://raw.githubusercontent.com/niyamulahsan/nexwire/main/logo-favicon/nexwire.png" width="300">
   </a>
 </p>
@@ -7,7 +7,7 @@
 <h3 align="center">Full-stack TypeScript framework for modern web applications</h3>
 
 <p align="center">
-  <a href="https://niyamulahsan.github.io/nexwire"><img src="https://img.shields.io/badge/docs-nexwire.dev-3b8eed" alt="Documentation"></a>
+  <a href="https://niyamulahsan.github.io/nexwire"><img src="https://img.shields.io/badge/docs-3b8eed" alt="Documentation"></a>
   <a href="https://www.npmjs.com/package/create-nexwire"><img src="https://img.shields.io/npm/v/create-nexwire" alt="npm version"></a>
   <a href="https://www.npmjs.com/package/create-nexwire"><img src="https://img.shields.io/npm/dt/create-nexwire" alt="npm downloads"></a>
   <a href="https://github.com/niyamulahsan/nexwire/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"></a>
@@ -42,7 +42,7 @@ npm run maker dev
 
 Your API is live at `http://localhost:3000`, Scalar docs at `/api-docs`, and the Vue frontend at `http://localhost:5173`.
 
-Requires **Node.js >= 24** or **Bun >= 1.3**.
+Requires **Node.js >= 22.12** or **Bun >= 1.3**.
 
 ### Current directory
 
@@ -73,7 +73,7 @@ nexwire runs on **Node.js** or **Bun** — pick whichever fits your deployment:
 
 | Runtime     | Minimum version | Notes                                                                 |
 | ----------- | --------------- | --------------------------------------------------------------------- |
-| **Node.js** | `>= 24`         | Default. Uses `node` in Dockerfile.                                   |
+| **Node.js** | `>= 22.12`     | Default. Uses `node` in Dockerfile.                                   |
 | **Bun**     | `>= 1.3`        | Pass `--runtime=bun` to `deploy:init`. Uses `oven/bun` in Dockerfile. |
 
 ## Features
@@ -200,7 +200,7 @@ See the [deploy documentation](https://niyamulahsan.github.io/nexwire/deploy/ove
 
 ## Documentation
 
-Complete documentation is available at **[nexwire.dev](https://niyamulahsan.github.io/nexwire)**
+Complete documentation is available at **[Documentation](https://niyamulahsan.github.io/nexwire)**
 
 ## Contributing
 

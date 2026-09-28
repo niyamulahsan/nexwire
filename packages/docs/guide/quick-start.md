@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- **Node.js** >= 24 or **Bun** >= 1.3
+- **Node.js** >= 22.12 or **Bun** >= 1.3
 - **MySQL** / **PostgreSQL** / **SQLite** (pick one)
 - **Redis** (optional, for cache/session/queue/realtime)
 

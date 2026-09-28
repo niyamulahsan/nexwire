@@ -17,7 +17,7 @@ Create a module with model and seeder:
 
 ```bash [npm]
 npm run maker module:make blog
-npm run maker db:migrate --seed
+npm run maker db:migrate -- --seed
 ```
 
 ```bash [pnpm]
@@ -46,7 +46,7 @@ The first migration uses `--name init`. Subsequent migrations are named incremen
 ::: code-group
 
 ```bash [npm]
-npm run maker db:migrate --seed
+npm run maker db:migrate -- --seed
 ```
 
 ```bash [pnpm]

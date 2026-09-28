@@ -1,7 +1,7 @@
 {
-  "version": "5",
-  "dialect": "mysql",
-  "id": "2490c818-e809-4d64-9455-411153a45124",
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "7ded1f54-d153-4c29-ac53-b9ad529af7f9",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "notifications": {
@@ -9,28 +9,28 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "int",
-          "primaryKey": false,
+          "type": "integer",
+          "primaryKey": true,
           "notNull": true,
           "autoincrement": true
         },
         "user_id": {
           "name": "user_id",
-          "type": "int",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "type": {
           "name": "type",
-          "type": "varchar(100)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "title": {
           "name": "title",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -51,25 +51,25 @@
         },
         "link": {
           "name": "link",
-          "type": "varchar(500)",
+          "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
         "read_at": {
           "name": "read_at",
-          "type": "timestamp",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(now())"
+          "default": "(cast((julianday('now') - 2440587.5)*86400000 as integer))"
         }
       },
       "indexes": {},
@@ -88,85 +88,71 @@
           "onUpdate": "cascade"
         }
       },
-      "compositePrimaryKeys": {
-        "notifications_id": {
-          "name": "notifications_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraint": {}
+      "checkConstraints": {}
     },
     "roles": {
       "name": "roles",
       "columns": {
         "id": {
           "name": "id",
-          "type": "int",
-          "primaryKey": false,
+          "type": "integer",
+          "primaryKey": true,
           "notNull": true,
           "autoincrement": true
         },
         "name": {
           "name": "name",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(now())"
+          "default": "(cast((julianday('now') - 2440587.5)*86400000 as integer))"
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "onUpdate": true,
-          "default": "(now())"
+          "default": "(cast((julianday('now') - 2440587.5)*86400000 as integer))"
         }
       },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "roles_id": {
-          "name": "roles_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {
+      "indexes": {
         "roles_name_unique": {
           "name": "roles_name_unique",
           "columns": [
             "name"
-          ]
+          ],
+          "isUnique": true
         }
       },
-      "checkConstraint": {}
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     },
     "email_verification_tokens": {
       "name": "email_verification_tokens",
       "columns": {
         "id": {
           "name": "id",
-          "type": "int",
-          "primaryKey": false,
+          "type": "integer",
+          "primaryKey": true,
           "notNull": true,
           "autoincrement": true
         },
         "email": {
           "name": "email",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -180,46 +166,39 @@
         },
         "expires_at": {
           "name": "expires_at",
-          "type": "timestamp",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(now())"
+          "default": "(cast((julianday('now') - 2440587.5)*86400000 as integer))"
         }
       },
       "indexes": {},
       "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "email_verification_tokens_id": {
-          "name": "email_verification_tokens_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraint": {}
+      "checkConstraints": {}
     },
     "password_reset_tokens": {
       "name": "password_reset_tokens",
       "columns": {
         "id": {
           "name": "id",
-          "type": "int",
-          "primaryKey": false,
+          "type": "integer",
+          "primaryKey": true,
           "notNull": true,
           "autoincrement": true
         },
         "email": {
           "name": "email",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -233,60 +212,53 @@
         },
         "expires_at": {
           "name": "expires_at",
-          "type": "timestamp",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(now())"
+          "default": "(cast((julianday('now') - 2440587.5)*86400000 as integer))"
         }
       },
       "indexes": {},
       "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "password_reset_tokens_id": {
-          "name": "password_reset_tokens_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraint": {}
+      "checkConstraints": {}
     },
     "refresh_tokens": {
       "name": "refresh_tokens",
       "columns": {
         "id": {
           "name": "id",
-          "type": "int",
-          "primaryKey": false,
+          "type": "integer",
+          "primaryKey": true,
           "notNull": true,
           "autoincrement": true
         },
         "user_id": {
           "name": "user_id",
-          "type": "int",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
         "jti": {
           "name": "jti",
-          "type": "varchar(191)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "revoked": {
           "name": "revoked",
-          "type": "boolean",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
@@ -294,21 +266,29 @@
         },
         "expires_at": {
           "name": "expires_at",
-          "type": "timestamp",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(now())"
+          "default": "(cast((julianday('now') - 2440587.5)*86400000 as integer))"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "refresh_tokens_jti_unique": {
+          "name": "refresh_tokens_jti_unique",
+          "columns": [
+            "jti"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {
         "refresh_tokens_user_id_users_id_fk": {
           "name": "refresh_tokens_user_id_users_id_fk",
@@ -324,44 +304,30 @@
           "onUpdate": "cascade"
         }
       },
-      "compositePrimaryKeys": {
-        "refresh_tokens_id": {
-          "name": "refresh_tokens_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {
-        "refresh_tokens_jti_unique": {
-          "name": "refresh_tokens_jti_unique",
-          "columns": [
-            "jti"
-          ]
-        }
-      },
-      "checkConstraint": {}
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     },
     "users": {
       "name": "users",
       "columns": {
         "id": {
           "name": "id",
-          "type": "int",
-          "primaryKey": false,
+          "type": "integer",
+          "primaryKey": true,
           "notNull": true,
           "autoincrement": true
         },
         "name": {
           "name": "name",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "email": {
           "name": "email",
-          "type": "varchar(255)",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -375,37 +341,44 @@
         },
         "role_id": {
           "name": "role_id",
-          "type": "int",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
         "email_verified_at": {
           "name": "email_verified_at",
-          "type": "timestamp",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "(now())"
+          "default": "(cast((julianday('now') - 2440587.5)*86400000 as integer))"
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "onUpdate": true,
-          "default": "(now())"
+          "default": "(cast((julianday('now') - 2440587.5)*86400000 as integer))"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "users_email_unique": {
+          "name": "users_email_unique",
+          "columns": [
+            "email"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {
         "users_role_id_roles_id_fk": {
           "name": "users_role_id_roles_id_fk",
@@ -421,33 +394,19 @@
           "onUpdate": "cascade"
         }
       },
-      "compositePrimaryKeys": {
-        "users_id": {
-          "name": "users_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {
-        "users_email_unique": {
-          "name": "users_email_unique",
-          "columns": [
-            "email"
-          ]
-        }
-      },
-      "checkConstraint": {}
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     }
   },
   "views": {},
+  "enums": {},
   "_meta": {
     "schemas": {},
     "tables": {},
     "columns": {}
   },
   "internal": {
-    "tables": {},
     "indexes": {}
   }
 }

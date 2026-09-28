@@ -1,20 +1,28 @@
 <p align="center">
-  <a href="https://nexwire.dev">
+  <a href="https://github.com/niyamulahsan/nexwire">
     <img alt="nexwire" src="https://raw.githubusercontent.com/niyamulahsan/nexwire/main/logo-favicon/nexwire.png" width="300">
   </a>
 </p>
 
-<h3 align="center">Full-stack TypeScript framework for modern web applications</h3>
+<h3 align="center">Stop wiring the stack together. Ship the app.</h3>
 
 <p align="center">
-  <a href="https://niyamulahsan.github.io/nexwire"><img src="https://img.shields.io/badge/docs-nexwire.dev-3b8eed" alt="Documentation"></a>
+  <a href="https://niyamulahsan.github.io/nexwire"><img src="https://img.shields.io/badge/docs-3b8eed" alt="Documentation"></a>
   <a href="https://www.npmjs.com/package/create-nexwire"><img src="https://img.shields.io/npm/v/create-nexwire" alt="npm version"></a>
   <a href="https://github.com/niyamulahsan/nexwire/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"></a>
 </p>
 
 ---
 
-nexwire is a batteries-included TypeScript framework that combines modular backends (Hono, Express) with Drizzle ORM, BullMQ, Socket.IO, Redis, and a Vue 3 SPA frontend — all scaffolded with a single command and deployed with Docker Compose.
+Every serious TypeScript app needs the same ten things: an HTTP API, auth with refresh-token rotation, a database with migrations, background jobs, real-time sockets, cron, file uploads, email, security headers, and a frontend. Assembling them is a week of glue code — and the failures are the silent kind, where a job never runs or a socket never joins a room.
+
+nexwire ships that stack **already connected**. Auth reads the database. Enqueueing a job is one call. Events broadcast to the right rooms. Uploads land on disk or in S3. `maker` supervises the API, worker, and cron, and Docker Compose puts the whole thing behind nginx with automatic SSL.
+
+- **Runnable the second it exists** — the scaffold ships a pre-migrated, pre-seeded SQLite database, so `npm install && npm run maker dev` lands you on a login screen that already works. Sign in with `admin@example.com` / `Password@123`. No Docker, no Postgres, no services to configure.
+- **Nothing to register** — `maker module:make blog` scaffolds the whole module (routes, controllers, models, seeders, jobs, tests) and the app auto-discovers it. No router file to edit, no registry to update.
+- **One import for every subsystem** — `db`, `cache`, `queue`, `jwt`, `mail`, `storage`, `notify`, and `urls` all come from `@/framework/facade.js`. Drop Redis in dev and the in-memory fallback takes over without touching a single call site.
+- **Infrastructure is optional** — Redis, mail, and S3 sit behind circuit breakers with real fallbacks, so nothing hard-fails when a service is absent or down.
+- **Deploy to a VPS over SSH** — one-time `maker deploy:init`, then `maker deploy:workflow:remote` builds the image, provisions nginx, requests Let's Encrypt certificates, and supervises API, worker, and cron as long-running processes.
 
 ## Quick Start
 
@@ -24,7 +32,6 @@ nexwire is a batteries-included TypeScript framework that combines modular backe
 npm create nexwire@latest my-app
 cd my-app
 npm install
-npm run maker db:migrate --seed
 npm run maker dev
 ```
 
@@ -34,13 +41,14 @@ npm run maker dev
 npm create nexwire@latest my-app -- --engine=express
 cd my-app
 npm install
-npm run maker db:migrate --seed
 npm run maker dev
 ```
 
 Your API is live at `http://localhost:3000`, Scalar docs at `/api-docs`, and the Vue frontend at `http://localhost:5173`.
 
-Requires **Node.js >= 24** or **Bun >= 1.3**.
+The scaffold already ships a pre-migrated, pre-seeded SQLite database, so there is no migration step before `maker dev`. If you point `DATABASE_URL` at MySQL or PostgreSQL, run `npm run maker db:migrate -- --seed` once to build and populate that database instead.
+
+Requires **Node.js >= 22.12** or **Bun >= 1.3**.
 
 ### Current directory
 
@@ -71,7 +79,7 @@ nexwire runs on **Node.js** or **Bun** — pick whichever fits your deployment:
 
 | Runtime     | Minimum version | Notes                                                                 |
 | ----------- | --------------- | --------------------------------------------------------------------- |
-| **Node.js** | `>= 24`         | Default. Uses `node` in Dockerfile.                                   |
+| **Node.js** | `>= 22.12`     | Default. Uses `node` in Dockerfile.                                   |
 | **Bun**     | `>= 1.3`        | Pass `--runtime=bun` to `deploy:init`. Uses `oven/bun` in Dockerfile. |
 
 ## Features
@@ -79,7 +87,7 @@ nexwire runs on **Node.js** or **Bun** — pick whichever fits your deployment:
 | Category            | What you get                                                                           |
 | ------------------- | -------------------------------------------------------------------------------------- |
 | **API**             | Hono/Express HTTP server with Zod validation, OpenAPI/Scalar docs, CORS, rate limiting |
-| **Database**        | Drizzle ORM — SQLite, MySQL, or PostgreSQL. Auto-detected from `DATABASE_URL`.         |
+| **Database**        | Drizzle ORM — SQLite by default, shipped pre-migrated and seeded; MySQL/PostgreSQL also supported, dialect auto-detected from `DATABASE_URL`.         |
 | **Auth**            | JWT access + refresh token rotation, signed httpOnly cookies, role middleware          |
 | **Queue**           | BullMQ background jobs with `shouldQueue` decorator and Bull Board dashboard           |
 | **Realtime**        | Socket.IO with auto room joining (user, role, auth) and broadcast events               |
@@ -198,7 +206,7 @@ See the [deploy documentation](https://niyamulahsan.github.io/nexwire/deploy/ove
 
 ## Documentation
 
-Complete documentation is available at **[nexwire.dev](https://niyamulahsan.github.io/nexwire)**
+Complete documentation is available at **[Documentation](https://niyamulahsan.github.io/nexwire)**
 
 ## Contributing
 
