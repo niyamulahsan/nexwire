@@ -1,7 +1,7 @@
-# ❤️ Support nexgen
+# ❤️ Support nexwire
 
 Thank you for considering a donation! Your support helps me continue
-developing and maintaining nexgen.
+developing and maintaining nexwire.
 
 ## 🏦 International Bank Transfer
 
