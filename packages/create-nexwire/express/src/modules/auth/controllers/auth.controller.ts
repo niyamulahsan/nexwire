@@ -35,7 +35,9 @@ export const register = async (req: Request, res: Response, _next: NextFunction)
       roleId: defaultRole?.id ?? null
     });
 
-    const insertedId = Number((insertResult as any)[0]?.insertId ?? (insertResult as any).insertId ?? (insertResult as any).lastInsertRowid);
+    const insertedId = Number(
+      (insertResult as any)[0]?.insertId ?? (insertResult as any).insertId ?? (insertResult as any).lastInsertRowid
+    );
     if (!insertedId) {
       throw new Error("Failed to resolve inserted user id");
     }
@@ -128,7 +130,7 @@ export const login = async (req: Request, res: Response, _next: NextFunction) =>
 
 export const me = async (_req: Request, res: Response, _next: NextFunction) => {
   try {
-    const auth = res.locals.auth as { id: number; } | undefined;
+    const auth = res.locals.auth as { id: number } | undefined;
     const user = await db.query.users.findFirst({
       where: eq(users.id, auth.id),
       with: { role: true }
@@ -340,7 +342,7 @@ export const refreshToken = async (req: Request, res: Response, _next: NextFunct
 
 export const logoutAllDevices = async (_req: Request, res: Response, _next: NextFunction) => {
   try {
-    const auth = res.locals.auth as { id: number; } | undefined;
+    const auth = res.locals.auth as { id: number } | undefined;
 
     if (!auth) return res.status(HttpStatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
 

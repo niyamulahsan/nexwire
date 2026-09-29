@@ -52,8 +52,8 @@
               :err="form.errors.password_confirmation"
               must />
           </div>
-          <button type="submit" class="btn btn-primary w-100" label="Create Account"
-            Icon="bi bi-person-plus" :disabled="processing" />
+          <Button type="submit" class="btn btn-primary w-100" label="Create Account"
+            icon="bi bi-person-plus" :disabled="processing" />
         </form>
         <div class="text-center mt-3">
           <span class="text-muted">Already have an account?</span>
@@ -68,9 +68,9 @@
 import { useHead } from "@vueuse/head";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import Button from "@/components/Button.vue";
 import Input from "@/components/Input.vue";
 import InputPasswordToggle from "@/components/InputPasswordToggle.vue";
-import Button from "@/components/Button.vue";
 import { useGumForm } from "@/plugins/gum";
 import { useAuthStore } from "@/stores/auth";
 
