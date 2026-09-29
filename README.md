@@ -67,13 +67,13 @@ Works with any package manager: `pnpm`, `yarn`, or `bun`.
 
 All examples use `npm` as the default. nexwire works with any major package manager:
 
-| Manager  | Create project                    | Run commands          |
-| -------- | --------------------------------- | --------------------- |
-| **npm**  | `npm create nexwire@latest my-app` | `npm run maker <cmd>` |
-| **pnpm** | `pnpm create nexwire@latest my-app`| `pnpm maker <cmd>`    |
-| **yarn** | `yarn create nexwire@latest my-app`| `yarn maker <cmd>`    |
-| **bun**  | `bun create nexwire@latest my-app` | `bun maker <cmd>`     |
-| **all**  | `npm create nexwire@latest .`      | current directory     |
+| Manager  | Create project                      | Run commands          |
+| -------- | ----------------------------------- | --------------------- |
+| **npm**  | `npm create nexwire@latest my-app`  | `npm run maker <cmd>` |
+| **pnpm** | `pnpm create nexwire@latest my-app` | `pnpm maker <cmd>`    |
+| **yarn** | `yarn create nexwire@latest my-app` | `yarn maker <cmd>`    |
+| **bun**  | `bun create nexwire@latest my-app`  | `bun maker <cmd>`     |
+| **all**  | `npm create nexwire@latest .`       | current directory     |
 
 ### Runtime
 
@@ -81,27 +81,43 @@ nexwire runs on **Node.js** or **Bun** — pick whichever fits your deployment:
 
 | Runtime     | Minimum version | Notes                                                                 |
 | ----------- | --------------- | --------------------------------------------------------------------- |
-| **Node.js** | `>= 22.12`     | Default. Uses `node` in Dockerfile.                                   |
+| **Node.js** | `>= 22.12`      | Default. Uses `node` in Dockerfile.                                   |
 | **Bun**     | `>= 1.3`        | Pass `--runtime=bun` to `deploy:init`. Uses `oven/bun` in Dockerfile. |
+
+## Demo
+
+Real recordings from a freshly scaffolded project — no mockups, no staging data.
+
+**Dev mode** — one command boots the API, Vue UI, Scalar docs, Bull Board queues, MailDev and Redis UI together:
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/niyamulahsan/nexwire/main/packages/docs/public/screenshots/dev-mode.gif" alt="nexwire dev mode: API, UI, API docs, queue dashboard and mail UI booting in one command" width="100%">
+</p>
+
+**Real deploy** — the same project running on a live server, with HTTPS, process supervision and zero-downtime restarts:
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/niyamulahsan/nexwire/main/packages/docs/public/screenshots/real-deploy.gif" alt="nexwire deployed to a real server with HTTPS and process supervision" width="100%">
+</p>
 
 ## Features
 
-| Category            | What you get                                                                           |
-| ------------------- | -------------------------------------------------------------------------------------- |
-| **API**             | Hono/Express HTTP server with Zod validation, OpenAPI/Scalar docs, CORS, rate limiting |
-| **Database**        | Drizzle ORM — SQLite by default, shipped pre-migrated and seeded; MySQL/PostgreSQL also supported, dialect auto-detected from `DATABASE_URL`.         |
-| **Auth**            | JWT access + refresh token rotation, signed httpOnly cookies, role middleware          |
-| **Queue**           | BullMQ background jobs with `shouldQueue` decorator and Bull Board dashboard           |
-| **Realtime**        | Socket.IO with auto room joining (user, role, auth) and broadcast events               |
-| **Cache & Session** | Redis-backed with graceful fallback when Redis is disabled                             |
-| **Scheduler**       | Cron-based task scheduling with distributed Redis lock                                 |
-| **Storage**         | Local disk or S3-compatible (AWS S3, R2, MinIO, DigitalOcean Spaces)                   |
-| **Notifications**   | Database-persisted notifications with broadcast + mail delivery                        |
-| **Frontend**        | Vue 3 SPA — Vite, Pinia, Vue Router, Bootstrap 5, real-time Pulse plugin               |
-| **Security**        | CSP, HSTS, X-Frame headers — configured in one place, toggled per environment          |
-| **Reliability**     | Circuit breakers for Redis, mail, and S3 with auto-fallback; startup config validation |
-| **CLI**             | `maker` command for code generation, migrations, runtime, and deploy                   |
-| **Deploy**          | Two-layer Docker Compose — nginx-proxy, auto SSL, supervisor                           |
+| Category            | What you get                                                                                                                                  |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| **API**             | Hono/Express HTTP server with Zod validation, OpenAPI/Scalar docs, CORS, rate limiting                                                        |
+| **Database**        | Drizzle ORM — SQLite by default, shipped pre-migrated and seeded; MySQL/PostgreSQL also supported, dialect auto-detected from `DATABASE_URL`. |
+| **Auth**            | JWT access + refresh token rotation, signed httpOnly cookies, role middleware                                                                 |
+| **Queue**           | BullMQ background jobs with `shouldQueue` decorator and Bull Board dashboard                                                                  |
+| **Realtime**        | Socket.IO with auto room joining (user, role, auth) and broadcast events                                                                      |
+| **Cache & Session** | Redis-backed with graceful fallback when Redis is disabled                                                                                    |
+| **Scheduler**       | Cron-based task scheduling with distributed Redis lock                                                                                        |
+| **Storage**         | Local disk or S3-compatible (AWS S3, R2, MinIO, DigitalOcean Spaces)                                                                          |
+| **Notifications**   | Database-persisted notifications with broadcast + mail delivery                                                                               |
+| **Frontend**        | Vue 3 SPA — Vite, Pinia, Vue Router, Bootstrap 5, real-time Pulse plugin                                                                      |
+| **Security**        | CSP, HSTS, X-Frame headers — configured in one place, toggled per environment                                                                 |
+| **Reliability**     | Circuit breakers for Redis, mail, and S3 with auto-fallback; startup config validation                                                        |
+| **CLI**             | `maker` command for code generation, migrations, runtime, and deploy                                                                          |
+| **Deploy**          | Two-layer Docker Compose — nginx-proxy, auto SSL, supervisor                                                                                  |
 
 ## Architecture
 

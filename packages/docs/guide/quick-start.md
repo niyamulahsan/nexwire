@@ -96,28 +96,28 @@ The project name is derived from the current folder name.
 
 ```bash [npm]
 cd my-project
-cp .env.example .env
 npm install
 ```
 
 ```bash [pnpm]
 cd my-project
-cp .env.example .env
 pnpm install
 ```
 
 ```bash [yarn]
 cd my-project
-cp .env.example .env
 yarn install
 ```
 
 ```bash [bun]
 cd my-project
-cp .env.example .env
 bun install
 ```
 
+:::
+
+::: tip
+There is nothing to copy before installing — the scaffolder writes a working `.env` for you, pointing at a SQLite database that is already migrated and seeded. `.env.example` sits beside it as the reference for what you can change; see [Environment](/guide/env).
 :::
 
 ## Package Manager Setup

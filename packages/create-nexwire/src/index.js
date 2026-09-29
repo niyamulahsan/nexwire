@@ -180,7 +180,7 @@ async function main() {
     console.log("  cd " + cdName);
   }
   console.log("  " + pm + " install");
-  console.log("  cp .env.example .env");
+  console.log("  " + (existsSync(join(targetDir, ".env")) ? ".env ready - no copy needed" : process.platform === "win32" ? "copy .env.example .env" : "cp .env.example .env"));
   console.log();
   console.log("Enjoy building with nexwire!");
 }

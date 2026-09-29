@@ -1,10 +1,10 @@
 # Environment
 
-nexwire uses a Zod-validated `.env` file at the project root. Copy `.env.example` to get started.
+nexwire uses a Zod-validated `.env` file at the project root. The scaffolder writes a working one for you — a fresh project runs with no setup — and ships `.env.example` beside it as the reference for what you can change.
 
-```bash
-cp .env.example .env
-```
+::: tip Windows
+There is nothing to copy on a fresh project. If you ever need to recreate the file by hand, note that `cp` does not exist in cmd or PowerShell — use `copy .env.example .env` there, and `cp .env.example .env` on macOS and Linux.
+:::
 
 ## Application
 

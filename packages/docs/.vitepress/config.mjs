@@ -79,7 +79,9 @@ const icons = {
 
 const mi = (key, label) => navIcon(icons[key], label);
 
-export default defineConfig({
+const changelogLink = { text: mi("fileText", "Changelog"), link: "/changelog" };
+
+const config = defineConfig({
   base: "/nexwire/",
   title: "nexwire",
   description: "Full-stack TypeScript framework with Hono or Express, Vue 3, and Drizzle ORM",
@@ -197,6 +199,7 @@ export default defineConfig({
             }
           ],
         },
+        changelogLink,
       ],
       "/cli/": [
         { text: mi("terminal", "CLI Reference"), link: "/cli/reference" },
@@ -205,11 +208,13 @@ export default defineConfig({
         { text: mi("database", "Database Commands"), link: "/cli/database" },
         { text: mi("play", "Runtime Commands"), link: "/cli/runtime" },
         { text: mi("rocket", "Deploy Commands"), link: "/cli/deploy" },
+        changelogLink,
       ],
       "/deploy/": [
         { text: mi("map", "Overview"), link: "/deploy/overview" },
         { text: mi("monitor", "Local Deploy"), link: "/deploy/local" },
         { text: mi("server", "Remote Deploy"), link: "/deploy/remote" },
+        changelogLink,
       ],
       "/api/": [
         {
@@ -290,6 +295,7 @@ export default defineConfig({
             { text: mi("boxes", "lodash"), link: "/api/lodash" },
           ],
         },
+        changelogLink,
       ],
     },
     socialLinks: [
@@ -310,3 +316,10 @@ export default defineConfig({
     darkModeSwitchTitle: "Switch to dark mode",
   },
 });
+
+// The changelog page sits outside every sidebar section, so it matches no prefix
+// and would otherwise render with no sidebar at all. It reuses the guide menu so
+// the reader keeps the full navigation on that page too.
+config.themeConfig.sidebar["/changelog"] = config.themeConfig.sidebar["/guide/"];
+
+export default config;

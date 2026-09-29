@@ -75,7 +75,7 @@ If you delete migration files while the database still has tables, the command d
 
 ```
 Initial migration was generated, but the database already contains tables.
-Use 'npm run|pnpm|yarn|bun maker db:fresh --seed' to rebuild locally.
+Use 'npm run maker db:fresh -- --seed' (or 'bun maker db:fresh --seed') to rebuild locally, or restore migration files before running db:migrate.
 ```
 
 ### `db:generate` — Migration Files Only
