@@ -13,7 +13,7 @@
     "express"
   ],
   "scripts": {
-    "prepublish": "node ../../scripts/sync-template.mjs"
+    "prepublishOnly": "node ../../scripts/sync-template.mjs"
   },
   "engines": {
     "node": ">=22.12.0",

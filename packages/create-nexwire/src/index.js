@@ -33,7 +33,15 @@ function isValidProjectName(name) {
 
 function resolveTargetDir(name) {
   const cwd = process.cwd();
-  if (name === ".") return cwd;
+  if (name === ".") {
+    const entries = readdirSync(cwd);
+    if (entries.length > 0) {
+      console.error(`Error: Current directory "${basename(cwd)}" is not empty.`);
+      console.error("  Scaffolding into '.' requires an empty directory so existing files are not overwritten.");
+      process.exit(1);
+    }
+    return cwd;
+  }
   const dir = join(cwd, name);
   if (existsSync(dir)) {
     console.error(`Error: Directory "${name}" already exists.`);
@@ -143,6 +151,7 @@ async function main() {
   }
 
   const targetDir = resolveTargetDir(projectName);
+  const isCurrentDir = targetDir === process.cwd();
 
   console.log(`\nCreating project "${projectName}" (engine: ${engine})...\n`);
 
@@ -155,7 +164,11 @@ async function main() {
   } catch (err) {
     console.error("Error: Failed to download template from npm registry.");
     console.error("  " + err.message);
-    rmSync(targetDir, { recursive: true, force: true });
+    if (isCurrentDir) {
+      console.error("  Leaving the current directory in place; nothing was removed.");
+    } else {
+      rmSync(targetDir, { recursive: true, force: true });
+    }
     process.exit(1);
   }
 
