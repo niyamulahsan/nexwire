@@ -3,7 +3,7 @@
     <div class="auth col-12 col-sm-9 col-md-7 col-lg-5 col-xl-4 mx-auto py-5">
       <div class="card card-body border-0">
         <div class="d-block mb-2 text-center">
-          <img src="@/assets/images/logo.png" alt="nexgen" style="max-height: 60px;" />
+          <img src="@/assets/images/logo.png" alt="nexwire" style="max-height: 60px;" />
         </div>
         <h4 class="text-center">Reset Password</h4>
         <p
@@ -17,21 +17,18 @@
           :class="{ 'pe-none opacity-50': !isLinkValid }"
           @submit.prevent="onSubmit">
           <div class="mb-4">
-            <Input
+            <input-password-toggle
               id="password"
               v-model="form.data.password"
-              type="password"
               label="new password"
-              placeholder="Enter new password..."
+              placeholder="Enter your password..."
               :err="form.errors.password"
-              focus
               must />
           </div>
           <div class="mb-4">
-            <Input
+            <input-password-toggle
               id="password_confirmation"
               v-model="form.data.password_confirmation"
-              type="password"
               label="confirm password"
               placeholder="Confirm new password..."
               :err="form.errors.password_confirmation"
@@ -60,7 +57,7 @@ import { useHead } from "@vueuse/head";
 import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import Button from "@/components/Button.vue";
-import Input from "@/components/Input.vue";
+import InputPasswordToggle from "@/components/InputPasswordToggle.vue";
 import { useGumForm } from "@/plugins/gum";
 
 useHead({ title: "Reset Password" });

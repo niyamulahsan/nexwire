@@ -45,7 +45,7 @@ console.log(config.cache.ttlSeconds);
 ```ts
 // src/config/app.ts
 export default {
-  name: env.APP_NAME, // "nexgen"
+  name: env.APP_NAME, // "nexwire"
   environment: env.APP_ENV, // "development" | "production" | "test"
   port: env.APP_PORT, // 3000
   url: env.APP_URL, // "http://localhost:3000"
@@ -61,7 +61,7 @@ export default {
 // src/config/openapi.ts
 export default {
   version: "3.0.0",
-  title: "nexgen API",
+  title: "nexwire API",
   apiVersion: "1.0.0",
   description: "",
 
@@ -70,7 +70,7 @@ export default {
     docsPath: "/api-docs", // change this to rename the docs URL
     layout: "classic", // "classic" | "modern"
     theme: "moon", // "default" | "moon" | "purple" | "solarized" | "bluePlanet" | "fastify" | "kepler" | "mars" | "nebula" | "none"
-    pageTitle: "nexgen API",
+    pageTitle: "nexwire API",
     favicon: "src/resources/src/assets/images/favicon/favicon.ico", // served at /favicon.ico for the docs page
     defaultHttpClient: {
       targetKey: "js",
@@ -126,7 +126,7 @@ The dialect (`mysql`, `postgresql`, `sqlite`) is auto-detected from the URL pref
 export default {
   enabled: env.REDIS, // read from REDIS env var
   url: env.REDIS_URL,
-  prefix: env.REDIS_PREFIX, // "nexgen"
+  prefix: env.REDIS_PREFIX, // "nexwire"
   commanderPort: 1369,
 };
 ```
@@ -139,7 +139,7 @@ Redis must be explicitly enabled. When `enabled: false`, all Redis-backed servic
 // src/config/cache.ts
 export default {
   ttlSeconds: 3600, // 1 hour
-  keyPrefix: `${redisConfig.prefix}:cache`, // "nexgen:cache"
+  keyPrefix: `${redisConfig.prefix}:cache`, // "nexwire:cache"
 };
 ```
 
@@ -148,9 +148,9 @@ export default {
 ```ts
 // src/config/session.ts
 export default {
-  cookieName: `${cookieConfig.name}_session`, // "nexgen_session"
+  cookieName: `${cookieConfig.name}_session`, // "nexwire_session"
   ttlSeconds: 7200, // 2 hours
-  keyPrefix: `${redisConfig.prefix}:session`, // "nexgen:session"
+  keyPrefix: `${redisConfig.prefix}:session`, // "nexwire:session"
 };
 ```
 
@@ -162,8 +162,8 @@ export default {
   queues: ["default", "mail", "maintenance"], // default queue, you can add or remove
   concurrency: 10,
   autoPruneQueues: true, // auto remove stale key value
-  prefix: `${redisConfig.prefix}:queue`, // "nexgen:queue"
-  durablePrefix: `${redisConfig.prefix}:durable`, // "nexgen:durable"
+  prefix: `${redisConfig.prefix}:queue`, // "nexwire:queue"
+  durablePrefix: `${redisConfig.prefix}:durable`, // "nexwire:durable"
   queueUi: "/queues", // queue dashboard
   allowedEmails: "", // comma-separated emails allowed to access the queue dashboard
 };
@@ -177,7 +177,7 @@ export default {
   windowMs: 60000, // 1 minute
   maxRequests: 500, // per window (global)
   loginMaxRequests: 60, // per window (login)
-  keyPrefix: `${redisConfig.prefix}:rl`, // "nexgen:rl"
+  keyPrefix: `${redisConfig.prefix}:rl`, // "nexwire:rl"
 };
 ```
 
@@ -235,7 +235,7 @@ export default {
 ```ts
 // src/config/cookie.ts
 export default {
-  name: "nexgen",
+  name: "nexwire",
   secret: env.COOKIE_SECRET,
 };
 ```
@@ -329,13 +329,13 @@ Access via `securityConfig` from the facade or `config.security`.
 
 ## Redis Key Namespace
 
-All Redis keys are prefixed with `REDIS_PREFIX` (default `nexgen`):
+All Redis keys are prefixed with `REDIS_PREFIX` (default `nexwire`):
 
 | Service       | Key Pattern        | Config              |
 | ------------- | ------------------ | ------------------- |
-| Cache         | `nexgen:cache:*`   | `cache.ts`          |
-| Session       | `nexgen:session:*` | `session.ts`        |
-| Queue         | `nexgen:queue:*`   | `queue.ts`          |
-| Durable Queue | `nexgen:durable:*` | `queue.ts`          |
-| Rate Limit    | `nexgen:rl:*`      | `rateLimit.ts`      |
-| Broadcast     | `nexgen:broadcast` | `redis.ts` (prefix) |
+| Cache         | `nexwire:cache:*`   | `cache.ts`          |
+| Session       | `nexwire:session:*` | `session.ts`        |
+| Queue         | `nexwire:queue:*`   | `queue.ts`          |
+| Durable Queue | `nexwire:durable:*` | `queue.ts`          |
+| Rate Limit    | `nexwire:rl:*`      | `rateLimit.ts`      |
+| Broadcast     | `nexwire:broadcast` | `redis.ts` (prefix) |

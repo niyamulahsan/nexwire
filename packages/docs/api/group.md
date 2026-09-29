@@ -8,7 +8,7 @@ Shorthand for `createRouter().group(...)`, plus the building block when spreadin
 
 | Function | Signature                          | Description                                                                               |
 | -------- | ---------------------------------- | ----------------------------------------------------------------------------------------- |
-| `group`  | `(...middlewares) => NexgenRouter` | `createRouter().group(...middlewares)` — applies middleware to routes registered after it |
+| `group`  | `(...middlewares) => NexwireRouter` | `createRouter().group(...middlewares)` — applies middleware to routes registered after it |
 
 ## Use cases
 

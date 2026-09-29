@@ -204,22 +204,22 @@ Import a SQL dump into the local Docker container. Auto-detects MySQL or Postgre
 ::: code-group
 
 ```bash [npm]
-npm run maker deploy:db:import -- --file=deploy/nexgen.sql --database=nexgen
+npm run maker deploy:db:import -- --file=deploy/nexwire.sql --database=nexwire
 npm run maker deploy:db:import -- --file=dump.sql --database=myapp --container=mysql-global --user=root
 ```
 
 ```bash [pnpm]
-pnpm maker deploy:db:import --file=deploy/nexgen.sql --database=nexgen
+pnpm maker deploy:db:import --file=deploy/nexwire.sql --database=nexwire
 pnpm maker deploy:db:import --file=dump.sql --database=myapp --container=mysql-global --user=root
 ```
 
 ```bash [yarn]
-yarn maker deploy:db:import --file=deploy/nexgen.sql --database=nexgen
+yarn maker deploy:db:import --file=deploy/nexwire.sql --database=nexwire
 yarn maker deploy:db:import --file=dump.sql --database=myapp --container=mysql-global --user=root
 ```
 
 ```bash [bun]
-bun maker deploy:db:import --file=deploy/nexgen.sql --database=nexgen
+bun maker deploy:db:import --file=deploy/nexwire.sql --database=nexwire
 bun maker deploy:db:import --file=dump.sql --database=myapp --container=mysql-global --user=root
 ```
 
@@ -232,22 +232,22 @@ Import a SQL dump into a remote Docker container via SSH. Auto-detects MySQL or 
 ::: code-group
 
 ```bash [npm]
-npm run maker deploy:db:import:remote -- --config=deploy/workflow.remote.json --file=deploy/nexgen.sql --database=nexgen
+npm run maker deploy:db:import:remote -- --config=deploy/workflow.remote.json --file=deploy/nexwire.sql --database=nexwire
 npm run maker deploy:db:import:remote -- --config=workflow.remote.json --file=dump.sql --database=myapp --dry-run
 ```
 
 ```bash [pnpm]
-pnpm maker deploy:db:import:remote --config=deploy/workflow.remote.json --file=deploy/nexgen.sql --database=nexgen
+pnpm maker deploy:db:import:remote --config=deploy/workflow.remote.json --file=deploy/nexwire.sql --database=nexwire
 pnpm maker deploy:db:import:remote --config=workflow.remote.json --file=dump.sql --database=myapp --dry-run
 ```
 
 ```bash [yarn]
-yarn maker deploy:db:import:remote --config=deploy/workflow.remote.json --file=deploy/nexgen.sql --database=nexgen
+yarn maker deploy:db:import:remote --config=deploy/workflow.remote.json --file=deploy/nexwire.sql --database=nexwire
 yarn maker deploy:db:import:remote --config=workflow.remote.json --file=dump.sql --database=myapp --dry-run
 ```
 
 ```bash [bun]
-bun maker deploy:db:import:remote --config=deploy/workflow.remote.json --file=deploy/nexgen.sql --database=nexgen
+bun maker deploy:db:import:remote --config=deploy/workflow.remote.json --file=deploy/nexwire.sql --database=nexwire
 bun maker deploy:db:import:remote --config=workflow.remote.json --file=dump.sql --database=myapp --dry-run
 ```
 
@@ -284,7 +284,7 @@ bun maker deploy:db:import:remote --config=workflow.remote.json --file=dump.sql 
     "user": "deploy",
     "port": 22,
     "keyPath": "~/.ssh/id_rsa",
-    "targetPath": "/home/deploy/nexgen"
+    "targetPath": "/home/deploy/nexwire"
   },
   "upload": {
     "source": ".",
@@ -292,8 +292,8 @@ bun maker deploy:db:import:remote --config=workflow.remote.json --file=dump.sql 
   },
   "databaseImport": {
     "enabled": false,
-    "file": "deploy/nexgen.sql",
-    "database": "nexgen",
+    "file": "deploy/nexwire.sql",
+    "database": "nexwire",
     "container": "mysql-global",
     "user": "root"
   },
@@ -323,7 +323,7 @@ bun maker deploy:db:import:remote --config=workflow.remote.json --file=dump.sql 
     },
     {
       "name": "Import database dump (optional)",
-      "run": "deploy:db:import --file=deploy/nexgen.sql --database=nexgen",
+      "run": "deploy:db:import --file=deploy/nexwire.sql --database=nexwire",
       "enabled": false
     }
   ]

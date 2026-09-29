@@ -23,7 +23,7 @@ export const urls = {
    *          SPA itself, so the page resolves to the app origin.
    *      appConfig.uiEnabled + no UI build: the Vite dev server is still
    *          running (UI not built yet) — use the origin the maker-cli
-   *          injected (NEXGEN_FRONTEND_URL, dev Vite dev server).
+   *          injected (NEXWIRE_FRONTEND_URL, dev Vite dev server).
    *      When BOTH origin knobs are unset (API-only mode) there is no SPA to
    *          point at — fall back to the app URL so the link is valid.
    */
@@ -33,7 +33,7 @@ export const urls = {
       (appConfig.uiEnabled
         ? hasUiBuild()
           ? urls.appUrl()                                     // built SPA, framework serves it — same origin
-          : process.env.NEXGEN_FRONTEND_URL || urls.appUrl()  // dev Vite dev server — injected by maker-cli
+          : process.env.NEXWIRE_FRONTEND_URL || urls.appUrl()  // dev Vite dev server — injected by maker-cli
         : appConfig.url);                                     // API-only
     if (!path) return base;
     return `${base}${path.startsWith("/") ? path : `/${path}`}`;

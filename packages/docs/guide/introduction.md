@@ -1,12 +1,12 @@
 # Introduction
 
-nexgen is a full-stack TypeScript framework that combines a Hono (default) or Express API server, a Vite UI (Vue 3 by default, swappable for React/Svelte/Solid/etc.), Drizzle ORM for the database, and Redis for caching, sessions, queues, and realtime — all wired together with a single CLI.
+nexwire is a full-stack TypeScript framework that combines a Hono (default) or Express API server, a Vite UI (Vue 3 by default, swappable for React/Svelte/Solid/etc.), Drizzle ORM for the database, and Redis for caching, sessions, queues, and realtime — all wired together with a single CLI.
 
-## Why nexgen?
+## Why nexwire?
 
 Full-stack TypeScript today means choosing ten libraries and gluing them together by hand. Every choice locks you in. Every glue point is somewhere things break.
 
-nexgen makes those choices for you, and lets you override the ones that matter.
+nexwire makes those choices for you, and lets you override the ones that matter.
 
 - HTTP engine — Hono (default) or Express. Pick at scaffold time. Same module code either way.
 - UI framework — Vue 3 by default, swappable for React/Svelte/Solid.
@@ -54,7 +54,7 @@ bun maker db:migrate --seed
 
 The route file is picked up automatically. The model is used by the migration system. The seeder (if you add one) is sorted by foreign key dependencies. No index.ts to update.
 
-## Who nexgen is for
+## Who nexwire is for
 
 - Solo developers building SaaS, internal tools, or client projects who want a batteries-included stack without weeks of architecture decisions.
 - Growing teams that need consistent conventions and clear module boundaries — so a codebase can expand without becoming a pile of glue code.
@@ -63,7 +63,7 @@ The route file is picked up automatically. The model is used by the migration sy
 - Laravel / Rails / Django developers looking for a TypeScript equivalent with routing, ORM, queues, cache, auth, realtime, and deployment in one package.
 - Teams scaling past their first architecture who want module isolation, engine choice, and one-command deployment without adopting a heavyweight DI framework.
 
-## Who nexgen is not for
+## Who nexwire is not for
 
 - Projects that need fine-grained control over every dependency.
 - Teams already committed to a meta-framework like Next.js or Nuxt.
@@ -211,7 +211,7 @@ The above example auto-registers the route — no manual wiring needed. Create a
 
 ## API-Only Mode
 
-You don't have to use the built-in UI. Set `UI=false` in `.env` and nexgen becomes a pure API server — perfect if you already have a React, Next.js, Flutter, or mobile app that needs a backend.
+You don't have to use the built-in UI. Set `UI=false` in `.env` and nexwire becomes a pure API server — perfect if you already have a React, Next.js, Flutter, or mobile app that needs a backend.
 
 ```bash
 # .env
@@ -222,7 +222,7 @@ The API runs standalone at `http://localhost:3000` with OpenAPI docs at `/api-do
 
 ## Separate UI
 
-If your UI lives in a different repo or uses a different framework, nexgen still gives you everything you need out of the box:
+If your UI lives in a different repo or uses a different framework, nexwire still gives you everything you need out of the box:
 
 - **Cache** — avoid hitting the database on every request
 - **Session** — server-side sessions with cross-origin cookie support
@@ -610,7 +610,7 @@ What you get on the remote server:
 npm run maker deploy:workflow:promote
 
 # Import a database dump
-npm run maker deploy:db:import:remote -- --file=deploy/nexgen.sql
+npm run maker deploy:db:import:remote -- --file=deploy/nexwire.sql
 ```
 
 ```bash [pnpm]
@@ -618,7 +618,7 @@ npm run maker deploy:db:import:remote -- --file=deploy/nexgen.sql
 pnpm maker deploy:workflow:promote
 
 # Import a database dump
-pnpm maker deploy:db:import:remote --file=deploy/nexgen.sql
+pnpm maker deploy:db:import:remote --file=deploy/nexwire.sql
 ```
 
 ```bash [yarn]
@@ -626,7 +626,7 @@ pnpm maker deploy:db:import:remote --file=deploy/nexgen.sql
 yarn maker deploy:workflow:promote
 
 # Import a database dump
-yarn maker deploy:db:import:remote --file=deploy/nexgen.sql
+yarn maker deploy:db:import:remote --file=deploy/nexwire.sql
 ```
 
 ```bash [bun]
@@ -634,7 +634,7 @@ yarn maker deploy:db:import:remote --file=deploy/nexgen.sql
 bun maker deploy:workflow:promote
 
 # Import a database dump
-bun maker deploy:db:import:remote --file=deploy/nexgen.sql
+bun maker deploy:db:import:remote --file=deploy/nexwire.sql
 ```
 
 :::
@@ -727,11 +727,11 @@ bun maker dev
 Different developers have different learning styles. Feel free to pick a path that suits your preference.
 
 <div class="vt-doc-intro-cards" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 20px;">
-  <a href="/nexgen/guide/quick-start" style="display: block; padding: 20px; border: 1px solid var(--vp-c-divider); border-radius: 8px; text-decoration: none; color: inherit; transition: border-color 0.25s;">
+  <a href="/nexwire/guide/quick-start" style="display: block; padding: 20px; border: 1px solid var(--vp-c-divider); border-radius: 8px; text-decoration: none; color: inherit; transition: border-color 0.25s;">
     <div style="font-weight: 600; font-size: 16px; margin-bottom: 8px;">Quick Start →</div>
     <div style="font-size: 14px; color: var(--vp-c-text-2);">Get a project running in under 5 minutes.</div>
   </a>
-  <a href="/nexgen/guide/architecture" style="display: block; padding: 20px; border: 1px solid var(--vp-c-divider); border-radius: 8px; text-decoration: none; color: inherit; transition: border-color 0.25s;">
+  <a href="/nexwire/guide/architecture" style="display: block; padding: 20px; border: 1px solid var(--vp-c-divider); border-radius: 8px; text-decoration: none; color: inherit; transition: border-color 0.25s;">
     <div style="font-weight: 600; font-size: 16px; margin-bottom: 8px;">Read the Guide →</div>
     <div style="font-size: 14px; color: var(--vp-c-text-2);">Walk through every part of the framework in detail.</div>
   </a>

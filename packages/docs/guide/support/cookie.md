@@ -52,7 +52,7 @@ Cookie settings are in `src/config/cookie.ts`. The cookie name is a plain litera
 
 | Setting  | Default             | Description                                                   |
 | -------- | ------------------- | ------------------------------------------------------------- |
-| `name`   | `nexgen`            | Prefix for auth cookie names (`_access`, `_refresh` appended) |
+| `name`   | `nexwire`            | Prefix for auth cookie names (`_access`, `_refresh` appended) |
 | `secret` | `env.COOKIE_SECRET` | **Required.** Secret for cookie signing                       |
 
 ## Cross-origin cookies

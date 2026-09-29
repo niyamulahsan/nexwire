@@ -414,6 +414,18 @@ Start Redis Commander — a web UI to browse and manage Redis keys.
 | ------- | ---- |
 | Web UI  | 1369 |
 
+If Redis is not reachable, the view does not fail silently. `redis:view` first
+probes the configured `REDIS_URL` and, when nothing answers (or `REDIS=false` in
+`.env`), it serves a **Redis Commander Unavailable** page on port 1369 naming
+the Redis URL it tried, instead of leaving the browser to report "unable to
+connect".
+
+This page is specific to Redis Commander. It is **not** the queue dashboard:
+queue and job state live on the app's own bull-board route at `/queues`, which
+shows its own *Queue Dashboard Unavailable* page when Redis is down. The two
+tools are separate — Redis Commander browses raw Redis keys, the bull-board
+shows BullMQ queue state.
+
 ::: code-group
 
 ```bash [npm]

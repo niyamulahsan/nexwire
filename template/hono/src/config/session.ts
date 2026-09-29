@@ -6,7 +6,7 @@ import { redisConfig } from "./redis.js";
  * When: Session middleware creates/refreshes sessions for each request.
  * Where: src/config/session.ts.
  * How: `cookieName` and `ttlSeconds` are plain literals; `keyPrefix` is
- *      derived from the shared `REDIS_PREFIX` (`nexgen:session:*` by default).
+ *      derived from the shared `REDIS_PREFIX` (`nexwire:session:*` by default).
  */
 export const sessionConfig = {
   cookieName: `${cookieConfig.name}_session`,

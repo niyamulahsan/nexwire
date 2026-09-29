@@ -363,8 +363,8 @@ You can also use `db <subcommand>` instead of `db:<subcommand>`:
 
 ```bash
 npm run maker db schema
-npm run maker db migrate --seed
-npm run maker db fresh --seed
+npm run maker db migrate -- --seed
+npm run maker db fresh -- --seed
 npm run maker db seed
 ```
 

@@ -1,6 +1,8 @@
 import { spawn, spawnSync } from "node:child_process";
 import fsSync from "node:fs";
 import fs from "node:fs/promises";
+import http from "node:http";
+import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { glob } from "glob";
@@ -51,20 +53,83 @@ function devViewList(flags = [], withOptions = new Set()) {
   return Array.from(selected);
 }
 
+/** Resolve the Redis endpoint from REDIS_URL (falls back to local default). */
+function redisEndpoint() {
+  const redisUrl = new URL(process.env.REDIS_URL || "redis://127.0.0.1:6379");
+  return {
+    url: process.env.REDIS_URL || "redis://127.0.0.1:6379",
+    hostname: redisUrl.hostname || "127.0.0.1",
+    port: redisUrl.port || "6379",
+    password: redisUrl.password ? decodeURIComponent(redisUrl.password) : ""
+  };
+}
+
 /** Build redis-commander CLI arguments from REDIS_URL env. */
 function redisConnectionArgs() {
-  const redisUrl = new URL(process.env.REDIS_URL || "redis://127.0.0.1:6379");
+  const endpoint = redisEndpoint();
   const result = [
     "--port",
     String(readCliConfig().commanderPort || process.env.REDIS_COMMANDER_PORT || "1369"),
     "--redis-host",
-    redisUrl.hostname || "127.0.0.1",
+    endpoint.hostname,
     "--redis-port",
-    redisUrl.port || "6379"
+    endpoint.port
   ];
 
-  if (redisUrl.password) result.push("--redis-password", decodeURIComponent(redisUrl.password));
+  if (endpoint.password) result.push("--redis-password", endpoint.password);
   return result;
+}
+
+/** Commander (redis view) port, resolved the same way for every consumer. */
+function commanderPort() {
+  return String(readCliConfig().commanderPort || process.env.REDIS_COMMANDER_PORT || "1369");
+}
+
+/**
+ * Why: redis-commander only serves its own UI once it has a live Redis socket.
+ *      When Redis is down it either exits or renders a raw connection error, and
+ *      when the commander was never spawned the port is simply closed -- the
+ *      browser shows "unable to connect" with no hint about the cause.
+ * When: Before launching the redis view, and when REDIS is disabled in env.
+ * Where: Dev tool bootstrap (`redis:view`).
+ * How: Serves a Redis Commander diagnostic on the commander port. This is
+ *      deliberately NOT the bull-board page from `framework/queue/ui.ts`: that
+ *      one is about queue/job state on `/queues`, this one is the standalone
+ *      Redis key browser, so it names Redis Commander and the key browser
+ *      rather than the queue dashboard.
+ */
+function serveRedisUnavailablePage(port, endpoint) {
+  const body = `<!doctype html>
+<html>
+  <head>
+    <title>Redis Commander Unavailable</title>
+    <style>
+      body { font-family: system-ui, sans-serif; padding: 48px; text-align: center; }
+      h1 { color: #dc2626; }
+      code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; }
+      .note { color: #6b7280; font-size: 14px; }
+    </style>
+  </head>
+  <body>
+    <h1>Redis Commander Unavailable</h1>
+    <p>Redis is not connected, so the Redis key browser cannot start.</p>
+    <p>Redis URL: <code>${endpoint.url}</code></p>
+    <p>Start Redis, then run <code>npm run maker redis:view</code> again.</p>
+    <p class="note">This port serves Redis Commander (browse Redis keys).<br>Queue and job state lives on the app's own dashboard at <code>/queues</code>.</p>
+  </body>
+</html>
+`;
+
+  return new Promise((resolve, reject) => {
+    const server = http.createServer((_req, res) => {
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      res.end(body);
+    });
+    server.once("error", reject);
+    server.listen(Number(port), () => {
+      console.log(`[redis-view] Redis is not reachable — serving the unavailable page on http://localhost:${port}`);
+    });
+  });
 }
 
 /** Poll the API health endpoint until it responds or retries exhausted. */
@@ -120,8 +185,10 @@ async function runDevStack(flags = []) {
 
   const withOptions = parseWithOptions(flags);
   const views = devViewList(flags, withOptions);
-  const enableRedisView =
-    process.env.REDIS !== "false" && process.env.REDIS !== "0" && (hasFlag(flags, "--with-redis-view") || withOptions.has("redis"));
+  // Keep launching the view when it was explicitly asked for, even with Redis
+  // disabled: the view then serves the "Redis is not connected" page instead of
+  // leaving the advertised URL as a dead port.
+  const enableRedisView = hasFlag(flags, "--with-redis-view") || withOptions.has("redis");
   const enableMaildev = hasFlag(flags, "--with-maildev") || withOptions.has("maildev");
   const enableDbStudio = hasFlag(flags, "--with-db-studio") || withOptions.has("studio");
 
@@ -130,7 +197,7 @@ async function runDevStack(flags = []) {
       label: "redis-view",
       args: ["redis:view", "--quiet"],
       required: false,
-      hint: `http://localhost:${cliConfig.commanderPort || 1369}`
+      hint: `http://localhost:${commanderPort()}`
     });
   }
   if (enableMaildev) {
@@ -210,8 +277,8 @@ async function runDevStack(flags = []) {
         stdio: "inherit",
         env: {
           ...process.env,
-          NEXGEN_DEV_VIEWS: views.join(","),
-          NEXGEN_FRONTEND_URL: "http://localhost:5173"
+          NEXWIRE_DEV_VIEWS: views.join(","),
+          NEXWIRE_FRONTEND_URL: "http://localhost:5173"
         }
       });
       children.push(apiChild);
@@ -362,6 +429,30 @@ export async function runRuntime(commandName, rawArgs = []) {
   }
 }
 
+/**
+ * Why: Deciding whether to launch redis-commander needs to know if Redis is
+ *      actually accepting connections, which REDIS=true does not guarantee.
+ * When: Before spawning the redis view.
+ * Where: Dev tool bootstrap.
+ * How: Opens a short-lived TCP socket to the configured host/port.
+ */
+function isRedisReachable(endpoint, timeoutMs = 1500) {
+  return new Promise((resolve) => {
+    const socket = net.connect({ host: endpoint.hostname, port: Number(endpoint.port) });
+    let settled = false;
+    const done = (ok) => {
+      if (settled) return;
+      settled = true;
+      socket.destroy();
+      resolve(ok);
+    };
+    socket.setTimeout(timeoutMs);
+    socket.once("connect", () => done(true));
+    socket.once("timeout", () => done(false));
+    socket.once("error", () => done(false));
+  });
+}
+
 /** Launch a UI tool: maildev or redis-commander. */
 export async function runUi(commandName) {
   if (commandName === "maildev:view") {
@@ -376,6 +467,20 @@ export async function runUi(commandName) {
   }
 
   if (commandName === "redis:view") {
+    const endpoint = redisEndpoint();
+
+    if (process.env.REDIS === "false" || process.env.REDIS === "0") {
+      console.log("[redis-view] REDIS is disabled in .env — Redis Commander will not connect.");
+      await serveRedisUnavailablePage(commanderPort(), endpoint);
+      return;
+    }
+
+    if (!(await isRedisReachable(endpoint))) {
+      console.log(`[redis-view] No Redis server responded at ${endpoint.hostname}:${endpoint.port}.`);
+      await serveRedisUnavailablePage(commanderPort(), endpoint);
+      return;
+    }
+
     const patch = fileURLToPath(new URL("./redis-commander-patch.cjs", import.meta.url));
     await runCommand(process.execPath, [
       "--require",

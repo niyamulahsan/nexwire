@@ -1,6 +1,6 @@
 # OpenAPI
 
-nexgen has built-in OpenAPI 3.0 support so your routes automatically generate an interactive API documentation UI at `/api-docs` using Scalar. The engine underneath depends on your HTTP engine: the **Hono** engine uses `@hono/zod-openapi` + `stoker`, the **Express** engine uses `@asteasolutions/zod-to-openapi` + `@scalar/express-api-reference`. Either way, you write routes with the same facade helpers (`createRoute`, `z`, `jsonContent`) and get the docs for free.
+nexwire has built-in OpenAPI 3.0 support so your routes automatically generate an interactive API documentation UI at `/api-docs` using Scalar. The engine underneath depends on your HTTP engine: the **Hono** engine uses `@hono/zod-openapi` + `stoker`, the **Express** engine uses `@asteasolutions/zod-to-openapi` + `@scalar/express-api-reference`. Either way, you write routes with the same facade helpers (`createRoute`, `z`, `jsonContent`) and get the docs for free.
 
 ## Enable / Disable
 

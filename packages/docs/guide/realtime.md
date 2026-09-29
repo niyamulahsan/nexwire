@@ -2,7 +2,7 @@
 
 ## Overview
 
-**nexgen** integrates **Socket.IO** for realtime, bidirectional communication. The framework auto-joins authenticated sockets to structured rooms based on user identity and roles, making targeted broadcasts simple.
+**nexwire** integrates **Socket.IO** for realtime, bidirectional communication. The framework auto-joins authenticated sockets to structured rooms based on user identity and roles, making targeted broadcasts simple.
 
 ### Dependencies
 

@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
-const PKG = join(ROOT, "packages", "create-nexgen");
+const PKG = join(ROOT, "packages", "create-nexwire");
 
 const ENGINES = {
   hono: { src: join(ROOT, "template", "hono"), dest: join(PKG, "hono") },
@@ -38,7 +38,8 @@ function syncEngine(name, { src, dest }) {
       return !parts.some((p) => skipDirs.has(p))
         && !skipDirs.has(basename_)
         && !(depth === 1 && skipRootDirs.has(basename_))
-        && !skipFiles.has(basename_);
+        && !skipFiles.has(basename_)
+        && !basename_.endsWith(".log");
     },
   });
 
@@ -61,4 +62,4 @@ for (const [name, cfg] of Object.entries(ENGINES)) {
   syncEngine(name, cfg);
 }
 
-console.log(requested ? `${requested} template synced to packages/create-nexgen/` : "Templates synced to packages/create-nexgen/");
+console.log(requested ? `${requested} template synced to packages/create-nexwire/` : "Templates synced to packages/create-nexwire/");

@@ -8,7 +8,7 @@ import { env } from "@/env.js";
  *      confidential and stays in .env (`COOKIE_SECRET`).
  */
 export const cookieConfig = {
-  name: "nexgen",
+  name: "nexwire",
   secret: env.COOKIE_SECRET
 };
 

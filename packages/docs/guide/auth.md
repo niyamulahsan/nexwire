@@ -19,7 +19,7 @@ The middleware handles transparent token refresh — clients never need to imple
 | `accessExpirySeconds`          | `900` (15 min)      | Access token TTL in seconds (config/jwt.ts)                                    |
 | `refreshExpirySeconds`         | `3600` (1 hour)     | Refresh token TTL in seconds (config/jwt.ts)                                   |
 | `refreshRememberExpirySeconds` | `2592000` (30 days) | Refresh token TTL when "remember me" is checked(config/jwt.ts)                 |
-| `name`                         | `nexgen`            | Prefix for auth cookies (config/cookie.ts) (`{name}_access`, `{name}_refresh`) |
+| `name`                         | `nexwire`            | Prefix for auth cookies (config/cookie.ts) (`{name}_access`, `{name}_refresh`) |
 | `requireEmailVerification`     | `false`             | Require email verification before login (config/auth.ts)                       |
 
 ## Auth Flow
@@ -38,7 +38,7 @@ Client                          Server
   │  200 { user, access_token }    │
   │                                │
   │  GET /api/auth/me              │
-  │  (cookie: nexgen_access=...)   │
+  │  (cookie: nexwire_access=...)   │
   │ ───────────────────────────>   │
   │                                │  authMiddleware reads cookie
   │                                │  verifies JWT
@@ -197,7 +197,7 @@ await session.put(sessionId, "cart", items);
 const cart = await session.get(sessionId, "cart");
 ```
 
-- Cookie: `nexgen_session` (configured in `src/config/session.ts`)
+- Cookie: `nexwire_session` (configured in `src/config/session.ts`)
 - Backend: Redis (gracefully no-op if Redis is off)
 - TTL: 7200 seconds / 2 hours (configured in `src/config/session.ts`)
 

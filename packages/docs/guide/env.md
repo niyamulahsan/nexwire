@@ -1,16 +1,16 @@
 # Environment
 
-nexgen uses a Zod-validated `.env` file at the project root. Copy `.env.example` to get started.
+nexwire uses a Zod-validated `.env` file at the project root. The scaffolder writes a working one for you — a fresh project runs with no setup — and ships `.env.example` beside it as the reference for what you can change.
 
-```bash
-cp .env.example .env
-```
+::: tip Windows
+There is nothing to copy on a fresh project. If you ever need to recreate the file by hand, note that `cp` does not exist in cmd or PowerShell — use `copy .env.example .env` there, and `cp .env.example .env` on macOS and Linux.
+:::
 
 ## Application
 
 | Variable       | Default                 | Description                                                                                    |
 | -------------- | ----------------------- | ---------------------------------------------------------------------------------------------- |
-| `APP_NAME`     | `nexgen`                | Application name used in logging and email headers                                             |
+| `APP_NAME`     | `nexwire`                | Application name used in logging and email headers                                             |
 | `APP_ENV`      | `development`           | Runtime environment: `development`, `production`, or `test`                                    |
 | `APP_PORT`     | `3000`                  | HTTP server port                                                                               |
 | `APP_URL`      | `http://localhost:3000` | Public-facing URL of the application (required)                                                |
@@ -22,14 +22,14 @@ cp .env.example .env
 
 | Variable       | Default                                       | Description                                            |
 | -------------- | --------------------------------------------- | ------------------------------------------------------ |
-| `DATABASE_URL` | `sqlite:./src/storage/database/nexgen.sqlite` | Database connection string (SQLite, MySQL, PostgreSQL) |
+| `DATABASE_URL` | `sqlite:./src/storage/database/nexwire.sqlite` | Database connection string (SQLite, MySQL, PostgreSQL) |
 
 ## Redis
 
 | Variable       | Default                  | Description                          |
 | -------------- | ------------------------ | ------------------------------------ |
 | `REDIS_URL`    | `redis://127.0.0.1:6379` | Redis connection string              |
-| `REDIS_PREFIX` | `nexgen`                 | Key prefix for all Redis namespacing |
+| `REDIS_PREFIX` | `nexwire`                 | Key prefix for all Redis namespacing |
 
 ## JWT & Cookies
 

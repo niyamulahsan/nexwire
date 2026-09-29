@@ -2,19 +2,19 @@
 layout: home
 
 hero:
-  name: "nexgen"
+  name: "nexwire"
   text: "Full-stack TypeScript Framework"
   tagline: Hono or Express API + Vue 3 UI + Drizzle ORM + Redis services
   image:
-    src: /nexgen-logo.png
-    alt: nexgen
+    src: /nexwire-logo.png
+    alt: nexwire
   actions:
     - theme: brand
       text: Get Started
       link: /guide/introduction
     - theme: alt
       text: View on GitHub
-      link: https://github.com/niyamulahsan/nexgen
+      link: https://github.com/niyamulahsan/nexwire
 
 features:
   - icon: ⚡

@@ -1,4 +1,4 @@
-const DEFAULT_DATABASE_URL = "sqlite:./src/storage/database/nexgen.sqlite";
+const DEFAULT_DATABASE_URL = "sqlite:./src/storage/database/nexwire.sqlite";
 
 /** Detect current DB dialect from DATABASE_URL (sqlite/mysql/postgresql). Falls back to sqlite. */
 export function detectDialect() {

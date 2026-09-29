@@ -34,7 +34,7 @@ try {
     .allowUnknownOption(true)
     .allowExcessArguments(true)
     .helpOption("-h, --help")
-    .addHelpText("beforeAll", "nexgen maker\n");
+    .addHelpText("beforeAll", "nexwire maker\n");
 
   registerMiddlewareCommands(program, args);
   registerModuleCommands(program, args);

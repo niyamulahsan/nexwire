@@ -1,6 +1,6 @@
 # Pulse
 
-Pulse is Nexgen's realtime event system. It pairs backend `dispatchEvent()` broadcasts with a UI Socket.IO client for live push notifications, presence updates, and collaborative features.
+Pulse is nexwire's realtime event system. It pairs backend `dispatchEvent()` broadcasts with a UI Socket.IO client for live push notifications, presence updates, and collaborative features.
 
 ```
 Backend                              UI
@@ -399,4 +399,4 @@ Pulse uses the general Redis and Socket configuration from `env.ts`:
 | `FRONTEND_URL` | optional                 | Additional CORS origin                                                        |
 | `REDIS`        | `false`                  | Enable Redis adapter for multi-process broadcasting                           |
 | `REDIS_URL`    | `redis://127.0.0.1:6379` | Redis connection (shared across all Redis features)                           |
-| `REDIS_PREFIX` | `nexgen`                 | Prefix for Redis pub/sub broadcast channel (shared across all Redis features) |
+| `REDIS_PREFIX` | `nexwire`                 | Prefix for Redis pub/sub broadcast channel (shared across all Redis features) |

@@ -1,6 +1,6 @@
 # Routing
 
-nexgen uses one of two HTTP engines for routing: **Hono** (default) or **Express**. Both are available from `create-nexgen` via `--engine=hono` or `--engine=express`. Routes are defined per module and auto-registered at startup.
+nexwire uses one of two HTTP engines for routing: **Hono** (default) or **Express**. Both are available from `create-nexwire` via `--engine=hono` or `--engine=express`. Routes are defined per module and auto-registered at startup.
 
 The framework exposes the same facade (`createRoute`, `group`, `HttpStatusCodes`, `jsonContent`, ...) on both engines — only the request handler signature differs:
 

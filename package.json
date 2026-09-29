@@ -1,5 +1,5 @@
 {
-  "name": "nexgen-monorepo",
+  "name": "nexwire-monorepo",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,6 +9,6 @@
     "docs:build": "npm -C packages/docs run build",
     "docs:preview": "npm -C packages/docs run preview",
     "prepublish:cli": "npm run sync:hono && npm run sync:express",
-    "publish:cli": "cd packages/create-nexgen && npm publish"
+    "publish:cli": "cd packages/create-nexwire && npm publish"
   }
 }

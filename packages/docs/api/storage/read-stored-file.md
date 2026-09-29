@@ -4,7 +4,7 @@
 
 ## Where the Content-Type Comes From
 
-Every nexgen storage entry knows its file's MIME from the **extension** — that's the "Content-Type is set from the file" you see in the download helpers. This is exactly what `generateForDownload` / `consumeGenerated` do internally with the `extension` you pass. When you stream the file yourself, reproduce it with the same lookup so `Content-Type` is correct and the browser renders it (instead of offering to download):
+Every nexwire storage entry knows its file's MIME from the **extension** — that's the "Content-Type is set from the file" you see in the download helpers. This is exactly what `generateForDownload` / `consumeGenerated` do internally with the `extension` you pass. When you stream the file yourself, reproduce it with the same lookup so `Content-Type` is correct and the browser renders it (instead of offering to download):
 
 | Your need                              | Facade call to get the MIME                                               |
 | -------------------------------------- | ------------------------------------------------------------------------- |
