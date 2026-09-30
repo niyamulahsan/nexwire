@@ -238,10 +238,13 @@ If nexwire helps you build faster, consider supporting the project:
   <a href="https://www.supportkori.com/niyam" target="_blank">
     <img src="https://img.shields.io/badge/Support-Kori-ff6f00?style=for-the-badge&logo=kofi&logoColor=white" alt="Support Kori">
   </a>
-  <a href="https://github.com/sponsors/niyamulahsan">
-    <img src="https://img.shields.io/badge/GitHub-Sponsors-ea4aaa?style=for-the-badge&logo=github" alt="GitHub Sponsors">
+  <a href="./DONATE.md">
+    <img src="https://img.shields.io/badge/Donate-0070ba?style=for-the-badge&logo=bank&logoColor=white" alt="Donate">
   </a>
 </p>
+
+Local **bKash / Nagad / SupportKori** and international bank transfer details
+are in [DONATE.md](./DONATE.md).
 
 ## License
 
