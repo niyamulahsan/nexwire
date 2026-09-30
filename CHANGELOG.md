@@ -25,6 +25,8 @@
 
 ### Fixed
 
+- **The README pointed donations at GitHub Sponsors, which is unusable for the maintainer's region** — the Donate section offered only a Support Kori badge and a `github.com/sponsors/niyamulahsan` button, but `DONATE.md` (the file carrying the actual payment routes: bKash, Nagad, Support Kori, and international bank transfer with SWIFT/BIC) was never linked from the README. The GitHub Sponsors button is replaced by a Donate badge linking to `DONATE.md`, plus a plain line naming the local and international options. The link is relative, so it resolves correctly both on GitHub and on the npm package page. This restores the bank-transfer badge that `main` carried before the 4.0.0 merge.
+
 - **The scaffolder's template sync never ran at publish time** — `create-nexwire` declared its sync as `prepublish`, a lifecycle hook modern npm (>=7) no longer runs for `npm publish`, so `scripts/sync-template.mjs` silently never executed and the published `hono/` + `express/` copies were whatever happened to be on disk. Renamed to `prepublishOnly`, the hook that npm actually fires on publish. Verified with a probe package: `npm publish --dry-run` runs `prepublishOnly` and not `prepublish`.
 
 - **`create-nexwire@latest .` could delete the directory it was run in** — on a failed template download the error path ran `rmSync(targetDir, { recursive: true, force: true })`, but with the `.` argument `targetDir` *is* `process.cwd()`, so the cleanup removed the user's own project (including `.git`). Cleanup is now skipped when scaffolding into the current directory, and the failure message says so. Windows masked this by throwing `EPERM` on the open cwd handle; POSIX platforms would have deleted the tree.
