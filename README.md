@@ -236,15 +236,14 @@ If nexwire helps you build faster, consider supporting the project:
 
 <p>
   <a href="https://www.supportkori.com/niyam" target="_blank">
-    <img src="https://img.shields.io/badge/Support-Kori-ff6f00?style=for-the-badge&logo=kofi&logoColor=white" alt="Support Kori">
+    <img src="https://img.shields.io/badge/Local-Bangladesh-ff6f00?style=for-the-badge&logo=taka&logoColor=white" alt="Local Bangladesh (bKash/Nagad)">
   </a>
-  <a href="./DONATE.md">
-    <img src="https://img.shields.io/badge/Donate-0070ba?style=for-the-badge&logo=bank&logoColor=white" alt="Donate">
+  <a href="./DONATE.md#-international-bank-transfer">
+    <img src="https://img.shields.io/badge/International-Bank_Transfer-0070ba?style=for-the-badge&logo=bank&logoColor=white" alt="International Bank Transfer">
   </a>
 </p>
 
-Local **bKash / Nagad / SupportKori** and international bank transfer details
-are in [DONATE.md](./DONATE.md).
+See [DONATE.md](./DONATE.md) for full details (bKash, Nagad, Support Kori, and SWIFT/BIC).
 
 ## License
 
