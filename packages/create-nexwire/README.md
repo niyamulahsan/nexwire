@@ -7,8 +7,9 @@
 <h3 align="center">Stop wiring the stack together. Ship the app.</h3>
 
 <p align="center">
-  <a href="https://niyamulahsan.github.io/nexwire"><img src="https://img.shields.io/badge/docs-3b8eed" alt="Documentation"></a>
+  <a href="https://niyamulahsan.github.io/nexwire"><img src="https://img.shields.io/badge/docs%20%7C%20nexwire-3b8eed" alt="Documentation"></a>
   <a href="https://www.npmjs.com/package/create-nexwire"><img src="https://img.shields.io/npm/v/create-nexwire" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/create-nexwire"><img src="https://img.shields.io/npm/dt/create-nexwire" alt="npm downloads"></a>
   <a href="https://github.com/niyamulahsan/nexwire/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"></a>
 </p>
 
