@@ -1,4 +1,4 @@
-import { cookieConfig } from "./index.js";
+import { cookieConfig } from "./cookie.js";
 import { redisConfig } from "./redis.js";
 
 /**

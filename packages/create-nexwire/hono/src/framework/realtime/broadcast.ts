@@ -1,5 +1,5 @@
 import { env } from "@/env.js";
-import { socketServer } from "@/framework/realtime/index.js";
+import { socketServer } from "@/framework/realtime/socket.js";
 import { redisClientIfReady } from "@/framework/redis/client.js";
 
 export type BroadcastOptions = {

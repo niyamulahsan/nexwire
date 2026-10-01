@@ -5,7 +5,7 @@ import { apiReference } from "@scalar/express-api-reference";
 import type { Express } from "express";
 import { z } from "zod";
 import { openApiConfig } from "@/config/index.js";
-import type { RouteConfig } from "@/framework/http/router.js";
+import type { RouteConfig } from "@/framework/http/types.js";
 
 extendZodWithOpenApi(z);
 

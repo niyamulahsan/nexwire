@@ -6,7 +6,7 @@ import type { z } from "zod";
  * Where: Controllers/helpers/services.
  * How: Runs safeParseAsync and throws 422 payload on failure.
  */
-export async function validate<T extends z.ZodTypeAny>(schema: T, data: unknown): Promise<z.infer<T>> {
+export async function validate<T extends z.ZodType>(schema: T, data: unknown): Promise<z.infer<T>> {
   const result = await schema.safeParseAsync(data);
 
   if (!result.success) {

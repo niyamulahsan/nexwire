@@ -2,25 +2,10 @@ import type { Router as ExpressRouter, RequestHandler } from "express";
 import express from "express";
 import type { z } from "zod";
 import { registerOpenApiRoute } from "@/framework/http/openapi.js";
+import type { HttpMethod, RouteConfig } from "@/framework/http/types.js";
 import { validate } from "@/framework/http/validation.js";
 
-export type HttpMethod = "get" | "post" | "put" | "patch" | "delete" | "options" | "head" | "trace";
-
-export type RouteConfig = {
-  path: string;
-  method: HttpMethod;
-  tags?: string[];
-  summary?: string;
-  description?: string;
-  request?: {
-    params?: z.ZodTypeAny;
-    query?: z.ZodTypeAny;
-    headers?: z.ZodTypeAny;
-    cookies?: z.ZodTypeAny;
-    body?: { content: { "application/json": { schema: z.ZodTypeAny } }; description?: string };
-  };
-  responses: Record<number | string, { description?: string; content?: { "application/json": { schema: z.ZodTypeAny } } }>;
-};
+export type { HttpMethod, RouteConfig };
 
 export type NexwireRouter = Omit<ExpressRouter, "route"> & {
   group: (...middlewares: RequestHandler[]) => NexwireRouter;
@@ -35,7 +20,7 @@ export function createRoute<T extends RouteConfig>(config: T): T {
   return config;
 }
 
-export const jsonContent = <T extends z.ZodTypeAny>(schema: T, description: string) => ({
+export const jsonContent = <T extends z.ZodType>(schema: T, description: string) => ({
   content: {
     "application/json": {
       schema
