@@ -50,7 +50,7 @@ Your API is live at `http://localhost:3000`, Scalar docs at `/api-docs`, and the
 
 The scaffold already ships a pre-migrated, pre-seeded SQLite database, so there is no migration step before `maker dev`. If you point `DATABASE_URL` at MySQL or PostgreSQL, run `npm run maker db:migrate -- --seed` once to build and populate that database instead.
 
-Requires **Node.js >= 22.12** or **Bun >= 1.3**.
+Requires **Node.js >= 22** or **Bun >= 1.3**.
 
 ### Current directory
 
