@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- **Node.js** >= 22.12 or **Bun** >= 1.3
+- **Node.js** >= 22 or **Bun** >= 1.3
 - **MySQL** / **PostgreSQL** / **SQLite** (pick one)
 - **Redis** (optional, for cache/session/queue/realtime)
 
@@ -226,11 +226,11 @@ bun maker dev
 
 This starts:
 
-| Component                     | Command              | Auto-enabled            |
-| ----------------------------- | -------------------- | ----------------------- |
-| API server                    | `maker serve --src`  | Always                  |
-| Vue 3 UI (HMR)          | `maker ui:dev` | Unless `UI=false` |
-| Queue worker (default + mail) | `maker queue:work`   | Unless `REDIS=false`    |
+| Component                     | Command             | Auto-enabled         |
+| ----------------------------- | ------------------- | -------------------- |
+| API server                    | `maker serve --src` | Always               |
+| Vue 3 UI (HMR)                | `maker ui:dev`      | Unless `UI=false`    |
+| Queue worker (default + mail) | `maker queue:work`  | Unless `REDIS=false` |
 
 All URLs are printed in the console when the dev server starts:
 

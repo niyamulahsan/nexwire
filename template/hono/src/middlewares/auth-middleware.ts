@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import type { Context, Next } from "hono";
-import { cookie, db, jwt, HttpStatusCodes } from "@/framework/facade.js";
+import { cookie, db, HttpStatusCodes, jwt } from "@/framework/facade.js";
 import { refreshTokens, users } from "@/modules/auth/database/models/user.js";
 
 export async function authMiddleware(c: Context, next: Next) {

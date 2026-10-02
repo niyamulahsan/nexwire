@@ -35,20 +35,20 @@ export function createHttpApp() {
     let allOk = true;
     try {
       database();
-      checks["database"] = "ok";
+      checks.database = "ok";
     } catch {
-      checks["database"] = "error";
+      checks.database = "error";
       allOk = false;
     }
     if (redisConfig.enabled) {
       if (redisClientIfReady()) {
-        checks["redis"] = "ok";
+        checks.redis = "ok";
       } else {
-        checks["redis"] = "error";
+        checks.redis = "error";
         allOk = false;
       }
     } else {
-      checks["redis"] = "disabled";
+      checks.redis = "disabled";
     }
     const status = allOk ? 200 : 503;
     res.status(status).json({ status: allOk ? "ready" : "not_ready", checks });

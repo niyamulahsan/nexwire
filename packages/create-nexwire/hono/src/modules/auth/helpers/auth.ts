@@ -2,8 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { jwtConfig } from "@/config/index.js";
 import { cookie, db, jwt } from "@/framework/facade.js";
-import { refreshTokens } from "@/modules/auth/database/models/user.js";
-import { users } from "@/modules/auth/database/models/user.js";
+import { refreshTokens, users } from "@/modules/auth/database/models/user.js";
 
 export function hasRole(auth: any, rolesToMatch: string[]) {
   const role = String(auth?.role || "").toLowerCase();
@@ -17,7 +16,7 @@ export async function getCurrentUser(auth: any) {
     with: { role: true },
     columns: {
       password: false,
-      rememberToken: false,
+      rememberToken: false
     }
   });
 }
@@ -86,7 +85,7 @@ export async function revokeCurrentRefreshToken(c: any) {
  * When: Used after successful auth actions (register/login/refresh patterns).
  * Where: Called by auth controllers.
  */
-export async function issueTokens(c: any, user: any, options?: { remember?: boolean; }) {
+export async function issueTokens(c: any, user: any, options?: { remember?: boolean }) {
   const remember = !!options?.remember;
   const refreshExpiry = remember ? jwtConfig.refreshRememberExpirySeconds : jwtConfig.refreshExpirySeconds;
   const role = user.role || null;

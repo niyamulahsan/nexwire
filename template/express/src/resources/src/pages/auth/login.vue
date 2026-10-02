@@ -50,10 +50,10 @@
 import { useHead } from "@vueuse/head";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import Button from "@/components/Button.vue";
 import Checkbox from "@/components/Checkbox.vue";
 import Input from "@/components/Input.vue";
 import InputPasswordToggle from "@/components/InputPasswordToggle.vue";
-import Button from "@/components/Button.vue";
 import { useGumForm } from "@/plugins/gum";
 import { useAuthStore } from "@/stores/auth";
 

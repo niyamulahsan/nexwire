@@ -120,7 +120,7 @@ function serveRedisUnavailablePage(port, endpoint) {
 </html>
 `;
 
-  return new Promise((resolve, reject) => {
+  return new Promise((_resolve, reject) => {
     const server = http.createServer((_req, res) => {
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
       res.end(body);
@@ -540,4 +540,3 @@ export async function clearViteCache() {
 
   console.log("Vite cache cleared.");
 }
-

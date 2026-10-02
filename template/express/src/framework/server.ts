@@ -139,10 +139,11 @@ export async function startServer(): Promise<ServerHandle> {
     console.log("Drizzle Studio requested: https://local.drizzle.studio (see dev process status)");
   }
 
+  const wsUrl = serverUrl(server, WS_PATH).replace(/^http/, "ws");
   const socketLine = !realtimeConfig.enabled
     ? "Realtime (Socket.IO) disabled"
     : realtime
-      ? `Realtime (Socket.IO) enabled: ${socketAdmin.enabled ? "Admin UI: https://admin.socket.io" : ""} ${" | " + serverUrl(server, WS_PATH).replace(/^http/, "ws")}`
+      ? `Realtime (Socket.IO) enabled: ${socketAdmin.enabled ? `Admin UI: https://admin.socket.io | ${wsUrl}` : `| ${wsUrl}`}`
       : "Realtime (Socket.IO) unavailable";
   console.log(!realtimeConfig.enabled ? chalk.gray(socketLine) : realtime ? chalk.green(socketLine) : chalk.yellow(socketLine));
 

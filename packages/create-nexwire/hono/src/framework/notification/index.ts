@@ -3,7 +3,7 @@ import { db } from "@/framework/database/connection.js";
 import { dispatchEvent } from "@/framework/events/dispatcher.js";
 import { redisClientIfReady } from "@/framework/redis/client.js";
 import { mail } from "@/framework/support/mail.js";
-import { notifications } from "@/modules/auth/database/models/notifications.js";
+import { notifications } from "@/modules/auth/database/models/notification.js";
 import { users } from "@/modules/auth/database/models/user.js";
 
 /** Extra JSON metadata attached to the notification (e.g. entity IDs, links). */

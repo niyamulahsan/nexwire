@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import { mailConfig } from "@/config/index.js";
-import { logger } from "@/framework/support/logger.js";
 import { CircuitBreaker } from "@/framework/circuit-breaker/cb.js";
+import { logger } from "@/framework/support/logger.js";
 
 type MailPayload = {
   to: string;

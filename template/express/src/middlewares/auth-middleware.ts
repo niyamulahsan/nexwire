@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { type NextFunction, type Request, type Response } from "express";
-import { cookie, db, jwt, HttpStatusCodes } from "@/framework/facade.js";
+import { cookie, db, HttpStatusCodes, jwt } from "@/framework/facade.js";
 import { refreshTokens, users } from "@/modules/auth/database/models/user.js";
 
 export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
