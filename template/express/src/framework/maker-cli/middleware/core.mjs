@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { hasFlag } from "../utils/flags.mjs";
-import { assertName, pascal } from "../utils/naming.mjs";
+import { assertName, camelCase } from "../utils/naming.mjs";
 
 const stubsRoot = path.resolve(import.meta.dirname, "../stubs");
 
@@ -12,12 +12,6 @@ async function stub(name, values = {}) {
     content = content.replaceAll(`{{${key}}}`, String(value));
   }
   return content.replace(/\{\{[A-Z0-9_]+\}\}/g, "");
-}
-
-/** Convert a name to camelCase (e.g. "rate-limit" -> "rateLimit"). */
-function camelCase(input) {
-  const p = pascal(input);
-  return p.charAt(0).toLowerCase() + p.slice(1);
 }
 
 /** Generate a middleware file in src/middlewares. */

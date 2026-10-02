@@ -1,8 +1,8 @@
 import { createRoute, createRouter, HttpStatusCodes, jsonContent, z } from "@/framework/facade.js";
 import { authMiddleware } from "@/middlewares/auth-middleware.js";
 import { requireRole } from "@/middlewares/role-middleware.js";
-import { IdParamsSchema, RoleSchema } from "@/modules/auth/controllers/auth.schema.js";
-import { index, show } from "@/modules/auth/controllers/role.controller.js";
+import { index, show } from "@/modules/auth/controllers/role.js";
+import { IdParamsSchema, RoleSchema } from "@/modules/auth/schemas/auth.js";
 
 const indexRoute = createRoute({
   path: "/role",

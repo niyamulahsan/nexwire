@@ -1,59 +1,71 @@
 import type { Handler } from "hono";
 import { HttpStatusCodes } from "@/framework/facade.js";
 import { validate } from "@/framework/facade.js";
-import { Create{{ClassName}}Schema, Update{{ClassName}}Schema, {{ClassName}}IdParamsSchema } from "@/modules/{{module}}/controllers/{{controller}}.schema.js";
+import { Create{{ClassName}}Schema, Update{{ClassName}}Schema, {{ClassName}}IdParamsSchema } from "@/modules/{{module}}/schemas/{{controller}}.js";
+import * as {{controller}}Service from "@/modules/{{module}}/services/{{controller}}.js";
 
 /**
- * Why: Returns collection response shape for list pages.
+ * Why: Returns every {{controller}} row for list screens.
  * When: Used by GET list endpoint.
  * Where: GET /{{controller}} route.
  */
 export const index: Handler = async (c: any) => {
-  return c.json({ message: "{{controller}} list fetched successfully", data: [] });
+  const data = await {{controller}}Service.list();
+
+  return c.json({ message: "{{controller}} list fetched successfully", data });
 };
 
 /**
- * Why: Returns one resource by validated route id.
+ * Why: Returns one {{controller}} row by validated route id.
  * When: Used by detail screens or fetch-by-id calls.
  * Where: GET /{{controller}}/{id} route.
  */
 export const show: Handler = async (c: any) => {
   const params = await validate({{ClassName}}IdParamsSchema, c.req.param());
+  const data = await {{controller}}Service.findOne(params.id);
 
-  return c.json({ message: "{{controller}} fetched successfully", data: { id: params.id, name: "" } });
+  if (!data) return c.json({ message: "{{controller}} not found" }, HttpStatusCodes.NOT_FOUND);
+
+  return c.json({ message: "{{controller}} fetched successfully", data });
 };
 
 /**
- * Why: Creates a new resource from validated request body.
+ * Why: Creates a new {{controller}} row from a validated request body.
  * When: Used by create form submissions.
  * Where: POST /{{controller}} route.
  */
 export const store: Handler = async (c: any) => {
-  await validate(Create{{ClassName}}Schema, await c.req.json());
+  const body = await validate(Create{{ClassName}}Schema, await c.req.json());
+  const data = await {{controller}}Service.create(body);
 
-  return c.json({ message: "{{controller}} created successfully" }, HttpStatusCodes.CREATED);
+  return c.json({ message: "{{controller}} created successfully", data }, HttpStatusCodes.CREATED);
 };
 
 /**
- * Why: Updates an existing resource using id + body validation.
+ * Why: Updates an existing {{controller}} row using id + body validation.
  * When: Used by edit/update form submissions.
  * Where: PUT/PATCH /{{controller}}/{id} route.
  */
 export const update: Handler = async (c: any) => {
-  await validate({{ClassName}}IdParamsSchema, c.req.param());
-  await validate(Update{{ClassName}}Schema, await c.req.json());
+  const params = await validate({{ClassName}}IdParamsSchema, c.req.param());
+  const body = await validate(Update{{ClassName}}Schema, await c.req.json());
+  const data = await {{controller}}Service.update(params.id, body);
 
-  return c.json({ message: "{{controller}} updated successfully" });
+  if (!data) return c.json({ message: "{{controller}} not found" }, HttpStatusCodes.NOT_FOUND);
+
+  return c.json({ message: "{{controller}} updated successfully", data });
 };
 
 /**
- * Why: Deletes one resource by validated route id.
+ * Why: Deletes one {{controller}} row by validated route id.
  * When: Used by delete actions.
  * Where: DELETE /{{controller}}/{id} route.
  */
 export const destroy: Handler = async (c: any) => {
-  await validate({{ClassName}}IdParamsSchema, c.req.param());
+  const params = await validate({{ClassName}}IdParamsSchema, c.req.param());
+  const data = await {{controller}}Service.remove(params.id);
 
-  return c.json({ message: "{{controller}} deleted successfully" });
+  if (!data) return c.json({ message: "{{controller}} not found" }, HttpStatusCodes.NOT_FOUND);
+
+  return c.json({ message: "{{controller}} deleted successfully", data });
 };
-

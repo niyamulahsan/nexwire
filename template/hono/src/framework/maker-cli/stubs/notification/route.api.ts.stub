@@ -1,7 +1,7 @@
 import { createRoute, createRouter, HttpStatusCodes, jsonContent, z } from "@/framework/facade.js";
 import { authMiddleware } from "@/middlewares/auth-middleware.js";
-import { list, unreadCount, markRead, markAllRead, remove } from "../controllers/{{module}}.controller.js";
-import { PaginatedNotificationsSchema, UnreadCountSchema } from "../controllers/{{module}}.schema.js";
+import { list, markAllRead, markRead, remove, unreadCount } from "../controllers/{{module}}.js";
+import { PaginatedNotificationsSchema, UnreadCountSchema } from "../schemas/{{module}}.js";
 
 const listRoute = createRoute({
   path: "/",

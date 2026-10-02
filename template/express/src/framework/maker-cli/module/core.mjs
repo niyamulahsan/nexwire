@@ -5,25 +5,28 @@ import { drizzleGenerateArgs, ensureDatabaseDirectory, ensureMigrationMeta, sync
 import { detectDialect, openApiEnabled } from "../utils/env-db.mjs";
 import { writeFiles } from "../utils/file-ops.mjs";
 import { hasFlag } from "../utils/flags.mjs";
-import { assertName, pascal } from "../utils/naming.mjs";
+import { assertName, camelCase, pascal } from "../utils/naming.mjs";
 import { packageScript, runNodeScript } from "../utils/process.mjs";
 
 const stubsRoot = path.resolve(import.meta.dirname, "../stubs");
 
 /** Template stubs used for module file generation. */
 const STUBS = {
+  schema: {
+    openapi: "schema/name.ts.stub",
+    plain: "schema/name.plain.ts.stub"
+  },
   controller: {
     openapi: "controller/openapi.ts.stub",
     openapiWithModel: "controller/openapi.with-model.ts.stub",
     plain: "controller/plain.ts.stub",
-    schema: {
-      openapi: "controller/schema.ts.stub",
-      plain: "controller/schema.plain.ts.stub"
-    }
+    standalone: "controller/standalone.ts.stub"
   },
   route: {
     api: "route/api.ts.stub",
-    plain: "route/plain.ts.stub"
+    plain: "route/plain.ts.stub",
+    standaloneApi: "route/standalone.api.ts.stub",
+    standalonePlain: "route/standalone.plain.ts.stub"
   },
   model: {
     named: {
@@ -35,16 +38,21 @@ const STUBS = {
   seeder: {
     named: "seeder/name.ts.stub"
   },
-  example: {
-    schema: {
-      openapi: "example/schema.ts.stub",
-      plain: "example/schema.plain.ts.stub"
-    },
-    controller: "example/controller.ts.stub",
-    routeApi: "example/route.api.ts.stub",
-    routePlain: "example/route.plain.ts.stub",
-    job: "example/job.ts.stub",
-    console: "example/console.ts.stub"
+  service: {
+    named: "service/name.ts.stub",
+    plain: "service/name.plain.ts.stub"
+  },
+  facade: {
+    named: "facade/name.ts.stub"
+  },
+  helper: {
+    named: "helper/name.ts.stub"
+  },
+  middleware: {
+    local: "middleware/name.local.ts.stub"
+  },
+  type: {
+    named: "type/name.ts.stub"
   },
   job: {
     named: "job/name.ts.stub"
@@ -86,7 +94,95 @@ async function stub(name, values = {}) {
 
 /** Resolve the canonical module root path inside src/modules. */
 function moduleRoot(moduleName) {
-  return path.resolve(process.cwd(), "src/modules", moduleName);
+  const base = path.resolve(process.cwd(), "src/modules");
+  const root = path.resolve(base, moduleName);
+  if (root !== base && !root.startsWith(base + path.sep)) {
+    throw new Error(`Module path escapes src/modules: ${moduleName}`);
+  }
+  return root;
+}
+
+/**
+ * Leaf folder name of a module. `admin/post` -> `post`, `post` -> `post`.
+ * File names and class names always come from the leaf; imports come from the
+ * full path.
+ */
+function leafName(moduleName) {
+  const segments = String(moduleName).split("/").filter(Boolean);
+  return segments[segments.length - 1] || String(moduleName);
+}
+
+/**
+ * Panel prefix of a module, everything before the leaf. `admin/post` -> `admin`,
+ * `admin/reporting/deep` -> `admin/reporting`, `post` -> "".
+ */
+function panelOf(moduleName) {
+  const segments = String(moduleName).split("/").filter(Boolean);
+  return segments.slice(0, -1).join("/");
+}
+
+/**
+ * Scalar tag for a module. Panels become a nested tag group so Scalar renders
+ * `Admin / Post` instead of flattening everything under one panel.
+ */
+function moduleLabel(moduleName) {
+  return String(moduleName)
+    .split("/")
+    .filter(Boolean)
+    .map((segment) => pascal(segment))
+    .join(" / ");
+}
+
+/**
+ * Parse `--path=<panel>` into a normalized module prefix.
+ * A panel is only a folder separator, so nested values are allowed:
+ * `--path=admin` and `--path=admin/reporting` both validate.
+ */
+function parsePanelPath(flags) {
+  const matches = flags.filter((flag) => flag.startsWith("--path"));
+  if (matches.length === 0) return "";
+  if (matches.length > 1) throw new Error("--path can only be given once.");
+  const raw = matches[0].slice("--path".length).replace(/^=/, "").trim();
+  if (!raw) throw new Error("--path needs a value, e.g. --path=admin");
+  const segments = raw
+    .split(/[\\/]+/)
+    .filter(Boolean)
+    .map((segment) => segment.toLowerCase());
+  if (segments.length === 0) throw new Error(`Invalid --path value: ${raw}`);
+  for (const segment of segments) {
+    if (!/^[a-z0-9][a-z0-9-_]*$/.test(segment)) {
+      throw new Error(`Invalid --path segment "${segment}". Use lowercase letters, numbers and dashes.`);
+    }
+  }
+  return segments.join("/");
+}
+
+/** True when the path is a directory holding at least one entry. */
+async function dirHasFiles(target) {
+  try {
+    const entries = await fs.readdir(target);
+    return entries.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Resolve the module a subcommand targets.
+ *
+ * `rawModule` is always the leaf name the developer typed. Subcommands accept the
+ * same `--path=<panel>` flag as `module:make`, so `panelme --path=admin` addresses
+ * src/modules/admin/panelme instead of failing with "module does not exist".
+ * Flags may arrive either in the positional slot or in extraFlags depending on
+ * whether a name was given, so every candidate string is scanned.
+ */
+function resolveModuleRef(rawModule, ...flagGroups) {
+  const raw = assertName(rawModule, "Module name");
+  const panel = parsePanelPath(flagGroups.flat().filter((value) => typeof value === "string"));
+  const moduleName = panel ? `${panel}/${raw}` : raw;
+  // Derive the leaf from the resolved path so `admin/post` passed directly as the
+  // module argument still yields `post` for filenames and default names.
+  return { moduleName, leaf: leafName(moduleName) };
 }
 
 /** Ensure a module directory exists, throwing a helpful error if not. */
@@ -104,45 +200,89 @@ async function assertModuleExists(moduleName) {
   return root;
 }
 
-/** Generate controller and schema file content for a module. */
-async function controllerFiles(moduleName, controllerName = moduleName, options = {}) {
-  const { includeModelImport = false } = options;
-  const controller = controllerName.trim().toLowerCase();
-  const openApi = openApiEnabled();
-  const controllerStub = openApi
-    ? includeModelImport
-      ? STUBS.controller.openapiWithModel
-      : STUBS.controller.openapi
-    : STUBS.controller.plain;
-  const schemaStub = openApi ? STUBS.controller.schema.openapi : STUBS.controller.schema.plain;
-  return {
-    [`controllers/${controller}.schema.ts`]: await stub(schemaStub, {
+/** Build the placeholder substitution map shared by module file generators. */
+function moduleFileVars(moduleName, controller) {
+    return {
       module: moduleName,
       controller,
       ClassName: pascal(controller),
-      name: moduleName
-    }),
-    [`controllers/${controller}.controller.ts`]: await stub(controllerStub, {
-      module: moduleName,
-      controller,
-      ClassName: pascal(controller),
-      name: moduleName,
+      name: leafName(moduleName),
       tableVariable: `${controller}s`
-    })
+    };
+  }
+
+/**
+ * Generate a controller file for a module.
+ * When a matching service exists the controller delegates to it; otherwise it
+ * falls back to the standalone shape so the file never imports a missing module.
+ */
+async function controllerFile(moduleName, controllerName, openApi, withService) {
+  const controller = controllerName.trim().toLowerCase();
+  const controllerStub = withService
+    ? openApi
+      ? STUBS.controller.openapi
+      : STUBS.controller.plain
+    : STUBS.controller.standalone;
+  return await stub(controllerStub, moduleFileVars(moduleName, controller));
+}
+
+/** Generate a schema file for a module. */
+async function schemaFile(moduleName, controllerName, openApi) {
+  const controller = controllerName.trim().toLowerCase();
+  const schemaStub = openApi ? STUBS.schema.openapi : STUBS.schema.plain;
+  return await stub(schemaStub, moduleFileVars(moduleName, controller));
+}
+
+/** Generate a service file for a module. withModel picks the Drizzle-backed variant. */
+async function serviceFile(moduleName, controllerName, withModel) {
+  const controller = controllerName.trim().toLowerCase();
+  const serviceStub = withModel ? STUBS.service.named : STUBS.service.plain;
+  return await stub(serviceStub, moduleFileVars(moduleName, controller));
+}
+
+/** Build the full default scaffold for module:make. */
+async function moduleFiles(moduleName, openApi) {
+    const name = leafName(moduleName);
+    const vars = moduleFileVars(moduleName, name);
+  // The with-model controller variant only exists for the openapi style.
+  const controllerStub = openApi ? STUBS.controller.openapiWithModel : STUBS.controller.plain;
+  return {
+    "facade.ts": await stub(STUBS.facade.named, vars),
+    [`controllers/${name}.ts`]: await stub(controllerStub, vars),
+    [`schemas/${name}.ts`]: await schemaFile(moduleName, name, openApi),
+    // module:make also writes database/models/<name>.ts, so the service can query it.
+    [`services/${name}.ts`]: await serviceFile(moduleName, name, true)
   };
 }
 
-/** Generate a route file for a module. */
+/**
+ * Generate a wired route file. Only module:make uses this: it owns the whole
+ * module, so the controller and schema it just created are known to exist.
+ */
 async function routeTemplate(moduleName, controllerName = moduleName) {
-  const controller = controllerName.trim().toLowerCase();
-  const routeStub = openApiEnabled() ? STUBS.route.api : STUBS.route.plain;
-  return await stub(routeStub, {
-    module: moduleName,
-    controller,
-    ClassName: pascal(controller),
-    ModuleClass: pascal(moduleName)
-  });
-}
+    const controller = leafName(controllerName);
+    const routeStub = openApiEnabled() ? STUBS.route.api : STUBS.route.plain;
+    return await stub(routeStub, {
+      module: moduleName,
+      controller,
+      ClassName: pascal(controller),
+      ModuleClass: moduleLabel(moduleName)
+    });
+  }
+
+/**
+ * Generate a barebone route file that wires to nothing. module:make-route uses
+ * this so the developer decides which controller and schema to attach.
+ */
+async function standaloneRouteTemplate(moduleName, routeName) {
+  const routeStub = openApiEnabled() ? STUBS.route.standaloneApi : STUBS.route.standalonePlain;
+return await stub(routeStub, {
+      module: moduleName,
+      controller: routeName,
+      ClassName: pascal(routeName),
+      ModuleClass: moduleLabel(moduleName)
+    });
+  }
 
 /** Generate a named model file for a module. */
 async function namedModelTemplate(moduleName, name, dialect) {
@@ -168,14 +308,6 @@ async function namedSeederTemplate(moduleName, modelName, className) {
   });
 }
 
-/** Comment out every line of content (used for seeders generated without --force). */
-function asCommentedSeeder(content) {
-  return content
-    .split("\n")
-    .map((line) => (line ? `// ${line}` : "//"))
-    .join("\n");
-}
-
 /** Check if a file path exists on disk. */
 async function pathExists(filePath) {
   try {
@@ -186,40 +318,22 @@ async function pathExists(filePath) {
   }
 }
 
-/** Resolve the best controller name for a route. Prefers explicit name, falls back to most recently modified controller. */
-async function resolveRouteControllerName(moduleRootPath, moduleName, preferredName = "") {
-  const preferred = preferredName ? preferredName.trim().toLowerCase() : "";
-  if (preferred) {
-    const preferredController = path.join(moduleRootPath, "controllers", `${preferred}.controller.ts`);
-    const preferredSchema = path.join(moduleRootPath, "controllers", `${preferred}.schema.ts`);
-    if ((await pathExists(preferredController)) && (await pathExists(preferredSchema))) return preferred;
+/**
+ * Modules scaffolded before 4.1.0 kept schemas and services inside controllers/
+ * and used suffixed filenames. Returns the first legacy path that still exists
+ * so lookups resolve for existing projects.
+ */
+function legacyPath(moduleRootPath, folder, baseName) {
+  if (folder === "schemas") {
+    return path.join(moduleRootPath, "controllers", `${baseName}.schema.ts`);
   }
-
-  const controllerDir = path.join(moduleRootPath, "controllers");
-  let entries = [];
-  try {
-    entries = await fs.readdir(controllerDir, { withFileTypes: true });
-  } catch {
-    return moduleName;
+  if (folder === "helpers") {
+    return path.join(moduleRootPath, "controllers", `${baseName}.helpers.ts`);
   }
-
-  let latest = "";
-  let latestMtime = -1;
-  for (const entry of entries) {
-    if (!entry.isFile() || !entry.name.endsWith(".controller.ts")) continue;
-    const baseName = entry.name.replace(/\.controller\.ts$/, "");
-    const schemaPath = path.join(controllerDir, `${baseName}.schema.ts`);
-    if (!(await pathExists(schemaPath))) continue;
-    const fullPath = path.join(controllerDir, entry.name);
-    const stats = await fs.stat(fullPath);
-    const mtime = stats.mtimeMs || 0;
-    if (mtime > latestMtime) {
-      latest = baseName;
-      latestMtime = mtime;
-    }
+  if (folder === "services") {
+    return path.join(moduleRootPath, "controllers", `${baseName}.service.ts`);
   }
-
-  return latest || moduleName;
+  return path.join(moduleRootPath, "controllers", `${baseName}.controller.ts`);
 }
 
 /** Write a file with safety checks (dry-run support, force overwrite protection). */
@@ -235,53 +349,97 @@ async function writeFileSafe(filePath, content, flags = [], label = "File") {
   await fs.writeFile(filePath, content);
 }
 
-/** Generate a complete module scaffold (controller, route, models, seeders). */
-export async function makeModule(rawName) {
-  const name = assertName(rawName, "Module name");
-  const root = path.resolve(process.cwd(), "src/modules", name);
-  const controller = await controllerFiles(name, name, { includeModelImport: true });
-  const route = await routeTemplate(name);
-  const dialect = detectDialect();
-  const model = await namedModelTemplate(name, name, dialect);
-  const seeder = await namedSeederTemplate(name, name, name);
-  await writeFiles(root, { ...controller, "routes/api.ts": route });
-  await fs.mkdir(path.join(root, "database", "models"), { recursive: true });
-  await fs.mkdir(path.join(root, "database", "seeders"), { recursive: true });
-  await fs.writeFile(path.join(root, "database", "models", `${name}.ts`), model);
-  await fs.writeFile(path.join(root, "database", "seeders", `${name}.ts`), asCommentedSeeder(seeder));
-  console.log(`Module ready: ${name}`);
-  console.log("Database files: models/{module}.ts, seeders/{module}.ts (commented)");
-  console.log(`Route style: ${openApiEnabled() ? "openapi" : "plain"}`);
+/**
+ * Generate a complete module scaffold (facade, schema, service, controller, route, model, seeder).
+ * Pass `--path=<panel>` to nest the module under a panel folder, e.g.
+ * `module:make post --path=admin` writes to src/modules/admin/post/.
+ */
+export async function makeModule(rawName, flags = []) {
+  const result = await createModule(rawName, flags);
+  reportModule(result);
+  return result;
 }
 
-/** Generate a one-shot example module with queue/broadcast/scheduler cases. */
-export async function makeExampleModule(rawName = "example") {
-  const moduleName = assertName(rawName || "example", "Module name");
-  const root = path.resolve(process.cwd(), "src/modules", moduleName);
+/**
+ * Create several modules in one run: `module:make post tag testme`.
+ *
+ * A name that cannot be created is reported and the batch continues, so one bad
+ * argument never costs you the modules that were fine. The caller decides the
+ * exit code from `failed`.
+ */
+export async function makeModules(rawNames, flags = []) {
+  const created = [];
+  const failed = [];
+  for (const rawName of rawNames) {
+    try {
+      created.push(await createModule(rawName, flags));
+    } catch (error) {
+      failed.push({ name: rawName, reason: error.message });
+    }
+  }
+
+  if (created.length) {
+    console.log(`Module${created.length > 1 ? "s" : ""} ready: ${created.map((item) => item.moduleName).join(", ")}`);
+    const panel = created[0].panel;
+    if (panel) {
+      console.log(`  panel ${panel}  ->  ${created.map((item) => `/api/${item.moduleName}`).join(", ")}`);
+    }
+  }
+  for (const item of failed) {
+    console.log(`  skipped ${item.name}: ${item.reason}`);
+  }
+
+  return { created, failed };
+}
+
+/** Print the per-module summary for a single-module run. */
+function reportModule({ moduleName, panel, leaf }) {
+  console.log(`Module ready: ${moduleName}`);
+  if (panel) console.log(`Panel: ${panel}  ->  /api/${moduleName}`);
+  console.log(`Database files: models/${leaf}.ts, seeders/${leaf}.ts`);
+  console.log(`Route style: ${openApiEnabled() ? "openapi" : "plain"}`);
+  if (panel) {
+    console.log(`Fix unresolved imports with: bun maker alias`);
+  }
+}
+
+/**
+ * Scaffold one module.
+ *
+ * Refuses to touch a module folder that already has content. Without this guard
+ * writeFiles overwrites unconditionally, so re-running module:make on an
+ * existing module silently destroys the developer's edits to the controller,
+ * service, schema and route.
+ */
+async function createModule(rawName, flags = []) {
+  const leaf = assertName(rawName, "Module name");
+  const panel = parsePanelPath(flags);
+  const moduleName = panel ? `${panel}/${leaf}` : leaf;
+  const root = moduleRoot(moduleName);
+  const force = hasFlag(flags, "--force") || hasFlag(flags, "--yes");
+  if (!force && (await dirHasFiles(root))) {
+    throw new Error(`Module already exists: src/modules/${moduleName}. Re-run with --force to overwrite its files.`);
+  }
   const openApi = openApiEnabled();
-  await writeFiles(root, {
-    [`controllers/${moduleName}.schema.ts`]: await stub(openApi ? STUBS.example.schema.openapi : STUBS.example.schema.plain, {
-      module: moduleName
-    }),
-    [`controllers/${moduleName}.controller.ts`]: await stub(STUBS.example.controller, {
-      module: moduleName
-    }),
-    "routes/api.ts": await stub(openApi ? STUBS.example.routeApi : STUBS.example.routePlain, { module: moduleName }),
-    [`jobs/${moduleName}.ts`]: await stub(STUBS.example.job, { module: moduleName }),
-    [`console/${moduleName}.ts`]: await stub(STUBS.example.console, { module: moduleName })
-  });
+  const files = await moduleFiles(moduleName, openApi);
+  const route = await routeTemplate(moduleName);
+  const dialect = detectDialect();
+  const model = await namedModelTemplate(moduleName, leaf, dialect);
+  const seeder = await namedSeederTemplate(moduleName, leaf, leaf);
+  await writeFiles(root, { ...files, "routes/index.ts": route });
   await fs.mkdir(path.join(root, "database", "models"), { recursive: true });
   await fs.mkdir(path.join(root, "database", "seeders"), { recursive: true });
-  console.log(`Example module ready: ${moduleName}`);
-  console.log(`Route style: ${openApi ? "openapi" : "plain"}`);
+  await fs.writeFile(path.join(root, "database", "models", `${leaf}.ts`), model);
+  await fs.writeFile(path.join(root, "database", "seeders", `${leaf}.ts`), seeder);
+  return { moduleName, panel, leaf };
 }
 
 /** Generate a route file for an existing module. */
 export async function makeRoute(rawModule, rawControllerOrFlag, extraFlags = []) {
-  const moduleName = assertName(rawModule, "Module name");
+  const { moduleName, leaf } = resolveModuleRef(rawModule, rawControllerOrFlag, extraFlags);
   const root = await assertModuleExists(moduleName);
   const flags = [];
-  let routeName = moduleName;
+  let routeName = leaf;
   let controllerExplicit = false;
   if (rawControllerOrFlag) {
     if (rawControllerOrFlag.startsWith("--")) flags.push(rawControllerOrFlag);
@@ -291,9 +449,8 @@ export async function makeRoute(rawModule, rawControllerOrFlag, extraFlags = [])
     }
   }
   flags.push(...extraFlags);
-  const controllerName = await resolveRouteControllerName(root, moduleName, routeName);
-  const route = await routeTemplate(moduleName, controllerName);
-  const routeFile = controllerExplicit ? `${routeName}.ts` : "api.ts";
+  const route = await standaloneRouteTemplate(moduleName, routeName);
+  const routeFile = controllerExplicit ? `${routeName}.ts` : "index.ts";
   const routePath = path.join(root, `routes/${routeFile}`);
   const dryRun = hasFlag(flags, "--dry-run");
   const force = hasFlag(flags, "--force") || hasFlag(flags, "--yes");
@@ -311,31 +468,36 @@ export async function makeRoute(rawModule, rawControllerOrFlag, extraFlags = [])
 }
 
 /** Generate a notification module with controller, routes, and job. */
-export async function makeNotificationModule(rawName = "notification") {
-  const moduleName = assertName(rawName, "Module name");
-  const root = path.resolve(process.cwd(), "src/modules", moduleName);
-  const openApi = openApiEnabled();
+export async function makeNotificationModule(rawName = "notification", flags = []) {
+    const { moduleName, leaf } = resolveModuleRef(rawName, flags);
+    const root = moduleRoot(moduleName);
+    const force = hasFlag(flags, "--force") || hasFlag(flags, "--yes");
+    if (!force && (await dirHasFiles(root))) {
+      throw new Error(`Module already exists: src/modules/${moduleName}. Re-run with --force to overwrite its files.`);
+    }
+    const openApi = openApiEnabled();
 
-  await writeFiles(root, {
-    [`controllers/${moduleName}.controller.ts`]: await stub(STUBS.notification.controller, {
-      module: moduleName
-    }),
-    [`controllers/${moduleName}.schema.ts`]: await stub(openApi ? STUBS.notification.schema.openapi : STUBS.notification.schema.plain, {
-      module: moduleName
-    }),
-    "routes/api.ts": await stub(openApi ? STUBS.notification.routeApi : STUBS.notification.routePlain, { module: moduleName }),
-    [`jobs/${moduleName}.ts`]: await stub(STUBS.notification.job, { module: moduleName })
-  });
+    await writeFiles(root, {
+      [`controllers/${leaf}.ts`]: await stub(STUBS.notification.controller, {
+        module: moduleName
+      }),
+      [`schemas/${leaf}.ts`]: await stub(openApi ? STUBS.notification.schema.openapi : STUBS.notification.schema.plain, {
+        module: moduleName
+      }),
+      "routes/index.ts": await stub(openApi ? STUBS.notification.routeApi : STUBS.notification.routePlain, { module: moduleName }),
+      [`jobs/${leaf}.ts`]: await stub(STUBS.notification.job, { module: moduleName })
+    });
 
-  console.log(`Notification module ready: ${moduleName}`);
-  console.log(`Route style: ${openApi ? "openapi" : "plain"}`);
-  console.log("See docs (packages/docs/guide/notification.md) for Vue UI integration.");
-}
+    console.log(`Notification module ready: ${moduleName}`);
+    if (panelOf(moduleName)) console.log(`Panel: ${panelOf(moduleName)}  ->  /api/${moduleName}`);
+    console.log(`Route style: ${openApi ? "openapi" : "plain"}`);
+    console.log("See docs (packages/docs/guide/notification.md) for Vue UI integration.");
+  }
 
 /** Soft-delete a module by moving it to storage trash. */
 export async function deleteModule(rawName, flags = []) {
-  const name = assertName(rawName, "Module name");
-  if (name === "notification") {
+  const { moduleName: name, leaf } = resolveModuleRef(rawName, flags);
+  if (leaf === "notification") {
     console.log("Use `bun maker module:delete-notification` to remove the notification module (removes UI files too).");
     return;
   }
@@ -352,7 +514,8 @@ export async function deleteModule(rawName, flags = []) {
   if (!stats.isDirectory()) throw new Error(`Module path is not a directory: src/modules/${name}`);
   const trashRoot = path.resolve(process.cwd(), "src/storage/trash/modules");
   const stamp = new Date().toISOString().replace(/[.:]/g, "-");
-  const trashPath = path.join(trashRoot, `${name}-${stamp}`);
+  // Trash keeps the panel path so admin/post stays distinguishable from admin/user.
+  const trashPath = path.join(trashRoot, `${name.replaceAll("/", "-")}-${stamp}`);
   const dryRun = hasFlag(flags, "--dry-run");
   const confirmed = hasFlag(flags, "--yes") || hasFlag(flags, "--force");
   if (dryRun) return;
@@ -373,11 +536,11 @@ export async function deleteModule(rawName, flags = []) {
 
 /** Remove a notification module (backend only — moves to trash). */
 export async function deleteNotificationModule(rawName = "notification", flags = []) {
-  const moduleName = assertName(rawName, "Module name");
+  const { moduleName, leaf } = resolveModuleRef(rawName, flags);
   const dryRun = hasFlag(flags, "--dry-run");
   const confirmed = hasFlag(flags, "--yes") || hasFlag(flags, "--force");
 
-  const modulePath = path.resolve(process.cwd(), "src/modules", moduleName);
+  const modulePath = moduleRoot(moduleName);
 
   if (dryRun) {
     const exists = await fs
@@ -390,7 +553,7 @@ export async function deleteNotificationModule(rawName = "notification", flags =
 
   if (!confirmed) {
     throw new Error(
-      `Refusing to delete notification module without confirmation. Re-run with: bun maker module:delete-notification ${moduleName} --yes`
+      `Refusing to delete notification module without confirmation. Re-run with: bun maker module:delete-notification ${leaf} --yes${panelOf(moduleName) ? ` --path=${panelOf(moduleName)}` : ""}`
     );
   }
 
@@ -453,28 +616,96 @@ export async function cleanModuleTrash(rawName, flags = []) {
   for (const name of matches) await fs.rm(path.join(trashRoot, name), { recursive: true, force: true });
 }
 
-/** Generate a controller for an existing module. */
-export async function makeController(rawModule, rawControllerOrFlag, extraFlags = []) {
-  const moduleName = assertName(rawModule, "Module name");
+/**
+ * Split "<module> <nameOrFlag> [extraFlags]" into a validated name plus flags.
+ * Shared by the per-file commands so they all accept --force/--dry-run the same way.
+ */
+function parseNameArg(rawNameOrFlag, extraFlags, kindLabel, fallback) {
   const flags = [];
-  let controllerName = moduleName;
-  if (rawControllerOrFlag) {
-    if (rawControllerOrFlag.startsWith("--")) flags.push(rawControllerOrFlag);
-    else controllerName = assertName(rawControllerOrFlag, "Controller name");
+  let name = fallback;
+  if (rawNameOrFlag) {
+    if (rawNameOrFlag.startsWith("--")) flags.push(rawNameOrFlag);
+    else name = assertName(rawNameOrFlag, kindLabel);
   }
   flags.push(...extraFlags);
+  return { name, flags };
+}
+
+/** Generate a controller for an existing module. */
+export async function makeController(rawModule, rawControllerOrFlag, extraFlags = []) {
+  const { moduleName, leaf } = resolveModuleRef(rawModule, rawControllerOrFlag, extraFlags);
+  const { name, flags } = parseNameArg(rawControllerOrFlag, extraFlags, "Controller name", leaf);
   const root = await assertModuleExists(moduleName);
-  const files = await controllerFiles(moduleName, controllerName);
-  for (const [relativePath, content] of Object.entries(files)) {
-    await writeFileSafe(path.join(root, relativePath), content, flags, "Controller file");
-  }
+  const lower = name.toLowerCase();
+  const hasService =
+    (await pathExists(path.join(root, "services", `${lower}.ts`))) ||
+    (await pathExists(legacyPath(root, "services", lower)));
+  const content = await controllerFile(moduleName, name, openApiEnabled(), hasService);
+  await writeFileSafe(path.join(root, `controllers/${lower}.ts`), content, flags, "Controller file");
+}
+
+/** Generate a schema file for an existing module. */
+export async function makeSchema(rawModule, rawNameOrFlag, extraFlags = []) {
+  const { moduleName, leaf } = resolveModuleRef(rawModule, rawNameOrFlag, extraFlags);
+  const { name, flags } = parseNameArg(rawNameOrFlag, extraFlags, "Schema name", leaf);
+  const root = await assertModuleExists(moduleName);
+  const content = await schemaFile(moduleName, name, openApiEnabled());
+  await writeFileSafe(path.join(root, `schemas/${name.toLowerCase()}.ts`), content, flags, "Schema file");
+}
+
+/**
+ * Generate a service file for an existing module.
+ * Pass --with-model when the module has database/models/<name>.ts so the
+ * service queries the table instead of returning the empty defaults.
+ */
+export async function makeService(rawModule, rawNameOrFlag, extraFlags = []) {
+  const { moduleName, leaf } = resolveModuleRef(rawModule, rawNameOrFlag, extraFlags);
+  const { name, flags } = parseNameArg(rawNameOrFlag, extraFlags, "Service name", leaf);
+  const root = await assertModuleExists(moduleName);
+  const lower = name.toLowerCase();
+  const withModel =
+    hasFlag(flags, "--with-model") || (await pathExists(path.join(root, "database", "models", `${lower}.ts`)));
+  const content = await serviceFile(moduleName, name, withModel);
+  await writeFileSafe(path.join(root, `services/${lower}.ts`), content, flags, "Service file");
+}
+
+/** Generate a helper file for an existing module. */
+export async function makeHelper(rawModule, rawNameOrFlag, extraFlags = []) {
+  const { moduleName, leaf } = resolveModuleRef(rawModule, rawNameOrFlag, extraFlags);
+  const { name, flags } = parseNameArg(rawNameOrFlag, extraFlags, "Helper name", leaf);
+  const root = await assertModuleExists(moduleName);
+  const content = await stub(STUBS.helper.named, { module: moduleName, name, Name: pascal(name) });
+  await writeFileSafe(path.join(root, `helpers/${name}.ts`), content, flags, "Helper file");
+}
+
+/** Generate a module-local middleware file for an existing module. */
+export async function makeLocalMiddleware(rawModule, rawNameOrFlag, extraFlags = []) {
+  const { moduleName, leaf } = resolveModuleRef(rawModule, rawNameOrFlag, extraFlags);
+  const { name, flags } = parseNameArg(rawNameOrFlag, extraFlags, "Middleware name", leaf);
+  const root = await assertModuleExists(moduleName);
+  const content = await stub(STUBS.middleware.local, {
+    module: moduleName,
+    name,
+    camel: camelCase(name),
+    Name: pascal(name)
+  });
+  await writeFileSafe(path.join(root, `middlewares/${name}.ts`), content, flags, "Middleware file");
+}
+
+/** Generate a types file for an existing module. */
+export async function makeType(rawModule, rawNameOrFlag, extraFlags = []) {
+  const { moduleName, leaf } = resolveModuleRef(rawModule, rawNameOrFlag, extraFlags);
+  const { name, flags } = parseNameArg(rawNameOrFlag, extraFlags, "Type name", leaf);
+  const root = await assertModuleExists(moduleName);
+  const content = await stub(STUBS.type.named, { module: moduleName, name, Name: pascal(name) });
+  await writeFileSafe(path.join(root, `types/${name}.ts`), content, flags, "Type file");
 }
 
 /** Generate a model file for an existing module. */
 export async function makeModel(rawModule, rawNameOrFlag, extraFlags = []) {
-  const moduleName = assertName(rawModule, "Module name");
+  const { moduleName, leaf } = resolveModuleRef(rawModule, rawNameOrFlag, extraFlags);
   const flags = [];
-  let name = moduleName;
+  let name = leaf;
   if (rawNameOrFlag) {
     if (rawNameOrFlag.startsWith("--")) flags.push(rawNameOrFlag);
     else name = assertName(rawNameOrFlag, "Model name");
@@ -488,9 +719,9 @@ export async function makeModel(rawModule, rawNameOrFlag, extraFlags = []) {
 
 /** Generate a seeder file for an existing module model. */
 export async function makeSeeder(rawModule, rawNameOrFlag, extraFlags = []) {
-  const moduleName = assertName(rawModule, "Module name");
+  const { moduleName, leaf } = resolveModuleRef(rawModule, rawNameOrFlag, extraFlags);
   const flags = [];
-  let name = moduleName;
+  let name = leaf;
   if (rawNameOrFlag) {
     if (rawNameOrFlag.startsWith("--")) flags.push(rawNameOrFlag);
     else name = assertName(rawNameOrFlag, "Seeder name");
@@ -503,34 +734,35 @@ export async function makeSeeder(rawModule, rawNameOrFlag, extraFlags = []) {
   try {
     await fs.access(modelPath);
   } catch {
-    modelName = moduleName;
+    // Fall back to the module's own model. This must use the leaf, not
+    // moduleName: for a panel module moduleName is "admin/testme", so using it
+    // would probe database/models/admin/testme.ts and never match.
+    modelName = leaf;
     modelPath = path.join(root, "database", "models", `${modelName}.ts`);
 
     try {
       await fs.access(modelPath);
       console.log(`Model '${name}' not found, using module model '${modelName}' for seeder '${name}'.`);
     } catch {
+      const panel = panelOf(moduleName);
+      const suggest = panel ? `${leaf} ${name} --path=${panel}` : `${leaf} ${name}`;
       throw new Error(
-        `Model not found for seeder: src/modules/${moduleName}/database/models/${name}.ts. Create it first with: bun maker module:make-model ${moduleName} ${name}`
+        `Model not found for seeder: src/modules/${moduleName}/database/models/${name}.ts. Create it first with: bun maker module:make-model ${suggest}`
       );
     }
   }
 
-  await writeFileSafe(
-    path.join(root, `database/seeders/${name}.ts`),
-    await namedSeederTemplate(moduleName, modelName, name),
-    flags,
-    "Seeder file"
-  );
+  const seeder = await namedSeederTemplate(moduleName, modelName, name);
+  await writeFileSafe(path.join(root, `database/seeders/${name}.ts`), seeder, flags, "Seeder file");
 
   console.log(`Seeder ready: ${moduleName}/${name}`);
 }
 
 /** Generate a job file for an existing module. */
 export async function makeJob(rawModule, rawNameOrFlag, extraFlags = []) {
-  const moduleName = assertName(rawModule, "Module name");
+  const { moduleName, leaf } = resolveModuleRef(rawModule, rawNameOrFlag, extraFlags);
   const flags = [];
-  let name = moduleName;
+  let name = leaf;
   if (rawNameOrFlag) {
     if (rawNameOrFlag.startsWith("--")) flags.push(rawNameOrFlag);
     else name = assertName(rawNameOrFlag, "Job name");
@@ -542,9 +774,9 @@ export async function makeJob(rawModule, rawNameOrFlag, extraFlags = []) {
 
 /** Generate a schedule/console file for an existing module. */
 export async function makeSchedule(rawModule, rawNameOrFlag, extraFlags = []) {
-  const moduleName = assertName(rawModule, "Module name");
+  const { moduleName, leaf } = resolveModuleRef(rawModule, rawNameOrFlag, extraFlags);
   const flags = [];
-  let name = moduleName;
+  let name = leaf;
   if (rawNameOrFlag) {
     if (rawNameOrFlag.startsWith("--")) flags.push(rawNameOrFlag);
     else name = assertName(rawNameOrFlag, "Schedule name");
@@ -580,7 +812,8 @@ export async function listModules() {
 }
 
 /** Check that a module has at least one seeder file. */
-export async function assertModuleHasSeeders(moduleName) {
+export async function assertModuleHasSeeders(rawModule, flags = []) {
+  const { moduleName } = resolveModuleRef(rawModule, flags);
   await assertModuleExists(moduleName);
   const files = await glob(`${moduleName}/database/seeders/*.{ts,js}`, {
     cwd: path.resolve(process.cwd(), "src/modules"),
@@ -628,7 +861,10 @@ async function generateModuleSchemaTemp(moduleName) {
   const exports = [];
   const tempDir = path.resolve(process.cwd(), "src/storage/tmp");
   await fs.mkdir(tempDir, { recursive: true });
-  const tempSchemaPath = path.join(tempDir, `schema.${moduleName}.${Date.now()}.ts`);
+  // Flatten the panel path: "admin/testme" must not become a nested
+  // storage/tmp/schema.admin/testme.<ts>.ts path.
+  const slug = moduleName.replaceAll("/", "-");
+  const tempSchemaPath = path.join(tempDir, `schema.${slug}.${Date.now()}.ts`);
   const tempSchemaDir = path.dirname(tempSchemaPath);
   for (const file of files.sort()) {
     const absoluteFile = path.join(backendSrc, file);
@@ -645,7 +881,7 @@ async function generateModuleSchemaTemp(moduleName) {
 
 /** Generate and run migrations for a single module using a temporary schema. */
 export async function runModuleMigrate(rawModuleName, rawArgs = []) {
-  const moduleName = assertName(rawModuleName, "Module name");
+  const { moduleName } = resolveModuleRef(rawModuleName, rawArgs);
   await syncMigrationDialect();
   await ensureMigrationMeta();
   await ensureDatabaseDirectory();
@@ -667,9 +903,9 @@ export async function runModuleMigrate(rawModuleName, rawArgs = []) {
 
 /** Generate a unit test file for a module. */
 export async function makeTest(rawModule, rawNameOrFlag, extraFlags = []) {
-  const moduleName = assertName(rawModule, "Module name");
+  const { moduleName, leaf } = resolveModuleRef(rawModule, rawNameOrFlag, extraFlags);
   const flags = [];
-  let name = moduleName;
+  let name = leaf;
   if (rawNameOrFlag) {
     if (rawNameOrFlag.startsWith("--")) flags.push(rawNameOrFlag);
     else name = assertName(rawNameOrFlag, "Test name");

@@ -364,10 +364,10 @@ Modules are self-contained, but sometimes a set of functions is needed in **most
 
 ### 1. The auth module (auth-flavored context)
 
-Every module already depends on the auth module (its middleware, `users` model, `jwt`, cookies), so having modules import auth context adds no new coupling. Put auth-owned helpers in one canonical file, e.g. `src/modules/auth/auth.helpers.ts`:
+Every module already depends on the auth module (its middleware, `users` model, `jwt`, cookies), so having modules import auth context adds no new coupling. Put auth-owned helpers in one canonical file, e.g. `src/modules/auth/helpers/auth.helpers.ts`:
 
 ```ts
-// src/modules/auth/auth.helpers.ts
+// src/modules/auth/helpers/auth.helpers.ts
 import { eq } from "drizzle-orm";
 import { db } from "@/framework/facade.js";
 import { users } from "@/modules/auth/database/models/user.js";
@@ -390,7 +390,7 @@ export async function getCurrentUser(auth: any) {
 Then any controller in any module imports from this single source:
 
 ```ts
-import { getCurrentUser, hasRole } from "@/modules/auth/auth.helpers.js";
+import { getCurrentUser, hasRole } from "@/modules/auth/helpers/auth.helpers.js";
 ```
 
 > **Note:** `requireRole()` guards a route as middleware (before the controller runs), while `hasRole()` / `getCurrentUser()` are used *inside* controllers for logic. Keep them separate — a middleware can't replace in-controller checks.
@@ -446,7 +446,7 @@ import { sendNotification } from "@/modules/shared/notifications.js";
 
 | Where does the logic live?                    | Where does it go?                     |
 | --------------------------------------------- | ------------------------------------- |
-| Auth-flavored, needed by most modules         | `src/modules/auth/auth.helpers.ts`    |
+| Auth-flavored, needed by most modules         | `src/modules/auth/helpers/auth.helpers.ts` |
 | Generic, needed by 2+ modules                 | `src/modules/shared/`                 |
 | Only used inside one module                   | that module's `helpers.ts`            |
 | Framework-stable, every app needs (e.g. `db`, `jwt`, `password`) | the facade (`@/framework/facade.js`) |

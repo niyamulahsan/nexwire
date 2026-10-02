@@ -34,13 +34,16 @@ export async function discoverModuleFiles(pattern: string) {
 }
 
 /**
- * Why: Derives module folder name from absolute discovered file path.
+ * Why: Derives the module name from an absolute discovered file path.
  * When: Mounting route prefixes and grouping module assets.
  * Where: Route registration logic.
- * How: Computes relative path and returns first segment.
+ * How: Strips the artifact folder (e.g. `routes/`), keeping any panel segment so
+ * `admin/post/routes/index.ts` resolves to `admin/post` rather than `admin`.
+ * Returns POSIX separators because the result is used as a URL prefix.
  */
 export function moduleNameFromPath(filePath: string) {
-  return path.relative(modulesPath, filePath).split(path.sep)[0];
+  const relative = path.relative(modulesPath, filePath);
+  return path.dirname(path.dirname(relative)).split(path.sep).join("/");
 }
 
 /**

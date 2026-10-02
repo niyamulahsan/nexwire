@@ -1,0 +1,15 @@
+import type { Context, Next } from "hono";
+
+/**
+ * Why: Route-scoped middleware for the {{module}} module.
+ * When: Attach to a route or route group inside routes/*.ts.
+ * Where: src/modules/{{module}}/middlewares/{{name}}.ts
+ *
+ * Register it in a route file:
+ *   import { {{camel}}Middleware } from "@/modules/{{module}}/middlewares/{{name}}.js";
+ *   router.get("/path", {{camel}}Middleware, handler);
+ */
+export async function {{camel}}Middleware(c: Context, next: Next) {
+  // Guard the route here, then continue the chain.
+  return await next();
+}

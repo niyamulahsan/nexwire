@@ -1,0 +1,112 @@
+import { createRoute, group, HttpStatusCodes, jsonContent, z } from "@/framework/facade.js";
+import { authMiddleware } from "@/middlewares/auth-middleware.js";
+import { requireRole } from "@/middlewares/role-middleware.js";
+
+/**
+ * {{module}} routes for {{controller}}.
+ *
+ * Wire each route to a handler:
+ *   import { index, show, store, update, destroy } from "@/modules/{{module}}/controllers/{{controller}}.js";
+ *   export default group().api(indexRoute, index).api(showRoute, show) ...
+ *
+ * Wire each route to its validation schema:
+ *   import {
+ *     Create{{ClassName}}Schema,
+ *     {{ClassName}}IdParamsSchema,
+ *     {{ClassName}}ListResponseSchema,
+ *     {{ClassName}}MessageSchema,
+ *     {{ClassName}}ResponseSchema,
+ *     Update{{ClassName}}Schema
+ *   } from "@/modules/{{module}}/schemas/{{controller}}.js";
+ */
+
+const indexRoute = createRoute({
+  path: "/",
+  method: "get",
+  tags: ["{{ModuleClass}}"],
+  // request: {
+  //   query: {{ClassName}}ListQuerySchema
+  // },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      z.object({ message: z.string(), data: z.array(z.object({ id: z.number(), name: z.string() })) }),
+      "{{module}} list"
+    )
+  }
+});
+
+const showRoute = createRoute({
+  path: "/{id}",
+  method: "get",
+  tags: ["{{ModuleClass}}"],
+  // request: {
+  //   params: {{ClassName}}IdParamsSchema
+  // },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      z.object({ message: z.string(), data: z.object({ id: z.number(), name: z.string() }) }),
+      "{{module}} item"
+    ),
+    [HttpStatusCodes.NOT_FOUND]: jsonContent(z.object({ message: z.string() }), "Not found")
+  }
+});
+
+const storeRoute = createRoute({
+  path: "/",
+  method: "post",
+  tags: ["{{ModuleClass}}"],
+  // request: {
+  //   body: jsonContent(Create{{ClassName}}Schema, "Create {{module}} payload")
+  // },
+  responses: {
+    [HttpStatusCodes.CREATED]: jsonContent(z.object({ message: z.string() }), "Created")
+  }
+});
+
+const updateRoute = createRoute({
+  path: "/{id}",
+  method: "put",
+  tags: ["{{ModuleClass}}"],
+  // request: {
+  //   params: {{ClassName}}IdParamsSchema,
+  //   body: jsonContent(Update{{ClassName}}Schema, "Update {{module}} payload")
+  // },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(z.object({ message: z.string() }), "Updated"),
+    [HttpStatusCodes.NOT_FOUND]: jsonContent(z.object({ message: z.string() }), "Not found")
+  }
+});
+
+const destroyRoute = createRoute({
+  path: "/{id}",
+  method: "delete",
+  tags: ["{{ModuleClass}}"],
+  // request: {
+  //   params: {{ClassName}}IdParamsSchema
+  // },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(z.object({ message: z.string() }), "Deleted"),
+    [HttpStatusCodes.NOT_FOUND]: jsonContent(z.object({ message: z.string() }), "Not found")
+  }
+});
+
+export default group()
+  .api(indexRoute, (c: any) => c.json({ message: "{{module}} list not implemented", data: [] }))
+  .api(showRoute, (c: any) => c.json({ message: "{{module}} item not implemented", data: { id: 0, name: "" } }))
+  .api(storeRoute, (c: any) => c.json({ message: "{{module}} create not implemented" }, 201))
+  .api(updateRoute, (c: any) => c.json({ message: "{{module}} update not implemented" }))
+  .api(destroyRoute, (c: any) => c.json({ message: "{{module}} delete not implemented" }));
+
+
+// Gate the whole group (authMiddleware resolves the session once for every route):
+//   export default group(authMiddleware).api(indexRoute, index) ...
+//
+// Or gate a single route by role. requireRole reads the role authMiddleware set,
+// so authMiddleware must run first:
+//   group().api(destroyRoute, [authMiddleware, requireRole("admin")], destroy)
+//
+// Or group all authMiddleware and set single requireRole middleware
+// so authMiddleware must run on all chain and requireRole single on per route:
+//   group(authMiddleware).api(destroyRoute, [requireRole("admin")], destroy)
+//
+// Delete the imports above when you do not need them.

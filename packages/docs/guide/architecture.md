@@ -31,7 +31,7 @@ my-project/
 
 Modules are self-contained, but auth context helpers (`getCurrentUser`, `hasRole`) and other multi-module utilities cross module boundaries. **Never import another module's internals directly** — that leads to circular imports. Instead:
 
-- **Auth-flavored helpers** → `src/modules/auth/auth.helpers.ts` (every module already depends on auth)
+- **Auth-flavored helpers** → `src/modules/auth/helpers/auth.helpers.ts` (every module already depends on auth)
 - **Generic multi-module logic** → `src/modules/shared/` (imports only the framework + DB models, never another module)
 - **Single-module logic** → that module's own `helpers.ts`
 - **Framework-stable utilities** → the facade (`@/framework/facade.js`)

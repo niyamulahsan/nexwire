@@ -81,7 +81,7 @@ export const session = {
   },
 
   /** Write or update a single key in the session payload. Rewrites the entire document with a fresh TTL. Returns false when Redis is unavailable. */
-  async put(id: string, key: string, value: unknown) {
+  async set(id: string, key: string, value: unknown) {
     const client = redisClientIfReady();
     if (!client) return false;
 
@@ -89,6 +89,11 @@ export const session = {
     data[key] = value;
     await client.set(sessionKey(id), JSON.stringify(data), "EX", sessionConfig.ttlSeconds);
     return true;
+  },
+
+  /** @deprecated Use set() instead. */
+  async put(id: string, key: string, value: unknown) {
+    return this.set(id, key, value);
   },
 
   /** Extend the TTL of an existing session. Called automatically by sessionMiddleware. Returns false when Redis is unavailable. */

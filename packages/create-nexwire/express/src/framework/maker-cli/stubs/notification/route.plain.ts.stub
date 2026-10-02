@@ -1,6 +1,6 @@
 import { group } from "@/framework/facade.js";
 import { authMiddleware } from "@/middlewares/auth-middleware.js";
-import { list, unreadCount, markRead, markAllRead, remove } from "../controllers/{{module}}.controller.js";
+import { list, unreadCount, markRead, markAllRead, remove } from "../controllers/{{module}}.js";
 
 export default group()
   .use(authMiddleware)

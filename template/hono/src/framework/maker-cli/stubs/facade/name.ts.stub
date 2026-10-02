@@ -1,0 +1,12 @@
+/**
+ * Public API for the {{module}} module.
+ *
+ * Other modules import from this file, never from controllers/ or services/ directly.
+ * Re-export the pieces they are allowed to depend on:
+ *
+ * export { list, findOne } from "./services/{{controller}}.js";
+ *
+ * Rule: a facade must never import another module's facade.
+ */
+
+export {};

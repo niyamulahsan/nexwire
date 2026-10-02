@@ -26,18 +26,19 @@ export const cache = {
     return value ? (JSON.parse(value) as T) : fallback;
   },
 
-  /**
-   * Why: Stores value in cache with TTL.
-   * When: Data should be reused for a limited period.
-   * Where: Application code caching expensive results.
-   * How: Serializes value and writes with Redis EX seconds.
-   */
-  async put(key: string, value: unknown, ttl = cacheConfig.ttlSeconds) {
+  async set(key: string, value: unknown, ttl = cacheConfig.ttlSeconds) {
     const client = redisClientIfReady();
     if (!client) return false;
 
     await client.set(cacheKey(key), JSON.stringify(value), "EX", ttl);
     return true;
+  },
+
+  /**
+   * @deprecated Use set() instead.
+   */
+  async put(key: string, value: unknown, ttl = cacheConfig.ttlSeconds) {
+    return this.set(key, value, ttl);
   },
 
   /**

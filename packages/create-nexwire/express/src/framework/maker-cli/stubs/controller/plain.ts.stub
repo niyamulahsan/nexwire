@@ -1,54 +1,80 @@
 import type { Request, Response } from "express";
 import { HttpStatusCodes } from "@/framework/facade.js";
 import { validate } from "@/framework/facade.js";
-import { Create{{ClassName}}Schema, Update{{ClassName}}Schema, {{ClassName}}IdParamsSchema } from "@/modules/{{module}}/controllers/{{controller}}.schema.js";
+import { Create{{ClassName}}Schema, Update{{ClassName}}Schema, {{ClassName}}IdParamsSchema } from "@/modules/{{module}}/schemas/{{controller}}.js";
+import * as {{controller}}Service from "@/modules/{{module}}/services/{{controller}}.js";
 
 /**
- * Why: Returns collection response shape for list pages.
+ * Why: Returns every {{controller}} row for list screens.
  * When: Used by GET list endpoint.
  * Where: GET /{{controller}} route.
  */
 export const index = async (_req: Request, res: Response) => {
-  res.json({ message: "{{controller}} list fetched successfully", data: [] });
+  const data = await {{controller}}Service.list();
+
+  res.json({ message: "{{controller}} list fetched successfully", data });
 };
 
 /**
- * Why: Returns one resource by validated route id.
+ * Why: Returns one {{controller}} row by validated route id.
  * When: Used by detail screens or fetch-by-id calls.
  * Where: GET /{{controller}}/{id} route.
  */
 export const show = async (req: Request, res: Response) => {
   const params = await validate({{ClassName}}IdParamsSchema, req.params);
-  res.json({ message: "{{controller}} fetched successfully", data: { id: params.id, name: "" } });
+  const data = await {{controller}}Service.findOne(params.id);
+
+  if (!data) {
+    res.status(HttpStatusCodes.NOT_FOUND).json({ message: "{{controller}} not found" });
+    return;
+  }
+
+  res.json({ message: "{{controller}} fetched successfully", data });
 };
 
 /**
- * Why: Creates a new resource from validated request body.
+ * Why: Creates a new {{controller}} row from a validated request body.
  * When: Used by create form submissions.
  * Where: POST /{{controller}} route.
  */
 export const store = async (req: Request, res: Response) => {
-  await validate(Create{{ClassName}}Schema, req.body);
-  res.status(HttpStatusCodes.CREATED).json({ message: "{{controller}} created successfully" });
+  const body = await validate(Create{{ClassName}}Schema, req.body);
+  const data = await {{controller}}Service.create(body);
+
+  res.status(HttpStatusCodes.CREATED).json({ message: "{{controller}} created successfully", data });
 };
 
 /**
- * Why: Updates an existing resource using id + body validation.
+ * Why: Updates an existing {{controller}} row using id + body validation.
  * When: Used by edit/update form submissions.
  * Where: PUT/PATCH /{{controller}}/{id} route.
  */
 export const update = async (req: Request, res: Response) => {
-  await validate({{ClassName}}IdParamsSchema, req.params);
-  await validate(Update{{ClassName}}Schema, req.body);
-  res.json({ message: "{{controller}} updated successfully" });
+  const params = await validate({{ClassName}}IdParamsSchema, req.params);
+  const body = await validate(Update{{ClassName}}Schema, req.body);
+  const data = await {{controller}}Service.update(params.id, body);
+
+  if (!data) {
+    res.status(HttpStatusCodes.NOT_FOUND).json({ message: "{{controller}} not found" });
+    return;
+  }
+
+  res.json({ message: "{{controller}} updated successfully", data });
 };
 
 /**
- * Why: Deletes one resource by validated route id.
+ * Why: Deletes one {{controller}} row by validated route id.
  * When: Used by delete actions.
  * Where: DELETE /{{controller}}/{id} route.
  */
 export const destroy = async (req: Request, res: Response) => {
-  await validate({{ClassName}}IdParamsSchema, req.params);
-  res.json({ message: "{{controller}} deleted successfully" });
+  const params = await validate({{ClassName}}IdParamsSchema, req.params);
+  const data = await {{controller}}Service.remove(params.id);
+
+  if (!data) {
+    res.status(HttpStatusCodes.NOT_FOUND).json({ message: "{{controller}} not found" });
+    return;
+  }
+
+  res.json({ message: "{{controller}} deleted successfully", data });
 };

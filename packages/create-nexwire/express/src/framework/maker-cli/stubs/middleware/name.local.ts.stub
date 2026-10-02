@@ -1,0 +1,15 @@
+import type { NextFunction, Request, Response } from "express";
+
+/**
+ * Why: Route-scoped middleware for the {{module}} module.
+ * When: Attach to a route or route group inside routes/*.ts.
+ * Where: src/modules/{{module}}/middlewares/{{name}}.ts
+ *
+ * Register it in a route file:
+ *   import { {{camel}}Middleware } from "@/modules/{{module}}/middlewares/{{name}}.js";
+ *   router.get("/path", {{camel}}Middleware, handler);
+ */
+export function {{camel}}Middleware(_req: Request, _res: Response, next: NextFunction) {
+  // Guard the route here, then continue the chain.
+  return next();
+}

@@ -1,0 +1,37 @@
+import type { Request, Response } from "express";
+import { group, HttpStatusCodes } from "@/framework/facade.js";
+import { authMiddleware } from "@/middlewares/auth-middleware.js";
+import { requireRole } from "@/middlewares/role-middleware.js";
+
+/**
+ * {{module}} routes for {{controller}}.
+ *
+ * Wire each handler to a controller:
+ *   import { index, show, store, update, destroy } from "@/modules/{{module}}/controllers/{{controller}}.js";
+ *   export default group().get("/", index).get("/:id", show) ...
+ *
+ * Add validation with the validate() helper:
+ *   import { validate } from "@/framework/facade.js";
+ *   import { {{ClassName}}IdParamsSchema } from "@/modules/{{module}}/schemas/{{controller}}.js";
+ *   const params = await validate({{ClassName}}IdParamsSchema, req.params);
+ */
+
+export default group()
+  .get("/", (_req: Request, res: Response) => res.json({ message: "{{module}} list not implemented", data: [] }))
+  .get("/:id", (_req: Request, res: Response) =>res.json({ message: "{{module}} item not implemented", data: { id: 0, name: "" } }))
+  .post("/", (_req: Request, res: Response) =>res.status(HttpStatusCodes.CREATED).json({ message: "{{module}} create not implemented" }))
+  .put("/:id", (_req: Request, res: Response) => res.json({ message: "{{module}} update not implemented" }))
+  .delete("/:id", (_req: Request, res: Response) => res.json({ message: "{{module}} delete not implemented" }));
+
+// Gate the whole group (authMiddleware resolves the session once for every route):
+//   export default group(authMiddleware).api(indexRoute, index) ...
+//
+// Or gate a single route by role. requireRole reads the role authMiddleware set,
+// so authMiddleware must run first:
+//   group().api(destroyRoute, [authMiddleware, requireRole("admin")], destroy)
+//
+// Or group all authMiddleware and set single requireRole middleware
+// so authMiddleware must run on all chain and requireRole single on per route:
+//   group(authMiddleware).api(destroyRoute, [requireRole("admin")], destroy)
+//
+// Delete the imports above when you do not need them.

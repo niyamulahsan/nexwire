@@ -1,0 +1,26 @@
+import { z } from "zod";
+
+export const NotificationSchema = z.object({
+  id: z.number(),
+  userId: z.number(),
+  type: z.string(),
+  title: z.string(),
+  body: z.string().nullable(),
+  data: z.any().nullable(),
+  link: z.string().nullable(),
+  readAt: z.string().nullable(),
+  createdAt: z.string(),
+});
+
+export const UnreadCountSchema = z.object({
+  count: z.number(),
+});
+
+export const PaginatedNotificationsSchema = z.object({
+  data: z.array(NotificationSchema),
+  total: z.number(),
+  unread: z.number(),
+  page: z.number(),
+  perPage: z.number(),
+});
+

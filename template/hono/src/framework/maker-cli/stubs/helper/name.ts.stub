@@ -1,0 +1,14 @@
+/**
+ * Why: Reusable {{name}} logic that does not belong to a controller or service.
+ * When: Called by controllers, services, jobs, or other helpers.
+ * Where: src/modules/{{module}}/helpers/{{name}}.ts
+ */
+
+/**
+ * Why: Placeholder shared helper.
+ * When: Replace this with real logic and rename it.
+ * Where: Anywhere inside the {{module}} module.
+ */
+export function {{name}}Helper<T>(value: T): T {
+  return value;
+}

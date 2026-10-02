@@ -104,7 +104,7 @@ const user = await db.query.users.findFirst({
 When the same restricted select is reused, keep it in a helper — the `role` relation is fetched and password columns are dropped for every caller:
 
 ```ts
-// modules/auth/controllers/auth.helpers.ts
+// modules/auth/helpers/auth.helpers.ts
 export async function getCurrentUser(auth: any) {
   if (!auth?.id) return null;
   return db.query.users.findFirst({

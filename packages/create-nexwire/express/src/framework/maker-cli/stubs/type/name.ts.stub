@@ -1,0 +1,22 @@
+/**
+ * Why: Shared TypeScript types for the {{module}} module.
+ * When: Needed by controllers, services, or helpers that must agree on a shape.
+ * Where: src/modules/{{module}}/types/{{name}}.ts
+ */
+
+/** Why: Base shape for every {{name}} record. When: Used as a constraint or return type. Where: This file. */
+export interface {{Name}}Record {
+  id: number;
+}
+
+/** Why: Result shape for a single-item response. When: Returned by show-style handlers. Where: This file. */
+export interface {{Name}}Result {
+  message: string;
+  data: {{Name}}Record;
+}
+
+/** Why: Result shape for list responses. When: Returned by index-style handlers. Where: This file. */
+export interface {{Name}}ListResult {
+  message: string;
+  data: {{Name}}Record[];
+}

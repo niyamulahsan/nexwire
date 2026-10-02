@@ -1,0 +1,56 @@
+import { eq } from "drizzle-orm";
+import { db } from "@/framework/facade.js";
+import { {{tableVariable}} } from "@/modules/{{module}}/database/models/{{controller}}.js";
+
+/**
+ * Why: Returns every {{controller}} row for list screens.
+ * When: Called by the controller's index() handler.
+ * Where: GET /{{controller}} route.
+ */
+export async function list() {
+  return db.select().from({{tableVariable}});
+}
+
+/**
+ * Why: Returns one {{controller}} row by primary key.
+ * When: Called by the controller's show/update/destroy handlers.
+ * Where: Reused across GET/PUT/DELETE /{{controller}}/{id} routes.
+ */
+export async function findOne(id: number) {
+  const [row] = await db.select().from({{tableVariable}}).where(eq({{tableVariable}}.id, id)).limit(1);
+  return row ?? null;
+}
+
+/**
+ * Why: Persists a new {{controller}} row.
+ * When: Called by the controller's store() handler.
+ * Where: POST /{{controller}} route.
+ */
+export async function create(data: Record<string, unknown>) {
+  const [row] = await db.insert({{tableVariable}}).values(data).returning();
+  return row;
+}
+
+/**
+ * Why: Applies a partial change to one {{controller}} row.
+ * When: Called by the controller's update() handler.
+ * Where: PUT/PATCH /{{controller}}/{id} route.
+ */
+export async function update(id: number, data: Record<string, unknown>) {
+  const [row] = await db
+    .update({{tableVariable}})
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq({{tableVariable}}.id, id))
+    .returning();
+  return row ?? null;
+}
+
+/**
+ * Why: Removes one {{controller}} row.
+ * When: Called by the controller's destroy() handler.
+ * Where: DELETE /{{controller}}/{id} route.
+ */
+export async function remove(id: number) {
+  const [row] = await db.delete({{tableVariable}}).where(eq({{tableVariable}}.id, id)).returning();
+  return row ?? null;
+}
