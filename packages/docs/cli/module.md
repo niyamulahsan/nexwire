@@ -1,6 +1,6 @@
-# Module Commands
+﻿# Module Commands
 
-Generate and manage modules — the building blocks of your application. Each module is a self-contained directory under `src/modules/` with its own controllers, routes, models, jobs, and seeders.
+Generate and manage modules â€” the building blocks of your application. Each module is a self-contained directory under `src/modules/` with its own controllers, routes, models, jobs, and seeders.
 
 ::: code-group
 
@@ -38,16 +38,16 @@ Create a complete module with all default scaffolding.
 
 ```
 src/modules/posts/
-├── controllers/
-│   ├── posts.controller.ts
-│   └── posts.schema.ts
-├── database/
-│   ├── models/
-│   │   └── posts.ts
-│   └── seeders/
-│       └── posts.seeder.ts
-└── routes/
-    └── api.ts
+â”œâ”€â”€ controllers/
+â”‚   â”œâ”€â”€ posts.controller.ts
+â”‚   â””â”€â”€ posts.schema.ts
+â”œâ”€â”€ database/
+â”‚   â”œâ”€â”€ models/
+â”‚   â”‚   â””â”€â”€ posts.ts
+â”‚   â””â”€â”€ seeders/
+â”‚       â””â”€â”€ posts.seeder.ts
+â””â”€â”€ routes/
+    â””â”€â”€ api.ts
 ```
 
 ### `module:make-notification [name]`
@@ -62,27 +62,27 @@ Generate a notification backend module with controller, routes, and job. Default
 | `jobs/notification.ts`                   | Queue handler for email delivery                             |
 
 ::: tip
-UI integration is manual — see [Notification Guide](/guide/notification) for Vue copy-paste components and setup instructions.
+UI integration is manual â€” see [Notification Guide](/guide/notification) for Vue copy-paste components and setup instructions.
 :::
 
 
 
-Generate a one-shot example module demonstrating framework features — queue jobs, real-time broadcasting, scheduler cron, and a model with CRUD. Default name is `example`.
+Generate a one-shot example module demonstrating framework features â€” queue jobs, real-time broadcasting, scheduler cron, and a model with CRUD. Default name is `example`.
 
 ```
 src/modules/example/
-├── controllers/
-│   ├── example.controller.ts
-│   └── example.schema.ts
-├── database/
-│   └── models/
-│       └── example.ts
-├── jobs/
-│   └── example.job.ts
-├── routes/
-│   └── api.ts
-└── consoles/
-    └── example.command.ts
+â”œâ”€â”€ controllers/
+â”‚   â”œâ”€â”€ example.controller.ts
+â”‚   â””â”€â”€ example.schema.ts
+â”œâ”€â”€ database/
+â”‚   â””â”€â”€ models/
+â”‚       â””â”€â”€ example.ts
+â”œâ”€â”€ jobs/
+â”‚   â””â”€â”€ example.job.ts
+â”œâ”€â”€ routes/
+â”‚   â””â”€â”€ api.ts
+â””â”€â”€ consoles/
+    â””â”€â”€ example.command.ts
 ```
 
 ## Component Commands
@@ -193,7 +193,13 @@ bun maker module:make-seeder posts
 
 :::
 
-### `module:make-job <module> [name]`
+### `
+
+### module:make-schema <module> [name]
+
+Generate a schema file.
+
+module:make-job <module> [name]`
 
 Generate a queue job file with the `shouldQueue` pattern.
 
@@ -448,5 +454,6 @@ bun maker module:migrate posts --keep-temp
 ```
 
 :::
+
 
 
