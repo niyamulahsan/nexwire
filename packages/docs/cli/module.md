@@ -65,7 +65,7 @@ Generate a notification backend module with controller, routes, and job. Default
 UI integration is manual — see [Notification Guide](/guide/notification) for Vue copy-paste components and setup instructions.
 :::
 
-### `module:example [name]`
+
 
 Generate a one-shot example module demonstrating framework features — queue jobs, real-time broadcasting, scheduler cron, and a model with CRUD. Default name is `example`.
 
@@ -448,3 +448,5 @@ bun maker module:migrate posts --keep-temp
 ```
 
 :::
+
+
