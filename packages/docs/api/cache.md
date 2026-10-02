@@ -9,7 +9,7 @@ Redis-backed JSON caching with graceful fallback — every method becomes a no-o
 | Function            | Signature                                | Description                                                                                |
 | ------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------ |
 | `cache.get`         | `(key, fallback?) => Promise<T \| null>` | Read a cached JSON value; returns `fallback` (default `null`) on miss or when Redis is off |
-| `cache.put`         | `(key, value, ttl?) => Promise<boolean>` | Store a value with TTL (default from `config/cache.ts`); `false` when Redis is off         |
+| `cache.set`         | `(key, value, ttl?) => Promise<boolean>` | Store a value with TTL (default from `config/cache.ts`); `false` when Redis is off         |
 | `cache.forget`      | `(key) => Promise<boolean>`              | Delete a cached key (invalidate)                                                           |
 | `cache.remember`    | `(key, ttl, callback) => Promise<T>`     | Cache-aside — `get` first, on miss run `callback` and `put`                                |
 | `cache.isAvailable` | `() => boolean`                          | `true` when Redis is configured and connected                                              |
@@ -19,7 +19,7 @@ Redis-backed JSON caching with graceful fallback — every method becomes a no-o
 ### Basic get / put
 
 ```ts
-await cache.put("weather:london", { temp: 18, condition: "cloudy" }, 300);
+await cache.set("weather:london", { temp: 18, condition: "cloudy" }, 300);
 
 const weather = await cache.get<{ temp: number; condition: string }>(
   "weather:london",
@@ -47,7 +47,7 @@ This is equivalent to:
 let stats = await cache.get("dashboard:stats");
 if (!stats) {
   stats = await computeExpensiveStats(...);
-  await cache.put("dashboard:stats", stats, 60);
+  await cache.set("dashboard:stats", stats, 60);
 }
 ```
 
@@ -55,7 +55,7 @@ if (!stats) {
 
 ```ts
 if (cache.isAvailable()) {
-  await cache.put("key", value, 60);
+  await cache.set("key", value, 60);
 }
 ```
 
@@ -64,3 +64,4 @@ if (cache.isAvailable()) {
 - Values are JSON-serialized — store plain objects, arrays, strings, or numbers.
 - TTL is in **seconds**. The default (no `ttl` passed) comes from `ttlSeconds` in `src/config/cache.ts`.
 - All methods degrade gracefully: `get` returns `fallback`, `put`/`forget` return `false`, `remember` falls through to executing the callback whenever Redis is unavailable.
+

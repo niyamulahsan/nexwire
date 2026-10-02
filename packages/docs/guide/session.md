@@ -30,7 +30,7 @@ import { session } from "@/framework/facade.js";
 | `session.start(data?)`        | Creates a new session document and returns its ID. Use when you need a server-side session that is independent of the request cookie flow. |
 | `session.all(id)`             | Fetches the entire session payload as an object. Use when you need to inspect or iterate over all stored values.                           |
 | `session.get(id, key)`        | Reads a single key from the session. Use when you need one specific value without manual parsing.                                          |
-| `session.put(id, key, value)` | Writes or updates a single key in the session. Use when you need to persist incremental state (e.g., add an item to a cart).               |
+| `session.set(id, key, value)` | Writes or updates a single key in the session. Use when you need to persist incremental state (e.g., add an item to a cart).               |
 | `session.refresh(id)`         | Extends the session TTL from the current moment. Called automatically by the middleware on every request.                                  |
 | `session.destroy(id)`         | Deletes the session document from Redis. Use on logout or when invalidating a session.                                                     |
 | `session.isAvailable()`       | Returns `true` if Redis is configured and connected. Use as a runtime guard before accessing session data.                                 |
@@ -55,7 +55,7 @@ const sessionId = res.locals.sessionId;
 
 ```ts
 // Save a cart
-await session.put(sessionId, "cart", [
+await session.set(sessionId, "cart", [
   { productId: 1, quantity: 2 },
   { productId: 5, quantity: 1 },
 ]);
@@ -121,3 +121,4 @@ Client                          Server
 ```
 
 Data is stored in Redis under the key `{REDIS_PREFIX}:session:{sessionId}` as a JSON document with the configured TTL.
+

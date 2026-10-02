@@ -11,7 +11,7 @@ Redis-backed server-side session documents with an automatic httpOnly cookie. Di
 | `session.start`       | `(data?) => Promise<string>`           | Create a session document; returns its ID                    |
 | `session.all`         | `(id) => Promise<T \| null>`                                                       | Fetch the entire session payload |
 | `session.get`         | `(id, key) => Promise<T \| null>`                                                       | Read a single key                |
-| `session.put`         | `(id, key, value) => Promise<boolean>` | Write/update a single key (rewrites the document, fresh TTL) |
+| `session.set`         | `(id, key, value) => Promise<boolean>` | Write/update a single key (rewrites the document, fresh TTL) |
 | `session.refresh`     | `(id) => Promise<boolean>`             | Extend the TTL (called automatically by the middleware)      |
 | `session.destroy`     | `(id) => Promise<boolean>`             | Delete the session document                                  |
 | `session.isAvailable` | `() => boolean`                        | `true` when Redis is configured and connected                |
@@ -36,7 +36,7 @@ const sessionId = res.locals.sessionId; // set by sessionMiddleware
 
 ```ts
 // Save a cart
-await session.put(sessionId, "cart", [{ productId: 1, quantity: 2 }]);
+await session.set(sessionId, "cart", [{ productId: 1, quantity: 2 }]);
 
 // Read it back
 const cart = await session.get<CartItem[]>(sessionId, "cart");
@@ -66,7 +66,7 @@ await session.destroy(sessionId);
 
 ```ts
 if (session.isAvailable()) {
-  await session.put(sessionId, "wizardStep", 3);
+  await session.set(sessionId, "wizardStep", 3);
 }
 ```
 
@@ -76,3 +76,4 @@ if (session.isAvailable()) {
 - Keys are namespaced as `{REDIS_PREFIX}:session:{id}`; the default TTL is `ttlSeconds` (default 7200s, configured in `config/session.ts`) and is refreshed on every request.
 - When Redis is unavailable, mutators return `false`, readers return `null`/`undefined`, and `start` returns `""` — no crashes.
 - `destroy` only removes the Redis document — the httpOnly cookie persists and creates a new empty session on the next request.
+

@@ -17,7 +17,7 @@ import { cache } from "@/framework/facade.js";
 | Method                               | Purpose                                                                                                                 |
 | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
 | `cache.get(key, fallback?)`          | Fetches a cached JSON value. Returns `fallback` (default `null`) on miss or when Redis is unavailable.                  |
-| `cache.put(key, value, ttl?)`        | Stores a value with optional TTL (defaults to `ttlSeconds (config/cache.ts)`). Returns `false` if Redis is unavailable. |
+| `cache.set(key, value, ttl?)`        | Stores a value with optional TTL (defaults to `ttlSeconds (config/cache.ts)`). Returns `false` if Redis is unavailable. |
 | `cache.forget(key)`                  | Deletes a cached key. Use when the source data changes and the cache must be invalidated.                               |
 | `cache.remember(key, ttl, callback)` | Cache-aside pattern — tries `get` first; on miss, executes `callback`, stores via `put`, and returns the fresh value.   |
 | `cache.isAvailable()`                | Returns `true` if Redis is configured and connected. Use as a runtime guard.                                            |
@@ -28,7 +28,7 @@ import { cache } from "@/framework/facade.js";
 
 ```ts
 // Store
-await cache.put("weather:london", { temp: 18, condition: "cloudy" }, 300);
+await cache.set("weather:london", { temp: 18, condition: "cloudy" }, 300);
 
 // Retrieve
 const weather = await cache.get<{ temp: number; condition: string }>(
@@ -57,7 +57,7 @@ This pattern is equivalent to:
 let stats = await cache.get("dashboard:stats");
 if (!stats) {
   stats = await computeExpensiveStats(await db.select().from(orders).execute());
-  await cache.put("dashboard:stats", stats, 60);
+  await cache.set("dashboard:stats", stats, 60);
 }
 ```
 
@@ -81,3 +81,4 @@ Default TTL and other settings live in `src/config/cache.ts`:
 ## How It Works
 
 Cache keys are namespaced under `{REDIS_PREFIX}:cache:{key}` in Redis. Values are JSON-serialized. When Redis is disabled (`REDIS=false`), all methods degrade gracefully without throwing.
+
