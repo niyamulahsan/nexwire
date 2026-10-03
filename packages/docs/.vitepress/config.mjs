@@ -79,8 +79,6 @@ const icons = {
 
 const mi = (key, label) => navIcon(icons[key], label);
 
-const changelogLink = { text: mi("fileText", "Changelog"), link: "/changelog" };
-
 const config = defineConfig({
   base: "/nexwire/",
   title: "nexwire",
@@ -120,6 +118,7 @@ const config = defineConfig({
             { text: mi("route", "Routing"), link: "/guide/routing" },
             { text: mi("book", "OpenAPI"), link: "/guide/openapi" },
             { text: mi("grid4", "Modules"), link: "/guide/modules" },
+            { text: mi("grid4", "Convention"), link: "/guide/conventions" },
             { text: mi("database", "Database"), link: "/guide/database" },
             { text: mi("lock", "Authentication"), link: "/guide/auth" },
             { text: mi("flask", "Unit Testing"), link: "/guide/testing" },
@@ -199,7 +198,7 @@ const config = defineConfig({
             }
           ],
         },
-        changelogLink,
+        { text: mi("fileText", "Changelog"), link: "/changelog" },
       ],
       "/cli/": [
         { text: mi("terminal", "CLI Reference"), link: "/cli/reference" },
@@ -208,13 +207,13 @@ const config = defineConfig({
         { text: mi("database", "Database Commands"), link: "/cli/database" },
         { text: mi("play", "Runtime Commands"), link: "/cli/runtime" },
         { text: mi("rocket", "Deploy Commands"), link: "/cli/deploy" },
-        changelogLink,
+        { text: mi("fileText", "Changelog"), link: "/changelog" },
       ],
       "/deploy/": [
         { text: mi("map", "Overview"), link: "/deploy/overview" },
         { text: mi("monitor", "Local Deploy"), link: "/deploy/local" },
         { text: mi("server", "Remote Deploy"), link: "/deploy/remote" },
-        changelogLink,
+        { text: mi("fileText", "Changelog"), link: "/changelog" },
       ],
       "/api/": [
         {
@@ -295,7 +294,7 @@ const config = defineConfig({
             { text: mi("boxes", "lodash"), link: "/api/lodash" },
           ],
         },
-        changelogLink,
+        { text: mi("fileText", "Changelog"), link: "/changelog" },
       ],
     },
     socialLinks: [

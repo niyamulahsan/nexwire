@@ -10,10 +10,10 @@ The framework discovers files by **directory**, never by filename. Every glob is
 extension-agnostic:
 
 ```ts
-discoverModuleFiles("**/routes/*.{ts,js}")
-discoverModuleFiles("**/jobs/*.{ts,js}")
-discoverModuleFiles("**/database/models/*.{ts,js}")
-discoverModuleFiles("**/{schedules,console}/*.{ts,js}")
+discoverModuleFiles("**/routes/*.{ts,js}");
+discoverModuleFiles("**/jobs/*.{ts,js}");
+discoverModuleFiles("**/database/models/*.{ts,js}");
+discoverModuleFiles("**/{schedules,console}/*.{ts,js}");
 ```
 
 So the folder is what makes a file work. The `.controller.ts` / `.service.ts`
@@ -28,20 +28,22 @@ existing module. Directory stays king.
 
 All paths are relative to `src/modules/<module>/`.
 
-| Kind       | Directory            | Suffix           | Example              |
-| ---------- | -------------------- | ---------------- | -------------------- |
-| route      | `routes/`            | `.route.ts`      | `index.route.ts`     |
-| controller | `controllers/`       | `.controller.ts` | `post.controller.ts` |
-| schema     | `controllers/`       | `.schema.ts`     | `post.schema.ts`     |
-| helper     | `helpers/`           | `.helper.ts`     | `post.helpers.ts`    |
-| service    | `services/`          | `.service.ts`    | `post.service.ts`    |
-| middleware | `middlewares/`       | `.middleware.ts` | `auth.middleware.ts` |
-| model      | `database/models/`   | `.model.ts`      | `post.ts`            |
-| seeder     | `database/seeders/`  | `.seed.ts`       | `post.ts`            |
-| job        | `jobs/`              | `.job.ts`        | `processComment.ts`  |
-| schedule   | `console/`           | `.schedule.ts`   | `cleanup.ts`         |
-| test       | `__tests__/`         | `.test.ts`       | `post.test.ts`       |
-| **facade** | `facade.ts` (root)   | —                | `facade.ts`          |
+| Kind       | Directory           | Suffix      | Example             |
+| ---------- | ------------------- | ----------- | ------------------- |
+| test       | `__test__/`         | `*.test.ts` | `post.test.ts`      |
+| console    | `console/`          | `*.ts`      | `cleanup.ts`        |
+| controller | `controllers/`      | `*.ts`      | `post.ts`           |
+| database   | `database/`         | `*.ts`      | `post.ts`           |
+| model      | `database/models/`  | `*.ts`      | `post.ts`           |
+| seeder     | `database/seeders/` | `*.ts`      | `post.ts`           |
+| helper     | `helpers/`          | `*.ts`      | `post.ts`           |
+| job        | `jobs/`             | `*.ts`      | `processComment.ts` |
+| middleware | `middlewares/`      | `*.ts`      | `calc.ts`           |
+| route      | `routes/`           | `*.ts`      | `index.ts`          |
+| schema     | `schemas/`          | `*.ts`      | `post.ts`           |
+| service    | `services/`         | `*.ts`      | `post.ts`           |
+| type       | `types/`            | `*.ts`      | `post.ts`           |
+| **facade** | `facade.ts` (root)  | —           | `facade.ts`         |
 
 A scaffolded module looks like this:
 
@@ -88,10 +90,10 @@ default — fill them with the matching `module:make-*` command when needed.
 
 ## helper vs service — not the same
 
-|         | Test                                   | Examples                                                    |
-| ------- | -------------------------------------- | ----------------------------------------------------------- |
-| helper  | pure computation, **no I/O**           | `slugify("Hi There")` → `"hi-there"`<br/>`hasRole(u, ["admin"])` → `true` |
-| service | **does** something — DB, files, network | `sendPasswordEmail(user)`<br/>`createOrder(data)`           |
+|         | Test                                    | Examples                                                                  |
+| ------- | --------------------------------------- | ------------------------------------------------------------------------- |
+| helper  | pure computation, **no I/O**            | `slugify("Hi There")` → `"hi-there"`<br/>`hasRole(u, ["admin"])` → `true` |
+| service | **does** something — DB, files, network | `sendPasswordEmail(user)`<br/>`createOrder(data)`                         |
 
 > **helper = computes. service = does.**
 
@@ -125,7 +127,7 @@ import { hasRole } from "@/modules/auth/helpers/auth.helpers.js";
 > **Rule 1 — Modules talk to each other ONLY through facades.**
 > **Rule 2 — Facades NEVER import other facades.**
 
-Rule 2 exists because a facade re-exports *everything* in its module, so
+Rule 2 exists because a facade re-exports _everything_ in its module, so
 `A/facade.ts → B/facade.ts → A/facade.ts` loops trivially.
 
 ```
@@ -143,22 +145,22 @@ never the other facade.
 
 ### Inside vs outside a module
 
-| From                                      | To                              |   |
-| ----------------------------------------- | ------------------------------- | - |
-| `modules/auth/controllers/a.ts`           | `modules/auth/controllers/b.ts` | ✅ same module, direct |
-| `modules/admin/post/…`                    | `modules/auth/facade.ts`        | ✅ through the door |
-| `modules/auth/facade.ts`                  | `modules/auth/facade.ts`        | ❌ rule 1 |
-| `modules/auth/facade.ts`                  | `modules/billing/facade.ts`     | ❌ rule 2 |
-| `modules/blog/controllers/a.ts`           | `modules/blog/services/b.ts`    | ✅ same module, direct |
+| From                            | To                              |                        |
+| ------------------------------- | ------------------------------- | ---------------------- |
+| `modules/auth/controllers/a.ts` | `modules/auth/controllers/b.ts` | ✅ same module, direct |
+| `modules/admin/post/…`          | `modules/auth/facade.ts`        | ✅ through the door    |
+| `modules/auth/facade.ts`        | `modules/auth/facade.ts`        | ❌ rule 1              |
+| `modules/auth/facade.ts`        | `modules/billing/facade.ts`     | ❌ rule 2              |
+| `modules/blog/controllers/a.ts` | `modules/blog/services/b.ts`    | ✅ same module, direct |
 
 ### Decision guide
 
-| Where does the logic live?                              | Where does it go?                   |
-| ------------------------------------------------------- | ----------------------------------- |
-| Only used inside one module                             | that module, beside its caller      |
-| Auth-flavored, needed by most modules                   | `auth` module → export via facade   |
-| Generic, needed by 2+ modules                           | `src/modules/shared/`               |
-| Framework-stable, every app needs (`db`, `jwt`, `mail`) | `@/framework/facade.js`             |
+| Where does the logic live?                              | Where does it go?                 |
+| ------------------------------------------------------- | --------------------------------- |
+| Only used inside one module                             | that module, beside its caller    |
+| Auth-flavored, needed by most modules                   | `auth` module → export via facade |
+| Generic, needed by 2+ modules                           | `src/modules/shared/`             |
+| Framework-stable, every app needs (`db`, `jwt`, `mail`) | `@/framework/facade.js`           |
 
 ::: tip Why facades exist
 Rule 1 is the same bug this framework already hit: `config/session.ts` imported

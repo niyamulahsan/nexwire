@@ -4,7 +4,7 @@ import { authConfig } from "@/config/index.js";
 import { db, password } from "@/framework/facade.js";
 import { users } from "@/modules/auth/database/models/user.js";
 import { issueTokens, revokeCurrentRefreshToken, sanitizeUser } from "@/modules/auth/helpers/auth.js";
-import { LoginInput } from "@/modules/auth/types/auth.js";
+import type { LoginInput } from "@/modules/auth/types/auth.js";
 
 export type LoginResult =
   | { kind: "invalid_credentials"; message: string }
@@ -27,7 +27,11 @@ export const loginService = {
       with: { role: true }
     });
 
-    if (!user || !(await password.verifyPassword(body.password, user.password))) {
+    // Generic message for both "user missing" and "wrong password" —
+    // never tell an attacker which one it was.
+    const passwordOk = user && (await password.verifyPassword(body.password, user.password));
+
+    if (!user || !passwordOk) {
       return { kind: "invalid_credentials", message: "Invalid credentials" };
     }
 
@@ -38,8 +42,12 @@ export const loginService = {
       };
     }
 
+    // Rotate the current refresh token before issuing a new pair.
     await revokeCurrentRefreshToken(req, res);
-    const tokens = await issueTokens(req, res, user, { remember: !!body.remember });
+
+    const tokens = await issueTokens(req, res, user, {
+      remember: !!body.remember
+    });
 
     return {
       kind: "logged_in",

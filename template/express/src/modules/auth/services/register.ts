@@ -11,7 +11,7 @@ import {
   revokeCurrentRefreshToken,
   sanitizeUser
 } from "@/modules/auth/helpers/auth.js";
-import { RegisterInput } from "@/modules/auth/types/auth.js";
+import type { RegisterInput } from "@/modules/auth/types/auth.js";
 
 export type RegisterResult =
   | { kind: "email_exists"; message: string }
@@ -27,11 +27,17 @@ export type RegisterResult =
       };
     };
 
+const VERIFY_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
+
 export const registerService = {
   register: async (req: Request, res: Response, body: RegisterInput): Promise<RegisterResult> => {
     const defaultRole = await db.query.roles.findFirst({
       where: eq(roles.name, "user")
     });
+
+    if (!defaultRole) {
+      throw new Error('Default role "user" not found — check your seeds');
+    }
 
     const existingUser = await db.query.users.findFirst({
       where: eq(users.email, body.email)
@@ -41,41 +47,63 @@ export const registerService = {
       return { kind: "email_exists", message: "Email already exists" };
     }
 
-    const [inserted] = await db
-      .insert(users)
-      .values({
-        name: body.name,
-        email: body.email,
-        password: await password.hashPassword(body.password),
-        roleId: defaultRole?.id ?? null
-      })
-      .returning({ id: users.id });
+    const hashedPassword = await password.hashPassword(body.password);
+    const now = new Date();
 
-    if (!inserted) throw new Error("Failed to insert user");
+    const created = await db.transaction(async (tx) => {
+      const [inserted] = await tx
+        .insert(users)
+        .values({
+          name: body.name,
+          email: body.email,
+          password: hashedPassword,
+          roleId: defaultRole.id
+        })
+        .returning({ id: users.id });
 
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, inserted.id),
-      with: { role: true }
-    });
+      if (!inserted) throw new Error("Failed to insert user");
 
-    if (!user) throw new Error("Inserted user not found");
-
-    if (authConfig.requireEmailVerification) {
-      const plainToken = makeEmailVerificationToken();
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-      await db.delete(emailVerificationTokens).where(eq(emailVerificationTokens.email, user.email));
-
-      await db.insert(emailVerificationTokens).values({
-        email: user.email,
-        token: hashEmailVerificationToken(plainToken),
-        expiresAt,
-        createdAt: new Date()
+      const user = await tx.query.users.findFirst({
+        where: eq(users.id, inserted.id),
+        with: { role: true }
       });
 
-      const verifyUrl = urls.url(`/verify-email?token=${plainToken}&email=${encodeURIComponent(user.email)}`);
+      if (!user) throw new Error("Inserted user not found");
 
-      await dispatchEvent("user:verify-email", { email: user.email, name: user.name, verifyUrl }, { queue: "mail" });
+      let plainVerifyToken: string | null = null;
+
+      if (authConfig.requireEmailVerification) {
+        plainVerifyToken = makeEmailVerificationToken();
+        const expiresAt = new Date(now.getTime() + VERIFY_TOKEN_TTL_MS);
+
+        // One active verification token per email
+        await tx.delete(emailVerificationTokens).where(eq(emailVerificationTokens.email, user.email));
+
+        await tx.insert(emailVerificationTokens).values({
+          email: user.email,
+          token: hashEmailVerificationToken(plainVerifyToken),
+          expiresAt,
+          createdAt: now
+        });
+      }
+
+      return { user, plainVerifyToken };
+    });
+
+    // ---- Side effects AFTER commit ----
+
+    if (created.plainVerifyToken) {
+      const verifyUrl = urls.url(`/verify-email?token=${created.plainVerifyToken}&email=${encodeURIComponent(created.user.email)}`);
+
+      await dispatchEvent(
+        "user:verify-email",
+        {
+          email: created.user.email,
+          name: created.user.name,
+          verifyUrl
+        },
+        { queue: "mail" }
+      );
 
       return {
         kind: "verification_required",
@@ -84,15 +112,17 @@ export const registerService = {
     }
 
     await revokeCurrentRefreshToken(req, res);
-    const tokens = await issueTokens(req, res, user, { remember: !!body.remember });
+    const tokens = await issueTokens(req, res, created.user, {
+      remember: !!body.remember
+    });
 
     await dispatchEvent(
       "user:signup",
       {
-        userId: user.id,
-        email: user.email,
-        name: user.name,
-        password: body.password
+        userId: created.user.id,
+        email: created.user.email,
+        name: created.user.name
+        // NO password — see explanation below
       },
       { queue: "mail" }
     );
@@ -101,7 +131,7 @@ export const registerService = {
       kind: "registered",
       message: "User registered successfully",
       data: {
-        user: sanitizeUser(user),
+        user: sanitizeUser(created.user),
         access_token: tokens.accessToken,
         refresh_token: tokens.refreshToken,
         token_type: "Bearer"
