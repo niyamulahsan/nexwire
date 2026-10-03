@@ -31,6 +31,10 @@ yarn maker module:make blog
 
 ```bash [bun]
 bun maker module:make blog
+# or create multiple modules
+bun maker module:make post tag
+# or in a panel
+bun maker module:make post --path=admin
 ```
 
 :::
@@ -73,6 +77,11 @@ bun maker module:make-model blog post
 bun maker module:make-seeder blog post
 bun maker module:make-job blog process-comment
 bun maker module:make-console blog cleanup
+  bun maker module:make-schema blog post
+  bun maker module:make-service blog post -- --with-model
+  bun maker module:make-helper blog format
+  bun maker module:make-middleware blog auth-check
+  bun maker module:make-type blog dto
 ```
 
 :::
