@@ -548,3 +548,24 @@ First stable release of **nexgen** — a full-stack TypeScript framework built o
 ### Upgrade Notes
 
 This is the first stable release. No upgrade path from earlier versions since none were tagged.
+
+
+## [4.1.0] — 2026-10-02
+
+### Added
+- **Maker CLI**: Added module:make-schema, module:make-service, module:make-helper, module:make-middleware, module:make-type subcommands.
+- **Maker CLI**: module:make supports variadic names and --path for panels.
+- **Maker CLI**: module:make-notification/module:delete-notification accept --path.
+- **Framework**: cache.set() and session.set() with put() as deprecated aliases.
+
+### Changed
+- **Maker CLI**: Stricter name validation (lowercase start, no leading digits) with suggestions.
+- **Maker CLI**: Batch continues on failures, exits nonzero; existing-module guard with --force.
+- **Maker CLI**: writeFiles guards against overwriting without --force.
+- **Framework**: Express session uses Express APIs.
+
+### Removed
+- **Maker CLI**: Removed module:example command and stubs.
+
+### Fixed
+- **Maker CLI**: Panel-aware operations, seeder fallback, and migration temp names corrected.
