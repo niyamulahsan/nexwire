@@ -49,6 +49,25 @@ export default defineConfig({
 });
 ```
 
+## Sass
+
+The project depends on **`sass`** (pure JavaScript) and deliberately does **not** depend on `sass-embedded`.
+
+Vite resolves its Sass compiler in this order: `sass-embedded` first, then `sass`. `sass-embedded` downloads a native `dart-sass` executable into `node_modules`, and that binary is blocked on machines with Windows Application Control / AppLocker or a strict antivirus policy — the UI then fails on the first `npm run dev` with:
+
+```
+[vite] Internal server error: [sass] spawn UNKNOWN
+```
+
+Because `sass-embedded` is an *optional peer dependency* of Vite, simply not depending on it is enough: Vite falls back to the pure-JS `sass` package, which needs no executable and works everywhere. The trade-off is slightly slower compilation for larger stylesheets.
+
+If you hit `spawn UNKNOWN` on an older project, the fix is to drop the native package:
+
+```bash
+npm uninstall sass-embedded
+npm install -D sass
+```
+
 ## Swapping the UI framework
 
 Only the plugin line changes. Everything else (proxy, build output, defines, aliases) stays the same:

@@ -4,8 +4,13 @@
 
 ### Fixed
 
+- **Template (both engines)**: The UI failed to start on a fresh scaffold with `[sass] spawn UNKNOWN`. Vite resolves its Sass compiler by trying `sass-embedded` first, and the template depended on it explicitly, which downloads a native `dart-sass` executable into `node_modules`. That binary is blocked by Windows Application Control / AppLocker and some antivirus setups, so `npm run dev` died before the UI could compile. The template now depends on the pure-JS `sass` package instead; `sass-embedded` is an optional peer dependency of Vite, so once it is absent Vite falls back to `sass` and no executable is needed. Verified by removing `sass-embedded` from `node_modules` and running `build:ui` on both engines - the UI compiles.
 - **Release tooling**: `sync:hono` / `sync:express` now pin `REDIS=false` on every synced env file, so the flag can no longer be flipped by a local, gitignored `template/*/.env`. `REDIS=true` shipped in 4.1.0 (requiring the 4.1.1 patch) because the template `.env` is developer-local and unreviewed while the synced `packages/create-nexwire/*/.env` copy is tracked and published.
 - **Release tooling**: The sync now reports any key where the synced `.env` disagrees with the tracked `.env.example` (`[hono] .env differs from .env.example — this ships: SOCKET: false -> true`), so unreviewed drift is visible at sync time instead of after publishing. No default is changed by this; it only surfaces the difference.
+
+### Added
+
+- **Docs**: Added a Sass section to the Vite configuration guide explaining why the project uses pure-JS `sass`, and how to fix `spawn UNKNOWN` on an existing project.
 
 ## [4.1.1] — 2026-10-04
 
