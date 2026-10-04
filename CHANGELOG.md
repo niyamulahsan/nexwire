@@ -1,5 +1,29 @@
 # Changelog
 
+## [4.1.0] — 2026-10-02
+
+### Added
+
+- **Maker CLI**: Added module:make-schema, module:make-service, module:make-helper, module:make-middleware, module:make-type subcommands.
+- **Maker CLI**: module:make supports variadic names and --path for panels. here panel is a separator for api.
+- **Maker CLI**: module:make-notification/module:delete-notification accept --path.
+- **Framework**: cache.set() and session.set() with put() as deprecated aliases.
+
+### Changed
+
+- **Maker CLI**: Stricter name validation (lowercase start, no leading digits) with suggestions.
+- **Maker CLI**: Batch continues on failures, exits nonzero; existing-module guard with --force.
+- **Maker CLI**: writeFiles guards against overwriting without --force.
+- **Framework**: Express session uses Express APIs.
+
+### Removed
+
+- **Maker CLI**: Removed module:example command and stubs.
+
+### Fixed
+
+- **Maker CLI**: Panel-aware operations, seeder fallback, and migration temp names corrected.
+
 ## [4.0.0] — 2026-09-28
 
 > Successor to `create-nexgen@3.2.1`. The old package **stays published and must be deprecated — do not delete it**, because existing installs would hard-fail. Deprecate it with:
@@ -7,7 +31,7 @@
 
 ### Breaking
 
-- **Project renamed to `nexwire`** — the unscoped npm name `nexgen` is owned by an unrelated package (`samwalshnz`, "Get the current song on a radio station", 2022), which made the framework effectively undiscoverable: searching "nexgen" surfaced that package, and `npx nexgen@latest` executed *its* binary rather than the scaffolder. The new name is uncontested — `nexwire`, `create-nexwire` and the `@nexwire` scope all return 0 registry hits. 697 brand references across 206 files: root package `nexwire-monorepo`, scaffolder `create-nexwire`, directory `packages/create-nexgen/` → `packages/create-nexwire/`, templates `nexwire-express` / `nexwire-hono`, and the `NexgenRouter` type → `NexwireRouter`. Install command is now `npm create nexwire@latest my-app`; the published bin also exposes the bare `nexwire` command.
+- **Project renamed to `nexwire`** — the unscoped npm name `nexgen` is owned by an unrelated package (`samwalshnz`, "Get the current song on a radio station", 2022), which made the framework effectively undiscoverable: searching "nexgen" surfaced that package, and `npx nexgen@latest` executed _its_ binary rather than the scaffolder. The new name is uncontested — `nexwire`, `create-nexwire` and the `@nexwire` scope all return 0 registry hits. 697 brand references across 206 files: root package `nexwire-monorepo`, scaffolder `create-nexwire`, directory `packages/create-nexgen/` → `packages/create-nexwire/`, templates `nexwire-express` / `nexwire-hono`, and the `NexgenRouter` type → `NexwireRouter`. Install command is now `npm create nexwire@latest my-app`; the published bin also exposes the bare `nexwire` command.
 
 - **`NEXGEN_*` environment variables renamed to `NEXWIRE_*`** — 29 tokens across templates, scaffolder, `.env` files and docs (e.g. `NEXGEN_FRONTEND_URL` → `NEXWIRE_FRONTEND_URL`). **This breaks any existing deployment** — update your `.env` and deploy environment. Projects scaffolded from `create-nexgen@3.2.1` still use the `NEXGEN_` prefix and are unaffected, since the framework is copied into the project at scaffold time rather than installed as a dependency.
 
@@ -15,9 +39,9 @@
 
 ### Added
 
-- **Demo recordings in the showcase READMEs** — the READMEs asserted that the framework works (wiring, dashboards, deploys) but contained no visual proof, only tables and tree diagrams. Two real screen recordings now ship in `packages/docs/public/screenshots/` and are embedded in the two showcase READMEs (root `README.md` and `packages/create-nexwire/README.md`) under a new `## Demo` section — screen recordings rather than stills, because the claim being made is about a *sequence* (one command bringing a stack up, then the same project surviving a real deploy), which a screenshot cannot carry. `dev-mode.gif` is a freshly scaffolded project with its dev stack booting; `real-deploy.gif` is a real application — not a demo — deployed to a live server with HTTPS, process supervision and zero-downtime restarts. The two clips deliberately show different applications, because they are proving different things: the first that a generated project runs, the second that the framework is not a toy. Both are genuine captures of a running app: no mockups, no design tool, no fabricated states. The files live in the VitePress public directory rather than a new top-level `assets/` folder, so the docs site serves them at `/screenshots/*.gif` as well, and the READMEs reference them by absolute `raw.githubusercontent.com` URLs (the same pattern the logo badge already uses) so they resolve as soon as the files reach `main`, without waiting on a Pages deploy, and one committed copy serves both the GitHub page and the npm page. The scaffolded project READMEs are deliberately left unwired, since those files ship neither the recordings nor the docs site.
+- **Demo recordings in the showcase READMEs** — the READMEs asserted that the framework works (wiring, dashboards, deploys) but contained no visual proof, only tables and tree diagrams. Two real screen recordings now ship in `packages/docs/public/screenshots/` and are embedded in the two showcase READMEs (root `README.md` and `packages/create-nexwire/README.md`) under a new `## Demo` section — screen recordings rather than stills, because the claim being made is about a _sequence_ (one command bringing a stack up, then the same project surviving a real deploy), which a screenshot cannot carry. `dev-mode.gif` is a freshly scaffolded project with its dev stack booting; `real-deploy.gif` is a real application — not a demo — deployed to a live server with HTTPS, process supervision and zero-downtime restarts. The two clips deliberately show different applications, because they are proving different things: the first that a generated project runs, the second that the framework is not a toy. Both are genuine captures of a running app: no mockups, no design tool, no fabricated states. The files live in the VitePress public directory rather than a new top-level `assets/` folder, so the docs site serves them at `/screenshots/*.gif` as well, and the READMEs reference them by absolute `raw.githubusercontent.com` URLs (the same pattern the logo badge already uses) so they resolve as soon as the files reach `main`, without waiting on a Pages deploy, and one committed copy serves both the GitHub page and the npm page. The scaffolded project READMEs are deliberately left unwired, since those files ship neither the recordings nor the docs site.
 
-  Encoding: `dev-mode.gif` is built from a 64.47s 1918x1144 30fps capture, downscaled to 959x572 (`scale=959:-1:flags=lanczos`) at 15fps rather than dropped further, because terminal text blurs if the width goes below native — frame *rate* is the cheaper axis to spend on a screen recording than resolution — then a 256-colour `palettegen`/`paletteuse` pass (`dither=sierra2_4a`, `diff_mode=rectangle`) and `gifsicle -O3 --lossy=100` (6.69 MB; the lossy pass is what actually shrinks a GIF, `-O2`/`-O3` alone barely move the number). Both files loop infinitely. Duration, resolution and frame content were verified after encoding rather than assumed, and six frames sampled across `dev-mode.gif` were confirmed to carry real screen content (74–157 KB per extracted PNG, against ~3 KB for a blank 959x572 frame).
+  Encoding: `dev-mode.gif` is built from a 64.47s 1918x1144 30fps capture, downscaled to 959x572 (`scale=959:-1:flags=lanczos`) at 15fps rather than dropped further, because terminal text blurs if the width goes below native — frame _rate_ is the cheaper axis to spend on a screen recording than resolution — then a 256-colour `palettegen`/`paletteuse` pass (`dither=sierra2_4a`, `diff_mode=rectangle`) and `gifsicle -O3 --lossy=100` (6.69 MB; the lossy pass is what actually shrinks a GIF, `-O2`/`-O3` alone barely move the number). Both files loop infinitely. Duration, resolution and frame content were verified after encoding rather than assumed, and six frames sampled across `dev-mode.gif` were confirmed to carry real screen content (74–157 KB per extracted PNG, against ~3 KB for a blank 959x572 frame).
 
   Note for anyone re-cutting these: an earlier `dev-mode.gif` was built from a superseded 27.93s recording, and an even earlier one had been recorded against a project using `postgres://localhost:5432/statistic` instead of the shipped SQLite — which directly contradicted the README's zero-setup claim. The clip is only honest if the terminal it records shows the SQLite default that actually ships.
 
@@ -27,7 +51,7 @@
 
 - **The scaffolder's template sync never ran at publish time** — `create-nexwire` declared its sync as `prepublish`, a lifecycle hook modern npm (>=7) no longer runs for `npm publish`, so `scripts/sync-template.mjs` silently never executed and the published `hono/` + `express/` copies were whatever happened to be on disk. Renamed to `prepublishOnly`, the hook that npm actually fires on publish. Verified with a probe package: `npm publish --dry-run` runs `prepublishOnly` and not `prepublish`.
 
-- **`create-nexwire@latest .` could delete the directory it was run in** — on a failed template download the error path ran `rmSync(targetDir, { recursive: true, force: true })`, but with the `.` argument `targetDir` *is* `process.cwd()`, so the cleanup removed the user's own project (including `.git`). Cleanup is now skipped when scaffolding into the current directory, and the failure message says so. Windows masked this by throwing `EPERM` on the open cwd handle; POSIX platforms would have deleted the tree.
+- **`create-nexwire@latest .` could delete the directory it was run in** — on a failed template download the error path ran `rmSync(targetDir, { recursive: true, force: true })`, but with the `.` argument `targetDir` _is_ `process.cwd()`, so the cleanup removed the user's own project (including `.git`). Cleanup is now skipped when scaffolding into the current directory, and the failure message says so. Windows masked this by throwing `EPERM` on the open cwd handle; POSIX platforms would have deleted the tree.
 
 - **`create-nexwire@latest .` overwrote an existing project without warning** — `resolveTargetDir` returned early for `.` and skipped the "already exists" check applied to named targets, so running the command in a populated directory silently overwrote it. `.` now requires an empty directory and refuses with a clear message, matching the behaviour of `<project-name>`.
 
@@ -39,9 +63,9 @@
 
 - **`npm run maker db:migrate --seed` silently dropped the `--seed` flag** -- npm consumes `--seed` as its own unknown CLI config instead of forwarding it to the script, so the command ran as a plain `db:migrate` and no seeders executed. The npm warning `Unknown cli config "--seed"` was the only clue. npm requires a `--` separator: `npm run maker db:migrate -- --seed` (bun's `bun maker db:migrate --seed` works unchanged). Corrected in the four scaffolded `README.md` copies (byte-identical), root `README.md`, `packages/create-nexwire/README.md`, `packages/docs/guide/database.md` and `packages/docs/cli/database.md`. The maker CLI no longer prints the bun-only form: the `--seed` option descriptions and the two `db:fresh` recovery messages now show the npm form alongside the bun form.
 
-- **`db:migrate --seed` crashed on any freshly generated module** -- `module:make` writes a fully commented-out seeder stub (intentionally, so it compiles and inserts no fake rows), but `seed.ts` threw `Seeder file ... has no default export function` on any seeder without a default export. So the documented quick-start order -- generate a module, then `db:migrate --seed` -- always aborted with exit code 1. `seed.ts` now skips seeder files containing no `export` statements and reports `Skipped unfilled seeder <file> (no exports yet)`; a seeder that *does* export something but lacks a default function still throws, so genuine mistakes remain loud. Byte-identical across both engines (sha256 34a7f82b1ff2a0669d4332bc6e8a8fcdb210843cae1813f34eca30806c3a4dab).
+- **`db:migrate --seed` crashed on any freshly generated module** -- `module:make` writes a fully commented-out seeder stub (intentionally, so it compiles and inserts no fake rows), but `seed.ts` threw `Seeder file ... has no default export function` on any seeder without a default export. So the documented quick-start order -- generate a module, then `db:migrate --seed` -- always aborted with exit code 1. `seed.ts` now skips seeder files containing no `export` statements and reports `Skipped unfilled seeder <file> (no exports yet)`; a seeder that _does_ export something but lacks a default function still throws, so genuine mistakes remain loud. Byte-identical across both engines (sha256 34a7f82b1ff2a0669d4332bc6e8a8fcdb210843cae1813f34eca30806c3a4dab).
 
-- **Redis Commander view left port 1369 dead when Redis was unavailable** -- `npm run maker dev -- --with-redis-view` (or `redis:view`) with `REDIS=false` in `.env` skipped launching the commander entirely, so the documented URL `http://localhost:1369` was a closed port and the browser only said "unable to connect". With `REDIS=true` but no Redis actually listening, the commander started and rendered its own raw connection error instead of the framework's diagnostic. `redis:view` now probes `REDIS_URL` with a short TCP connect and, when nothing answers or `REDIS` is disabled, serves a **Redis Commander Unavailable** page (naming the Redis URL) that identifies Redis Commander and the Redis key browser and points at `/queues` for BullMQ state -- deliberately *not* the `framework/queue/ui.ts` "Queue Dashboard Unavailable" page, which describes the bull-board route and would mislabel a key browser as a queue dashboard; otherwise it launches Redis Commander exactly as before. The dev-stack gate no longer suppresses the view when `--with-redis-view` was explicitly requested with Redis disabled, so the advertised port stays live. The CLI runtime (`maker-cli/runtime/core.mjs`) is plain `.mjs` with no `tsconfig allowJs`, so the page markup is built locally rather than imported from `ui.ts`; the new functions are byte-identical across both engines (sha256 664f4a072755c0200aea2f72502b18af1077f4de4d57e9638bba7aedfd4e4e8e).
+- **Redis Commander view left port 1369 dead when Redis was unavailable** -- `npm run maker dev -- --with-redis-view` (or `redis:view`) with `REDIS=false` in `.env` skipped launching the commander entirely, so the documented URL `http://localhost:1369` was a closed port and the browser only said "unable to connect". With `REDIS=true` but no Redis actually listening, the commander started and rendered its own raw connection error instead of the framework's diagnostic. `redis:view` now probes `REDIS_URL` with a short TCP connect and, when nothing answers or `REDIS` is disabled, serves a **Redis Commander Unavailable** page (naming the Redis URL) that identifies Redis Commander and the Redis key browser and points at `/queues` for BullMQ state -- deliberately _not_ the `framework/queue/ui.ts` "Queue Dashboard Unavailable" page, which describes the bull-board route and would mislabel a key browser as a queue dashboard; otherwise it launches Redis Commander exactly as before. The dev-stack gate no longer suppresses the view when `--with-redis-view` was explicitly requested with Redis disabled, so the advertised port stays live. The CLI runtime (`maker-cli/runtime/core.mjs`) is plain `.mjs` with no `tsconfig allowJs`, so the page markup is built locally rather than imported from `ui.ts`; the new functions are byte-identical across both engines (sha256 664f4a072755c0200aea2f72502b18af1077f4de4d57e9638bba7aedfd4e4e8e).
 
 - **Stale runtime log files shipped inside the npm tarball** -- `template/{express,hono}/src/storage/logs/app.log` and `fatal.log` (up to 41 KB, 1118 lines) were untracked dev artifacts that `npm pack` still included, leaking local stack traces and absolute paths into every generated project. Present in published `create-nexgen@3.2.1` and carried into the 4.0.0 candidate. Deleting them was not enough: they are regenerated every time the app runs from `template/hono` or `template/express` (your own local run recreates them), and because `package.json` declares a `files: ["src","hono","express"]` whitelist, a root `.npmignore` is never consulted -- so npm packed them anyway. `scripts/sync-template.mjs` (the prepublish hook) now excludes `*.log` from the engine copies, which is the only place the rule is actually enforced. Verified by re-packing with the log files still present on disk: 490 -> 486 files, zero `.log` in the payload. `.gitkeep` still ships, so the runtime log directory exists.
 
@@ -544,28 +568,3 @@ First stable release of **nexgen** — a full-stack TypeScript framework built o
 - **Runtime**: Node.js >= 24 or Bun >= 1.3
 - **Database**: SQLite (default), MySQL, or PostgreSQL
 - **Optional**: Redis (for cache, session, queue, realtime, scheduler)
-
-### Upgrade Notes
-
-This is the first stable release. No upgrade path from earlier versions since none were tagged.
-
-
-## [4.1.0] — 2026-10-02
-
-### Added
-- **Maker CLI**: Added module:make-schema, module:make-service, module:make-helper, module:make-middleware, module:make-type subcommands.
-- **Maker CLI**: module:make supports variadic names and --path for panels.
-- **Maker CLI**: module:make-notification/module:delete-notification accept --path.
-- **Framework**: cache.set() and session.set() with put() as deprecated aliases.
-
-### Changed
-- **Maker CLI**: Stricter name validation (lowercase start, no leading digits) with suggestions.
-- **Maker CLI**: Batch continues on failures, exits nonzero; existing-module guard with --force.
-- **Maker CLI**: writeFiles guards against overwriting without --force.
-- **Framework**: Express session uses Express APIs.
-
-### Removed
-- **Maker CLI**: Removed module:example command and stubs.
-
-### Fixed
-- **Maker CLI**: Panel-aware operations, seeder fallback, and migration temp names corrected.

@@ -202,14 +202,14 @@ async function assertModuleExists(moduleName) {
 
 /** Build the placeholder substitution map shared by module file generators. */
 function moduleFileVars(moduleName, controller) {
-    return {
-      module: moduleName,
-      controller,
-      ClassName: pascal(controller),
-      name: leafName(moduleName),
-      tableVariable: `${controller}s`
-    };
-  }
+  return {
+    module: moduleName,
+    controller,
+    ClassName: pascal(controller),
+    name: leafName(moduleName),
+    tableVariable: `${controller}s`
+  };
+}
 
 /**
  * Generate a controller file for a module.
@@ -242,8 +242,8 @@ async function serviceFile(moduleName, controllerName, withModel) {
 
 /** Build the full default scaffold for module:make. */
 async function moduleFiles(moduleName, openApi) {
-    const name = leafName(moduleName);
-    const vars = moduleFileVars(moduleName, name);
+  const name = leafName(moduleName);
+  const vars = moduleFileVars(moduleName, name);
   // The with-model controller variant only exists for the openapi style.
   const controllerStub = openApi ? STUBS.controller.openapiWithModel : STUBS.controller.plain;
   return {
@@ -260,15 +260,15 @@ async function moduleFiles(moduleName, openApi) {
  * module, so the controller and schema it just created are known to exist.
  */
 async function routeTemplate(moduleName, controllerName = moduleName) {
-    const controller = leafName(controllerName);
-    const routeStub = openApiEnabled() ? STUBS.route.api : STUBS.route.plain;
-    return await stub(routeStub, {
-      module: moduleName,
-      controller,
-      ClassName: pascal(controller),
-      ModuleClass: moduleLabel(moduleName)
-    });
-  }
+  const controller = leafName(controllerName);
+  const routeStub = openApiEnabled() ? STUBS.route.api : STUBS.route.plain;
+  return await stub(routeStub, {
+    module: moduleName,
+    controller,
+    ClassName: pascal(controller),
+    ModuleClass: moduleLabel(moduleName)
+  });
+}
 
 /**
  * Generate a barebone route file that wires to nothing. module:make-route uses
@@ -276,13 +276,13 @@ async function routeTemplate(moduleName, controllerName = moduleName) {
  */
 async function standaloneRouteTemplate(moduleName, routeName) {
   const routeStub = openApiEnabled() ? STUBS.route.standaloneApi : STUBS.route.standalonePlain;
-return await stub(routeStub, {
-      module: moduleName,
-      controller: routeName,
-      ClassName: pascal(routeName),
-      ModuleClass: moduleLabel(moduleName)
-    });
-  }
+  return await stub(routeStub, {
+    module: moduleName,
+    controller: routeName,
+    ClassName: pascal(routeName),
+    ModuleClass: moduleLabel(moduleName)
+  });
+}
 
 /** Generate a named model file for a module. */
 async function namedModelTemplate(moduleName, name, dialect) {
@@ -459,7 +459,7 @@ export async function makeRoute(rawModule, rawControllerOrFlag, extraFlags = [])
   try {
     await fs.access(routePath);
     exists = true;
-  } catch {}
+  } catch { }
   if (exists && !force)
     throw new Error(`Route file already exists: ${path.relative(process.cwd(), routePath)}. Re-run with --force to overwrite.`);
   await fs.mkdir(path.dirname(routePath), { recursive: true });
@@ -469,30 +469,30 @@ export async function makeRoute(rawModule, rawControllerOrFlag, extraFlags = [])
 
 /** Generate a notification module with controller, routes, and job. */
 export async function makeNotificationModule(rawName = "notification", flags = []) {
-    const { moduleName, leaf } = resolveModuleRef(rawName, flags);
-    const root = moduleRoot(moduleName);
-    const force = hasFlag(flags, "--force") || hasFlag(flags, "--yes");
-    if (!force && (await dirHasFiles(root))) {
-      throw new Error(`Module already exists: src/modules/${moduleName}. Re-run with --force to overwrite its files.`);
-    }
-    const openApi = openApiEnabled();
-
-    await writeFiles(root, {
-      [`controllers/${leaf}.ts`]: await stub(STUBS.notification.controller, {
-        module: moduleName
-      }),
-      [`schemas/${leaf}.ts`]: await stub(openApi ? STUBS.notification.schema.openapi : STUBS.notification.schema.plain, {
-        module: moduleName
-      }),
-      "routes/index.ts": await stub(openApi ? STUBS.notification.routeApi : STUBS.notification.routePlain, { module: moduleName }),
-      [`jobs/${leaf}.ts`]: await stub(STUBS.notification.job, { module: moduleName })
-    });
-
-    console.log(`Notification module ready: ${moduleName}`);
-    if (panelOf(moduleName)) console.log(`Panel: ${panelOf(moduleName)}  ->  /api/${moduleName}`);
-    console.log(`Route style: ${openApi ? "openapi" : "plain"}`);
-    console.log("See docs (packages/docs/guide/notification.md) for Vue UI integration.");
+  const { moduleName, leaf } = resolveModuleRef(rawName, flags);
+  const root = moduleRoot(moduleName);
+  const force = hasFlag(flags, "--force") || hasFlag(flags, "--yes");
+  if (!force && (await dirHasFiles(root))) {
+    throw new Error(`Module already exists: src/modules/${moduleName}. Re-run with --force to overwrite its files.`);
   }
+  const openApi = openApiEnabled();
+
+  await writeFiles(root, {
+    [`controllers/${leaf}.ts`]: await stub(STUBS.notification.controller, {
+      module: moduleName
+    }),
+    [`schemas/${leaf}.ts`]: await stub(openApi ? STUBS.notification.schema.openapi : STUBS.notification.schema.plain, {
+      module: moduleName
+    }),
+    "routes/index.ts": await stub(openApi ? STUBS.notification.routeApi : STUBS.notification.routePlain, { module: moduleName }),
+    [`jobs/${leaf}.ts`]: await stub(STUBS.notification.job, { module: moduleName })
+  });
+
+  console.log(`Notification module ready: ${moduleName}`);
+  if (panelOf(moduleName)) console.log(`Panel: ${panelOf(moduleName)}  ->  /api/${moduleName}`);
+  console.log(`Route style: ${openApi ? "openapi" : "plain"}`);
+  console.log("See docs (packages/docs/guide/notification.md) for Vue UI integration.");
+}
 
 /** Soft-delete a module by moving it to storage trash. */
 export async function deleteModule(rawName, flags = []) {
@@ -637,9 +637,7 @@ export async function makeController(rawModule, rawControllerOrFlag, extraFlags 
   const { name, flags } = parseNameArg(rawControllerOrFlag, extraFlags, "Controller name", leaf);
   const root = await assertModuleExists(moduleName);
   const lower = name.toLowerCase();
-  const hasService =
-    (await pathExists(path.join(root, "services", `${lower}.ts`))) ||
-    (await pathExists(legacyPath(root, "services", lower)));
+  const hasService = (await pathExists(path.join(root, "services", `${lower}.ts`))) || (await pathExists(legacyPath(root, "services", lower)));
   const content = await controllerFile(moduleName, name, openApiEnabled(), hasService);
   await writeFileSafe(path.join(root, `controllers/${lower}.ts`), content, flags, "Controller file");
 }
@@ -663,8 +661,7 @@ export async function makeService(rawModule, rawNameOrFlag, extraFlags = []) {
   const { name, flags } = parseNameArg(rawNameOrFlag, extraFlags, "Service name", leaf);
   const root = await assertModuleExists(moduleName);
   const lower = name.toLowerCase();
-  const withModel =
-    hasFlag(flags, "--with-model") || (await pathExists(path.join(root, "database", "models", `${lower}.ts`)));
+  const withModel = hasFlag(flags, "--with-model") || (await pathExists(path.join(root, "database", "models", `${lower}.ts`)));
   const content = await serviceFile(moduleName, name, withModel);
   await writeFileSafe(path.join(root, `services/${lower}.ts`), content, flags, "Service file");
 }
@@ -897,7 +894,7 @@ export async function runModuleMigrate(rawModuleName, rawArgs = []) {
   } finally {
     if (previousSchema == null) delete process.env.DRIZZLE_SCHEMA;
     else process.env.DRIZZLE_SCHEMA = previousSchema;
-    if (!keepTemp) await fs.rm(tempSchemaPath, { force: true }).catch(() => {});
+    if (!keepTemp) await fs.rm(tempSchemaPath, { force: true }).catch(() => { });
   }
 }
 

@@ -66,6 +66,7 @@ const onSubmit = async () => {
     },
     {
       onSuccess: (res) => {
+        console.log(res);
         isError.value = false;
         message.value = res.data.message;
         form.reset();

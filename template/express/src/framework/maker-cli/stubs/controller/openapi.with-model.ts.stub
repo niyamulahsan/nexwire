@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { HttpStatusCodes } from "@/framework/facade.js";
-import * as {{controller}}Service from "@/modules/{{module}}/services/{{controller}}.js";
+import { {{controller}}Service } from "@/modules/{{module}}/services/{{controller}}.js";
 
 /**
  * Why: Returns every {{controller}} row for list screens.

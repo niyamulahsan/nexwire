@@ -2,7 +2,7 @@ import type { Handler } from "hono";
 import { HttpStatusCodes } from "@/framework/facade.js";
 import { validate } from "@/framework/facade.js";
 import { Create{{ClassName}}Schema, Update{{ClassName}}Schema, {{ClassName}}IdParamsSchema } from "@/modules/{{module}}/schemas/{{controller}}.js";
-import * as {{controller}}Service from "@/modules/{{module}}/services/{{controller}}.js";
+import { {{controller}}Service } from "@/modules/{{module}}/services/{{controller}}.js";
 
 /**
  * Why: Returns every {{controller}} row for list screens.

@@ -1,9 +1,9 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { jwtConfig } from "@/config/index.js";
 import { db, jwt } from "@/framework/facade.js";
 import { refreshTokens, users } from "@/modules/auth/database/models/user.js";
 import { sanitizeUser } from "@/modules/auth/helpers/auth.js";
-import { RefreshTokenInput } from "@/modules/auth/types/auth.js";
+import type { RefreshTokenInput } from "@/modules/auth/types/auth.js";
 
 export type RefreshTokenResult =
   | { kind: "invalid_token"; message: string }
@@ -30,12 +30,17 @@ export const refreshTokenService = {
   refreshToken: async (body: RefreshTokenInput): Promise<RefreshTokenResult> => {
     const payload = await jwt.verifyToken(body.refresh_token, "refresh");
 
-    if (!payload?.jti) {
+    if (!payload?.jti || typeof payload.jti !== "string") {
+      return { kind: "invalid_token", message: "Invalid refresh token" };
+    }
+
+    const userId = Number(payload.id);
+    if (!Number.isInteger(userId) || userId <= 0) {
       return { kind: "invalid_token", message: "Invalid refresh token" };
     }
 
     const storedToken = await db.query.refreshTokens.findFirst({
-      where: eq(refreshTokens.jti, payload.jti as string)
+      where: eq(refreshTokens.jti, payload.jti)
     });
 
     if (!storedToken || storedToken.revoked === 1) {
@@ -48,7 +53,7 @@ export const refreshTokenService = {
     }
 
     const user = await db.query.users.findFirst({
-      where: eq(users.id, payload.id as number),
+      where: eq(users.id, userId),
       with: { role: true }
     });
 
@@ -70,14 +75,21 @@ export const refreshTokenService = {
     const accessToken = await jwt.generateToken(tokenPayload, "access");
     const newRefreshToken = await jwt.generateToken(tokenPayload, "refresh", refreshExpiry);
 
-    await db
+    // Compare-and-swap: only rotate if the jti is still the one we read.
+    // Two concurrent requests with the same old token → exactly one wins.
+    const [rotated] = await db
       .update(refreshTokens)
       .set({
-        jti: newRefreshToken.jti as string,
+        jti: newRefreshToken.jti,
         expiresAt: new Date(newRefreshToken.exp * 1000),
         revoked: 0
       })
-      .where(eq(refreshTokens.id, storedToken.id));
+      .where(and(eq(refreshTokens.id, storedToken.id), eq(refreshTokens.jti, payload.jti)))
+      .returning();
+
+    if (!rotated) {
+      return { kind: "revoked", message: "Refresh token revoked" };
+    }
 
     return {
       kind: "refreshed",
