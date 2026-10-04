@@ -26,10 +26,11 @@ There is nothing to copy on a fresh project. If you ever need to recreate the fi
 
 ## Redis
 
-| Variable       | Default                  | Description                          |
-| -------------- | ------------------------ | ------------------------------------ |
-| `REDIS_URL`    | `redis://127.0.0.1:6379` | Redis connection string              |
-| `REDIS_PREFIX` | `nexwire`                | Key prefix for all Redis namespacing |
+| Variable       | Default                  | Description                                   |
+| -------------- | ------------------------ | --------------------------------------------- |
+| `REDIS`        | `false`                  | Master switch for all Redis-backed subsystems |
+| `REDIS_URL`    | `redis://127.0.0.1:6379` | Redis connection string                       |
+| `REDIS_PREFIX` | `nexwire`                | Key prefix for all Redis namespacing          |
 
 ## JWT & Cookies
 

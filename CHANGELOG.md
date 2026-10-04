@@ -1,5 +1,18 @@
 # Changelog
 
+## [4.1.2] — 2026-10-05
+
+### Fixed
+
+- **Release tooling**: `sync:hono` / `sync:express` now pin `REDIS=false` on every synced env file, so the flag can no longer be flipped by a local, gitignored `template/*/.env`. `REDIS=true` shipped in 4.1.0 (requiring the 4.1.1 patch) because the template `.env` is developer-local and unreviewed while the synced `packages/create-nexwire/*/.env` copy is tracked and published.
+- **Release tooling**: The sync now reports any key where the synced `.env` disagrees with the tracked `.env.example` (`[hono] .env differs from .env.example — this ships: SOCKET: false -> true`), so unreviewed drift is visible at sync time instead of after publishing. No default is changed by this; it only surfaces the difference.
+
+## [4.1.1] — 2026-10-04
+
+### Fixed
+
+- **Template (both engines)**: the published `.env` shipped `REDIS=true`, which made scaffolded projects expect a Redis server on first run. Changed to `REDIS=false` — the same value the tracked `.env.example` and the `REDIS` schema default already used. 4.1.1 differs from 4.1.0 only in `hono/.env`, `express/.env`, and the version.
+
 ## [4.1.0] — 2026-10-04
 
 ### Added
