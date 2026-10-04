@@ -21,7 +21,7 @@ Every serious TypeScript app needs the same ten things: an HTTP API, auth with r
 nexwire ships that stack **already connected**. Auth reads the database. Enqueueing a job is one call. Events broadcast to the right rooms. Uploads land on disk or in S3. `maker` supervises the API, worker, and cron, and Docker Compose puts the whole thing behind nginx with automatic SSL.
 
 - **Runnable the second it exists** — the scaffold ships a pre-migrated, pre-seeded SQLite database, so `npm install && npm run maker dev` lands you on a login screen that already works. Sign in with `admin@example.com` / `Password@123`. No Docker, no Postgres, no services to configure.
-- **Nothing to register** — `maker module:make blog` scaffolds the whole module (routes, controllers, models, seeders, jobs, tests) and the app auto-discovers it. No router file to edit, no registry to update.
+- **Nothing to register** — `maker module:make blog` scaffolds the whole module (facade, routes, controllers, schemas, services, models, seeders) and the app auto-discovers it. No router file to edit, no registry to update.
 - **One import for every subsystem** — `db`, `cache`, `queue`, `jwt`, `mail`, `storage`, `notify`, and `urls` all come from `@/framework/facade.js`. Drop Redis in dev and the in-memory fallback takes over without touching a single call site.
 - **Infrastructure is optional** — Redis, mail, and S3 sit behind circuit breakers with real fallbacks, so nothing hard-fails when a service is absent or down.
 - **Deploy to a VPS over SSH** — one-time `maker deploy:init`, then `maker deploy:workflow:remote` builds the image, provisions nginx, requests Let's Encrypt certificates, and supervises API, worker, and cron as long-running processes.
@@ -81,7 +81,7 @@ nexwire runs on **Node.js** or **Bun** — pick whichever fits your deployment:
 
 | Runtime     | Minimum version | Notes                                                                 |
 | ----------- | --------------- | --------------------------------------------------------------------- |
-| **Node.js** | `>= 22.12`      | Default. Uses `node` in Dockerfile.                                   |
+| **Node.js** | `>= 22`         | Default. Uses `node` in Dockerfile.                                   |
 | **Bun**     | `>= 1.3`        | Pass `--runtime=bun` to `deploy:init`. Uses `oven/bun` in Dockerfile. |
 
 ## Demo
@@ -94,7 +94,7 @@ Real recordings from a freshly scaffolded project — no mockups, no staging dat
   <img src="https://raw.githubusercontent.com/niyamulahsan/nexwire/main/packages/docs/public/screenshots/dev-mode.gif" alt="nexwire dev mode: API, UI, API docs, queue dashboard and mail UI booting in one command" width="100%">
 </p>
 
-**Real deploy** — the same project running on a live server, with HTTPS, process supervision and zero-downtime restarts:
+**Real deploy** — the same framework running on a live server as a real project, with HTTPS, process supervision, and zero-downtime restarts:
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/niyamulahsan/nexwire/main/packages/docs/public/screenshots/real-deploy.gif" alt="nexwire deployed to a real server with HTTPS and process supervision" width="100%">
@@ -138,14 +138,20 @@ Every feature is a self-contained module under `src/modules/<name>/`:
 
 ```
 src/modules/posts/
+├── __tests__/         # Unit tests
 ├── console/           # CLI commands & scheduled tasks
-├── controllers/       # Request handlers + Zod schemas
+├── controllers/       # Request handlers
 ├── database/
 │   ├── models/        # Drizzle table definitions
-│   └── seeders/       # Test data generators
+│   └── seeders/       # Test data
+├── helpers/           # Pure functions — no I/O
 ├── jobs/              # BullMQ queue handlers
+├── middlewares/       # Module-local middleware
 ├── routes/            # HTTP route definitions (auto-discovered)
-└── __test__/          # Unit test
+├── schemas/           # Zod validation schemas
+├── services/          # Business logic — DB, files, network
+├── types/             # Shared TypeScript types
+└── facade.ts          # Public API for other modules
 ```
 
 Modules are **auto-discovered** — no manual registration. Create one with:

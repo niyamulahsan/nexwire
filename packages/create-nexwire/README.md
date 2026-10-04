@@ -80,7 +80,7 @@ nexwire runs on **Node.js** or **Bun** — pick whichever fits your deployment:
 
 | Runtime     | Minimum version | Notes                                                                 |
 | ----------- | --------------- | --------------------------------------------------------------------- |
-| **Node.js** | `>= 22.12`      | Default. Uses `node` in Dockerfile.                                   |
+| **Node.js** | `>= 22`         | Default. Uses `node` in Dockerfile.                                   |
 | **Bun**     | `>= 1.3`        | Pass `--runtime=bun` to `deploy:init`. Uses `oven/bun` in Dockerfile. |
 
 ## Demo
@@ -93,7 +93,7 @@ Real recordings from a freshly scaffolded project — no mockups, no staging dat
   <img src="https://raw.githubusercontent.com/niyamulahsan/nexwire/main/packages/docs/public/screenshots/dev-mode.gif" alt="nexwire dev mode: API, UI, API docs, queue dashboard and mail UI booting in one command" width="100%">
 </p>
 
-**Real deploy** — the same project running on a live server, with HTTPS, process supervision and zero-downtime restarts:
+**Real deploy** — the same framework running on a live server as a real project, with HTTPS, process supervision, and zero-downtime restarts:
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/niyamulahsan/nexwire/main/packages/docs/public/screenshots/real-deploy.gif" alt="nexwire deployed to a real server with HTTPS and process supervision" width="100%">

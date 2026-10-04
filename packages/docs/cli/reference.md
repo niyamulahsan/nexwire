@@ -44,13 +44,13 @@ The CLI auto-detects your package manager from the `npm_config_user_agent` env v
 
 ## Command Categories
 
-| Category                      | File          | Commands | Purpose                                                                        |
-| ----------------------------- | ------------- | -------- | ------------------------------------------------------------------------------ |
-| [Module](/cli/module)         | `module/`     | 16       | Scaffold modules, controllers, models, routes, jobs, seeders, schedules, tests |
-| [Middleware](/cli/middleware) | `middleware/` | 1        | Generate middleware files in `src/middlewares`                                 |
-| [Database](/cli/database)     | `database/`   | 14       | Schema generation, migrations, seeding, push, studio                           |
-| [Runtime](/cli/runtime)       | `runtime/`    | 14       | Dev server, queue worker, scheduler, UI, testing, dev tools                    |
-| [Deploy](/cli/deploy)         | `deploy/`     | 6        | Docker scaffolding, local/remote compose, workflows, DB import                 |
+| Category                      | File          | Commands | Purpose                                                                                                                                 |
+| ----------------------------- | ------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| [Module](/cli/module)         | `module/`     | 20       | Scaffold modules, facades, controllers, schemas, services, helpers, middlewares, types, models, routes, jobs, seeders, schedules, tests |
+| [Middleware](/cli/middleware) | `middleware/` | 1        | Generate middleware files in `src/middlewares`                                                                                          |
+| [Database](/cli/database)     | `database/`   | 14       | Schema generation, migrations, seeding, push, studio                                                                                    |
+| [Runtime](/cli/runtime)       | `runtime/`    | 14       | Dev server, queue worker, scheduler, UI, testing, dev tools                                                                             |
+| [Deploy](/cli/deploy)         | `deploy/`     | 6        | Docker scaffolding, local/remote compose, workflows, DB import                                                                          |
 
 ## Architecture
 

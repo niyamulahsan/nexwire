@@ -59,8 +59,8 @@ Works with any package manager: `pnpm`, `yarn`, or `bun`.
 
 All examples use `npm` as the default. nexwire works with any major package manager:
 
-| Manager  | Create project                     | Run commands          |
-| -------- | ---------------------------------- | --------------------- |
+| Manager  | Create project                      | Run commands          |
+| -------- | ----------------------------------- | --------------------- |
 | **npm**  | `npm create nexwire@latest my-app`  | `npm run maker <cmd>` |
 | **pnpm** | `pnpm create nexwire@latest my-app` | `pnpm maker <cmd>`    |
 | **yarn** | `yarn create nexwire@latest my-app` | `yarn maker <cmd>`    |
@@ -73,7 +73,7 @@ nexwire runs on **Node.js** or **Bun** — pick whichever fits your deployment:
 
 | Runtime     | Minimum version | Notes                                                                 |
 | ----------- | --------------- | --------------------------------------------------------------------- |
-| **Node.js** | `>= 22.12`     | Default. Uses `node` in Dockerfile.                                   |
+| **Node.js** | `>= 22.12`      | Default. Uses `node` in Dockerfile.                                   |
 | **Bun**     | `>= 1.3`        | Pass `--runtime=bun` to `deploy:init`. Uses `oven/bun` in Dockerfile. |
 
 ## Features
@@ -114,14 +114,20 @@ Every feature is a self-contained module under `src/modules/<name>/`:
 
 ```
 src/modules/posts/
+├── __tests__/         # Unit tests
 ├── console/           # CLI commands & scheduled tasks
-├── controllers/       # Request handlers + Zod schemas
+├── controllers/       # Request handlers
 ├── database/
 │   ├── models/        # Drizzle table definitions
-│   └── seeders/       # Test data generators
+│   └── seeders/       # Test data
+├── helpers/           # Pure functions — no I/O
 ├── jobs/              # BullMQ queue handlers
+├── middlewares/       # Module-local middleware
 ├── routes/            # HTTP route definitions (auto-discovered)
-└── __test__/          # Unit test
+├── schemas/           # Zod validation schemas
+├── services/          # Business logic — DB, files, network
+├── types/             # Shared TypeScript types
+└── facade.ts          # Public API for other modules
 ```
 
 Modules are **auto-discovered** — no manual registration. Create one with:

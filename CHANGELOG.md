@@ -1,6 +1,6 @@
 # Changelog
 
-## [4.1.0] — 2026-10-02
+## [4.1.0] — 2026-10-04
 
 ### Added
 
@@ -15,6 +15,10 @@
 - **Maker CLI**: Batch continues on failures, exits nonzero; existing-module guard with --force.
 - **Maker CLI**: writeFiles guards against overwriting without --force.
 - **Framework**: Express session uses Express APIs.
+- **Docs**: Rewrote the Modules guide for the 4.1.0 module layout — the new `schemas/`, `services/`, `helpers/`, `middlewares/` and `types/` folders, the `facade.ts` public API, panels (`--path`), and the full `module:make-*` command set. Corrected the documented `OPEN_API` default (it is `true`, not `false`) and the plain-controller import paths (now `@/modules/<m>/schemas/<name>.js`, not a relative `./<name>.schema.js`).
+- **Docs**: Corrected the Module Commands reference to match the code — `module:make` now lists the `facade.ts` and `services/` outputs with current paths (no more `.controller.ts`/`.schema.ts` suffixes or `routes/api.ts`), `module:make-controller` no longer claims to generate a schema file, and the missing `module:make-service`, `module:make-helper`, `module:make-middleware` and `module:make-type` sections were added. Removed the leftover `module:example` paragraph (command was deleted in 4.1.0).
+- **Docs**: Added a Panels section (`--path=<panel>`) and a Removed Commands note to the Module Commands reference; fixed the CLI reference command-category count (20 module commands, was 16).
+- **Docs**: Corrected the module layout tree in all six README copies (root, create-nexwire, and the four template/scaffolded copies) — added `__tests__/`, `helpers/`, `middlewares/`, `schemas/`, `services/`, `types/` and `facade.ts`, and fixed `__test__/` → `__tests__/`.
 
 ### Removed
 

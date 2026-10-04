@@ -239,7 +239,7 @@ The CORS middleware automatically allows your `FRONTEND_URL`, so there's no extr
 
 ## Cache
 
-Redis-backed caching with a cache-aside pattern. The cache is Redis-only — if Redis is down, caching silently disables itself: `get` returns `null`, `put`/`forget` become no-ops, and `remember` recomputes the fresh value on every call (typically a database query). No crashes, no errors — but without Redis there is no caching, so reads hit the source every time.
+Redis-backed caching with a cache-aside pattern. The cache is Redis-only — if Redis is down, caching silently disables itself: `get` returns `null`, `set`/`forget` become no-ops, and `remember` recomputes the fresh value on every call (typically a database query). No crashes, no errors — but without Redis there is no caching, so reads hit the source every time.
 
 ```ts
 import { cache } from "@/framework/facade.js";
@@ -250,7 +250,7 @@ const posts = await cache.remember("posts:all", 600, async () => {
 });
 
 // Manual control
-await cache.put("config:sitemap", sitemapXml, 3600);
+await cache.set("config:sitemap", sitemapXml, 3600); // cache.put is deprecated
 const cached = await cache.get("config:sitemap");
 await cache.forget("config:sitemap");
 ```
@@ -265,7 +265,7 @@ import { session } from "@/framework/facade.js";
 // In a route handler
 const sessionId = await session.start({ userId: user.id, role: "admin" });
 const user = await session.get(sessionId, "user");
-await session.put(sessionId, "lastSeen", new Date().toISOString());
+await session.set(sessionId, "lastSeen", new Date().toISOString()); // session.put is deprecated
 await session.destroy(sessionId); // logout
 ```
 
@@ -647,14 +647,30 @@ Every feature is a self-contained module under `src/modules/<name>/`:
 
 ```
 src/modules/posts/
+├── __tests__/         # Unit testing
+│   └── post.test.ts
 ├── console/           # CLI commands
+│   └── post.ts
 ├── controllers/       # Request handlers
+│   └── post.ts
 ├── database/
 │   ├── models/        # Drizzle schema definitions
 │   └── seeders/       # Test data
+├── helpers/           # helper function for controller
+│   └── post.ts
 ├── jobs/              # BullMQ queue handlers
+│   └── post.ts
+├── middlewares/       # module specific middleware
+│   └── post.ts
 ├── routes/            # HTTP route definitions (auto-discovered)
-└── __tests__/         # Unit testing
+│   └── index.ts
+├── schemas/           # validation
+│   └── post.ts
+├── services/          # business logic for controller
+│   └── post.ts
+├── types/             # type define
+│   └── post.ts
+└── facade.ts          # front door to communicate one module to other module
 ```
 
 Modules are auto-discovered — no manual registration needed. Create one with the CLI:

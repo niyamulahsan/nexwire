@@ -10,7 +10,7 @@ There is nothing to copy on a fresh project. If you ever need to recreate the fi
 
 | Variable       | Default                 | Description                                                                                    |
 | -------------- | ----------------------- | ---------------------------------------------------------------------------------------------- |
-| `APP_NAME`     | `nexwire`                | Application name used in logging and email headers                                             |
+| `APP_NAME`     | `nexwire`               | Application name used in logging and email headers                                             |
 | `APP_ENV`      | `development`           | Runtime environment: `development`, `production`, or `test`                                    |
 | `APP_PORT`     | `3000`                  | HTTP server port                                                                               |
 | `APP_URL`      | `http://localhost:3000` | Public-facing URL of the application (required)                                                |
@@ -20,8 +20,8 @@ There is nothing to copy on a fresh project. If you ever need to recreate the fi
 
 ## Database
 
-| Variable       | Default                                       | Description                                            |
-| -------------- | --------------------------------------------- | ------------------------------------------------------ |
+| Variable       | Default                                        | Description                                            |
+| -------------- | ---------------------------------------------- | ------------------------------------------------------ |
 | `DATABASE_URL` | `sqlite:./src/storage/database/nexwire.sqlite` | Database connection string (SQLite, MySQL, PostgreSQL) |
 
 ## Redis
@@ -29,7 +29,7 @@ There is nothing to copy on a fresh project. If you ever need to recreate the fi
 | Variable       | Default                  | Description                          |
 | -------------- | ------------------------ | ------------------------------------ |
 | `REDIS_URL`    | `redis://127.0.0.1:6379` | Redis connection string              |
-| `REDIS_PREFIX` | `nexwire`                 | Key prefix for all Redis namespacing |
+| `REDIS_PREFIX` | `nexwire`                | Key prefix for all Redis namespacing |
 
 ## JWT & Cookies
 

@@ -1,6 +1,6 @@
 # Module Commands
 
-Generate and manage modules  the building blocks of your application. Each module is a self-contained directory under `src/modules/` with its own controllers, routes, models, jobs, and seeders.
+Generate and manage modules — the building blocks of your application. Each module is a self-contained directory under `src/modules/` with its own controllers, routes, schemas, services, helpers, middlewares, types, models, jobs, and seeders.
 
 ::: code-group
 
@@ -26,70 +26,60 @@ bun maker <command> [options]
 
 ### `module:make <name>`
 
-Create a complete module with all default scaffolding.
+Create a complete module with all default scaffolding. Pass several names to create multiple modules in one run, or `--path=<panel>` to nest the module under a panel folder.
 
-| Generated  | Path                                                   |
-| ---------- | ------------------------------------------------------ |
-| Controller | `src/modules/<name>/controllers/<name>.controller.ts`  |
-| Schema     | `src/modules/<name>/controllers/<name>.schema.ts`      |
-| Route      | `src/modules/<name>/routes/api.ts`                     |
-| Model      | `src/modules/<name>/database/models/<name>.ts`         |
-| Seeder     | `src/modules/<name>/database/seeders/<name>.seeder.ts` |
+| Generated  | Path                                            |
+| ---------- | ----------------------------------------------- |
+| Facade     | `src/modules/<name>/facade.ts`                  |
+| Controller | `src/modules/<name>/controllers/<name>.ts`      |
+| Schema     | `src/modules/<name>/schemas/<name>.ts`          |
+| Service    | `src/modules/<name>/services/<name>.ts`         |
+| Route      | `src/modules/<name>/routes/index.ts`            |
+| Model      | `src/modules/<name>/database/models/<name>.ts`  |
+| Seeder     | `src/modules/<name>/database/seeders/<name>.ts` |
 
 ```
 src/modules/posts/
- controllers/
-    posts.controller.ts
-    posts.schema.ts
- database/
-    models/
-       posts.ts
-    seeders/
-        posts.seeder.ts
- routes/
-     api.ts
+├── controllers/
+│   └── posts.ts
+├── database/
+│   ├── models/
+│   │   └── posts.ts
+│   └── seeders/
+│       └── posts.ts
+├── routes/
+│   └── index.ts
+├── schemas/
+│   └── posts.ts
+├── services/
+│   └── posts.ts
+└── facade.ts
 ```
+
+The controller, schema, service and route adapt to the `OPEN_API` environment variable at scaffold time — see [OpenAPI Mode](/guide/modules#openapi-mode).
 
 ### `module:make-notification [name]`
 
 Generate a notification backend module with controller, routes, and job. Default name is `notification`.
 
-| File                                     | Purpose                                                      |
-| ---------------------------------------- | ------------------------------------------------------------ |
-| `controllers/notification.controller.ts` | 5 handlers: list, unreadCount, markRead, markAllRead, remove |
-| `controllers/notification.schema.ts`     | Zod/OpenAPI schemas                                          |
-| `routes/api.ts`                          | 5 routes under `authMiddleware`                              |
-| `jobs/notification.ts`                   | Queue handler for email delivery                             |
+| File                          | Purpose                                                      |
+| ----------------------------- | ------------------------------------------------------------ |
+| `controllers/notification.ts` | 5 handlers: list, unreadCount, markRead, markAllRead, remove |
+| `schemas/notification.ts`     | Zod/OpenAPI schemas                                          |
+| `routes/index.ts`             | 5 routes under `authMiddleware`                              |
+| `jobs/notification.ts`        | Queue handler for email delivery                             |
 
 ::: tip
 UI integration is manual  see [Notification Guide](/guide/notification) for Vue copy-paste components and setup instructions.
 :::
 
-Generate a one-shot example module demonstrating framework features  queue jobs, real-time broadcasting, scheduler cron, and a model with CRUD. Default name is `example`.
-
-```
-src/modules/example/
- controllers/
-    example.controller.ts
-    example.schema.ts
- database/
-    models/
-        example.ts
- jobs/
-    example.job.ts
- routes/
-    api.ts
- consoles/
-     example.command.ts
-```
-
 ## Component Commands
 
-Add individual components to an existing module. All support `--force` (overwrite) and `--dry-run` (preview).
+Add individual components to an existing module. All support `--force` (overwrite), `--dry-run` (preview) and `--path=<panel>` (address a module inside a panel folder).
 
 ### `module:make-route <module> [controller]`
 
-Generate or overwrite a route file for an existing module. If no controller name given, uses the latest modified controller in the module.
+Generate a standalone route file for an existing module. Without a name it writes `routes/index.ts`; with a name it writes `routes/<name>.ts`. The stub ships with placeholder handlers — wire it to a controller and schemas when ready.
 
 ::: code-group
 
@@ -117,7 +107,7 @@ bun maker module:make-route posts custom-controller
 
 ### `module:make-controller <module> [name]`
 
-Generate a controller and schema file. If no name given, uses the module name.
+Generate a controller file at `controllers/<name>.ts`. If no name given, uses the module name. When a matching `services/<name>.ts` exists (or the legacy `controllers/<name>.service.ts`), the controller delegates to that service; otherwise it gets standalone handlers.
 
 ::: code-group
 
@@ -169,7 +159,7 @@ bun maker module:make-model posts
 
 ### `module:make-seeder <module> [name]`
 
-Generate a seeder file for a model. The seeder is registered in the module's seeder index.
+Generate a seeder file at `database/seeders/<name>.ts`. The seeder needs a matching model — it falls back to the module's own model when no `<name>` model exists.
 
 ::: code-group
 
@@ -193,7 +183,132 @@ bun maker module:make-seeder posts
 
 ### `module:make-schema <module> [name]`
 
-Generate a schema file.
+Generate a schema file at `schemas/<name>.ts`. The generated set depends on the `OPEN_API` setting at scaffold time — full (item, create, update, id-params and response schemas) or minimal (create, update and id-params only).
+
+::: code-group
+
+```bash [npm]
+npm run maker module:make-schema posts
+npm run maker module:make-schema posts publish
+```
+
+```bash [pnpm]
+pnpm maker module:make-schema posts
+pnpm maker module:make-schema posts publish
+```
+
+```bash [yarn]
+yarn maker module:make-schema posts
+yarn maker module:make-schema posts publish
+```
+
+```bash [bun]
+bun maker module:make-schema posts
+bun maker module:make-schema posts publish
+```
+
+:::
+
+### `module:make-service <module> [name]`
+
+Generate a service file at `services/<name>.ts`. The service is Drizzle-backed when `database/models/<name>.ts` exists or when `--with-model` is passed; otherwise it ships with `TODO` placeholders where the queries go.
+
+::: code-group
+
+```bash [npm]
+npm run maker module:make-service posts
+npm run maker module:make-service posts publish
+```
+
+```bash [pnpm]
+pnpm maker module:make-service posts
+pnpm maker module:make-service posts publish
+```
+
+```bash [yarn]
+yarn maker module:make-service posts
+yarn maker module:make-service posts publish
+```
+
+```bash [bun]
+bun maker module:make-service posts
+bun maker module:make-service posts publish
+bun maker module:make-service posts publish --with-model
+```
+
+:::
+
+### `module:make-helper <module> [name]`
+
+Generate a helper file at `helpers/<name>.ts` — pure logic with no I/O, safe to call from controllers, services, jobs and other helpers.
+
+::: code-group
+
+```bash [npm]
+npm run maker module:make-helper posts format
+```
+
+```bash [pnpm]
+pnpm maker module:make-helper posts format
+```
+
+```bash [yarn]
+yarn maker module:make-helper posts format
+```
+
+```bash [bun]
+bun maker module:make-helper posts format
+```
+
+:::
+
+### `module:make-middleware <module> [name]`
+
+Generate a module-local middleware file at `middlewares/<name>.ts`. Register it on a route or route group inside `routes/*.ts`.
+
+::: code-group
+
+```bash [npm]
+npm run maker module:make-middleware posts auth-check
+```
+
+```bash [pnpm]
+pnpm maker module:make-middleware posts auth-check
+```
+
+```bash [yarn]
+yarn maker module:make-middleware posts auth-check
+```
+
+```bash [bun]
+bun maker module:make-middleware posts auth-check
+```
+
+:::
+
+### `module:make-type <module> [name]`
+
+Generate a types file at `types/<name>.ts` with `Record`, `Result` and `ListResult` interfaces for the module to share.
+
+::: code-group
+
+```bash [npm]
+npm run maker module:make-type posts dto
+```
+
+```bash [pnpm]
+pnpm maker module:make-type posts dto
+```
+
+```bash [yarn]
+yarn maker module:make-type posts dto
+```
+
+```bash [bun]
+bun maker module:make-type posts dto
+```
+
+:::
 
 ### `module:make-job <module> [name]`
 
@@ -245,7 +360,7 @@ bun maker module:make-console posts cleanup
 
 ### `module:make-test <module> [name]`
 
-Generate a unit test file for a module. If no name given, uses the module name. The test file is created under the module's test directory.
+Generate a unit test file for a module. If no name given, uses the module name. The test file is created under the module's `__tests__/` directory.
 
 ::: code-group
 
@@ -450,3 +565,62 @@ bun maker module:migrate posts --keep-temp
 ```
 
 :::
+
+## Panels
+
+Every module command accepts `--path=<panel>` to nest the module under a panel folder. A panel is only a folder separator — the module keeps the same structure and rules, and its routes mount under the panel path:
+
+::: code-group
+
+```bash [npm]
+npm run maker module:make post -- --path=admin
+npm run maker module:make-controller blog post -- --path=admin
+npm run maker module:make-route blog post -- --path=admin
+npm run maker module:make-model blog post -- --path=admin
+```
+
+```bash [pnpm]
+pnpm maker module:make post --path=admin
+pnpm maker module:make-controller blog post --path=admin
+pnpm maker module:make-route blog post --path=admin
+pnpm maker module:make-model blog post --path=admin
+```
+
+```bash [yarn]
+yarn maker module:make post --path=admin
+yarn maker module:make-controller blog post --path=admin
+yarn maker module:make-route blog post --path=admin
+yarn maker module:make-model blog post --path=admin
+```
+
+```bash [bun]
+bun maker module:make post --path=admin
+bun maker module:make-controller blog post --path=admin
+bun maker module:make-route blog post --path=admin
+bun maker module:make-model blog post --path=admin
+```
+
+:::
+
+| Without `--path`       | With `--path=admin`        |
+| ---------------------- | -------------------------- |
+| `src/modules/post/`    | `src/modules/admin/post/`  |
+| mounted at `/api/post` | mounted at `/api/admin/post` |
+| Scalar tag `Post`      | Scalar tag `Admin / Post`  |
+
+Nested panels work too: `--path=admin/reporting` → `src/modules/admin/reporting/post/` → `/api/admin/reporting/post`.
+
+The CLI prints the panel and its API path after scaffolding:
+
+```
+Module ready: admin/post
+Panel: admin  ->  /api/admin/post
+```
+
+To address an existing panel module with any subcommand, pass the same `--path` — e.g. `module:make-controller blog post --path=admin` writes `src/modules/admin/blog/controllers/post.ts`, and `module:delete post --path=admin` moves `src/modules/admin/post/` to trash.
+
+## Removed Commands
+
+### `module:example [name]` (removed in 4.1.0)
+
+The one-shot example module generator was removed. Create a module with `module:make` and add the pieces you need with the component commands above.

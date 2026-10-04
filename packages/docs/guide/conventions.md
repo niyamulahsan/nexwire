@@ -49,26 +49,30 @@ A scaffolded module looks like this:
 
 ```
 src/modules/blog/
-├── facade.ts
+├── __tests__/
+│   └── post.test.ts
+├── console/
+│   └── post.ts
 ├── controllers/
-│   ├── post.controller.ts
-│   └── post.schema.ts
-├── helpers/
-│   ├── .gitkeep
-│   └── post.helpers.ts
-├── services/
-│   └── .gitkeep
-├── middlewares/
-│   └── .gitkeep
-├── routes/
-│   ├── api.ts
-│   └── plain.ts
+│   └── post.ts
 ├── database/
 │   ├── models/
 │   └── seeders/
+├── helpers/
+│   └── post.ts
 ├── jobs/
-├── console/
-└── __tests__/
+│   └── post.ts
+├── middlewares/
+│   └── post.ts
+├── routes/
+│   └── index.ts
+├── schemas/
+│   └── post.ts
+├── services/
+│   └── post.ts
+├── types/
+│   └── post.ts
+└── facade.ts
 ```
 
 ::: tip Use the `@/` alias, always
@@ -122,10 +126,13 @@ import { hasRole } from "@/modules/auth/facade.js";
 import { hasRole } from "@/modules/auth/helpers/auth.helpers.js";
 ```
 
-### The two rules
+### The three rules
 
 > **Rule 1 — Modules talk to each other ONLY through facades.**
+> 
 > **Rule 2 — Facades NEVER import other facades.**
+> 
+> **Rule 3 — Each module NEVER import/use its own facade.**
 
 Rule 2 exists because a facade re-exports _everything_ in its module, so
 `A/facade.ts → B/facade.ts → A/facade.ts` loops trivially.
@@ -137,6 +144,9 @@ Rule 2 exists because a facade re-exports _everything_ in its module, so
 
 ❌ BREAKS
    A/facade.ts ──► B/facade.ts ──► A/facade.ts
+
+❌ BREAKS
+   A/facade.ts ──► A/helpers/user.ts (circuler import)
 ```
 
 **Escape hatch:** anything you want to share goes in the facade. If a facade
@@ -145,12 +155,13 @@ never the other facade.
 
 ### Inside vs outside a module
 
-| From                            | To                              |                        |
-| ------------------------------- | ------------------------------- | ---------------------- |
+| From                            | To                              |                       |
+| ------------------------------- | ------------------------------- | --------------------- |
 | `modules/auth/controllers/a.ts` | `modules/auth/controllers/b.ts` | ✅ same module, direct |
 | `modules/admin/post/…`          | `modules/auth/facade.ts`        | ✅ through the door    |
 | `modules/auth/facade.ts`        | `modules/auth/facade.ts`        | ❌ rule 1              |
 | `modules/auth/facade.ts`        | `modules/billing/facade.ts`     | ❌ rule 2              |
+| `modules/auth/facade.ts`        | `modules/auth/user.ts`          | ❌ rule 3              |
 | `modules/blog/controllers/a.ts` | `modules/blog/services/b.ts`    | ✅ same module, direct |
 
 ### Decision guide
@@ -175,14 +186,46 @@ the "public surface" explicit so the cycle checker can enforce it.
 into lazy callbacks, so `user.ts` ↔ `role.ts` must import each other. That
 mutual reference is structural, not accidental.
 
-Everything else must be acyclic. The check runs with `dpdm`:
-
-```bash
-npm run check:cycles
-```
+Everything else must be acyclic.
 
 Models are skipped; `src/resources/**` (the Vue app) is excluded because it is
 not part of the module graph.
+
+## Module separation with panel
+
+Sometimes we need to separate APIs by app or by panel. Suppose we have panel APIs—one for the backend and another for the frontend. If we separate them with their own panel names, it will be clear which API is actually for which panel. Similarly, if we separate multiple apps, it will also help in that case. It's very easy to do, you'd think.
+
+::: code-group
+
+```bash [npm]
+npm run maker module:make blog --path=admin
+npm run maker module:make-controller blog post --path=admin
+npm run maker module:make-route blog post --path=admin
+npm run maker module:make-model blog post --path=admin
+```
+
+```bash [pnpm]
+pnpm maker module:make blog --path=admin
+pnpm maker module:make-controller blog post --path=admin
+pnpm maker module:make-route blog post --path=admin
+pnpm maker module:make-model blog post --path=admin
+```
+
+```bash [yarn]
+yarn maker module:make blog --path=admin
+yarn maker module:make-controller blog post --path=admin
+yarn maker module:make-route blog post --path=admin
+yarn maker module:make-model blog post --path=admin
+```
+
+```bash [bun]
+bun maker module:make blog --path=admin
+bun maker module:make-controller blog post --path=admin
+bun maker module:make-route blog post --path=admin
+bun maker module:make-model blog post --path=admin
+```
+
+:::
 
 ## Related
 
