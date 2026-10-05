@@ -92,6 +92,20 @@ function syncEngine(name, { src, dest }) {
   const skipRootDirs = new Set(["deploy"]);
   const skipFiles = new Set(["bun.lock", "package-lock.json", "pnpm-lock.yaml", "yarn.lock"]);
 
+  /**
+   * Directories that are kept in the repository but never published, counted
+   * only when they sit inside `src/framework`.
+   *
+   * The maker-cli's own tests belong to this repo, which is what keeps the
+   * generators honest. A scaffolded project should not receive them: the maker
+   * CLI is invisible to someone building an application, so a stray
+   * `src/framework/maker-cli/__tests__/` sitting next to the tests they write
+   * inside their own modules reads as something they are meant to look after.
+   * Module tests, the ones under `src/modules/`, do ship: those belong to the
+   * module the developer is actually using and show the pattern for it.
+   */
+  const skipInsideFramework = new Set(["__tests__"]);
+
   cpSync(src, dest, {
     recursive: true,
     filter: (s) => {
@@ -99,10 +113,14 @@ function syncEngine(name, { src, dest }) {
       const basename_ = parts.pop();
       const rootIdx = parts.indexOf(rootName);
       const depth = rootIdx >= 0 ? parts.length - rootIdx : 0;
+      // Path relative to the engine root, e.g. src/framework/maker-cli/__tests__
+      const relative = rootIdx >= 0 ? parts.slice(rootIdx + 1) : parts;
+      const insideFramework = relative[0] === "src" && relative[1] === "framework";
       return !parts.some((p) => skipDirs.has(p))
         && !skipDirs.has(basename_)
         && !(depth === 1 && skipRootDirs.has(basename_))
         && !skipFiles.has(basename_)
+        && !(insideFramework && skipInsideFramework.has(basename_))
         && !basename_.endsWith(".log");
     },
   });

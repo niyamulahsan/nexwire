@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/framework/facade.js";
 import { {{tableVariable}} } from "@/modules/{{module}}/database/models/{{controller}}.js";
 
-export const {{controller}}Service = {
+export const {{ServiceName}} = {
   /**
    * Why: Returns every {{controller}} row for list screens.
    * When: Called by the controller's index() handler.

@@ -1,0 +1,22 @@
+/**
+ * Standalone seeder for "{{name}}" — no model of that name exists in module
+ * "{{module}}", so nothing was imported for you. Uncomment the two lines below,
+ * point them at the table you want, then add your rows.
+ *
+ * Run with: bun maker module:seed {{module}}
+ */
+
+import { db } from "@/framework/facade.js";
+// import { {{tableVariable}} } from "@/modules/{{module}}/database/models/{{name}}.js";
+// export const table = {{tableVariable}};
+
+export default async function {{ClassName}}Seeder() {
+  const rows: Record<string, unknown>[] = [
+    // { name: "{{ClassName}} 1" },
+    // { name: "{{ClassName}} 2" }
+  ];
+
+  // for (const row of rows) await db.insert({{tableVariable}}).values(row);
+
+  console.log("{{ClassName}}: " + rows.length + " row(s) ready");
+}

@@ -4,16 +4,16 @@ import { queueConfig } from "@/config/index.js";
 import { discoverModuleFiles, importFile } from "@/framework/modules/discover.js";
 import { redisClientIfReady } from "@/framework/redis/client.js";
 
-type QueueJob = {
+export type QueueJob = {
   name: string;
   data: any;
 };
 
-type QueueHandler = (job: Job) => Promise<any>;
+export type QueueHandler = (job: Job) => Promise<any>;
 
-type DurableQueueHandler = (job: DurableJob, ctx: DurableContext) => Promise<any>;
+export type DurableQueueHandler = (job: DurableJob, ctx: DurableContext) => Promise<any>;
 
-type AnyQueueHandler = QueueHandler | DurableQueueHandler;
+export type AnyQueueHandler = QueueHandler | DurableQueueHandler;
 
 const queues = new Map<string, Queue>();
 const events = new Map<string, QueueEvents>();
@@ -21,6 +21,17 @@ const handlers = new Map<string, QueueHandler>();
 const durableHandlers = new Map<string, DurableQueueHandler>();
 const workers: Worker[] = [];
 let durableStateStore: RedisStateStore | null = null;
+
+/**
+ * Why: Jobs already reported as dropped, so that one unreachable queue cannot
+ *      flood the log from a request hot path.
+ * When: A call to queueJob finds no Redis.
+ * Where: Queue facade module scope.
+ * How: Keyed by queue + job name, because that pair is what identifies a queued
+ *      job - two queues running the same job name are two separate failures and
+ *      must each be reported once.
+ */
+const droppedJobs = new Set<string>();
 
 function queuePrefix() {
   return queueConfig.prefix;
@@ -127,10 +138,34 @@ export function getAllQueues() {
 }
 
 /**
+ * Why: Explains that a job was lost instead of letting it vanish.
+ * When: queueJob is called and no Redis connection is ready.
+ * Where: Called from queueJob.
+ * How: Warns once per queue + job. The message names the job and its queue,
+ *      says plainly that it never ran, and gives both the Redis fix and the
+ *      in-process alternative, so a caller reading only this line knows what
+ *      to do without opening framework source.
+ */
+function warnDroppedJob(queueName: string, job: string, delay?: number) {
+  const id = key(queueName, job);
+  if (droppedJobs.has(id)) return;
+  droppedJobs.add(id);
+
+  const schedule = delay ? ` It was due in ${delay}s, so it was never even scheduled.` : "";
+  console.warn(
+    `[queue] Dropped job "${job}" on queue "${queueName}". Redis is not available, so this job was never queued and never ran.${schedule} ` +
+      `Enable REDIS in .env and run a queue worker, or call dispatchCommand("${job}", payload) without { async: true } to run it in-process now.`
+  );
+}
+
+/**
  * Why: Adds a job to BullMQ with project defaults.
  * When: Commands/events need background execution.
  * Where: Dispatcher and feature modules.
- * How: Resolves queue then calls add with retry/backoff options.
+ * How: Resolves queue then calls add with retry/backoff options. When Redis is
+ *      absent there is nowhere to put the job, so it returns null and says so -
+ *      previously it returned null with no output at all, which meant silently
+ *      losing the work.
  */
 export async function queueJob(
   job: string,
@@ -148,7 +183,10 @@ export async function queueJob(
 ) {
   const queueName = options.queue || "default";
   const queue = getQueue(queueName);
-  if (!queue) return null;
+  if (!queue) {
+    warnDroppedJob(queueName, job, options.delay);
+    return null;
+  }
 
   return await queue.add(job, data, {
     delay: options.delay ? options.delay * 1000 : 0,

@@ -51,13 +51,16 @@ await queueJob(
 ```ts
 const job = await queueJob("process-image", { path });
 if (job === null) {
-  /* Redis unavailable — handle gracefully */
+  /* Redis unavailable — the job never ran. A warning was already logged. */
 }
 ```
 
+The `null` return means the work was dropped, not deferred. `queueJob` logs a warning once per queue and job name naming the job, its queue, and both ways forward, so a caller that ignores the return value still leaves a trace. See [Graceful Degradation](./../guide/events-queue#graceful-degradation).
+
 ## Notes
 
-- Requires Redis; returns `null` (never throws) when Redis is unavailable on the app side.
+- Requires Redis; returns `null` (never throws) when Redis is unavailable on the app side, and warns once per job so the loss is visible.
+- A dropped job is not retried, not persisted, and not shown in BullBoard. To run the work immediately instead, use [`dispatchCommand`](./dispatchCommand) without `{ async: true }`.
 - Default queue resources: `attempts: 3`, exponential backoff 3s, keep 1000 completed / 5000 failed — override per enqueue.
 - Handlers register with `shouldQueue(job, queue, fn)`; the job name and queue name must match.
 

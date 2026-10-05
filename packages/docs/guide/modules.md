@@ -150,7 +150,7 @@ bun maker module:make-test blog post
 | `module:make-middleware <m> [name]` | `middlewares/<name>.ts`                 | Route-scoped middleware — register it in a route file          |
 | `module:make-type <m> [name]`       | `types/<name>.ts`                       | `Record`, `Result` and `ListResult` interfaces                 |
 | `module:make-model <m> [name]`      | `database/models/<name>.ts`             | Dialect-aware: SQLite, MySQL or PostgreSQL                     |
-| `module:make-seeder <m> [name]`     | `database/seeders/<name>.ts`            | Falls back to the module's own model                           |
+| `module:make-seeder <m> [name]`     | `database/seeders/<name>.ts`            | Bound to the model when one matches, standalone otherwise       |
 | `module:make-job <m> [name]`        | `jobs/<name>.ts`                        | `shouldQueue` worker pattern                                   |
 | `module:make-console <m> [name]`    | `console/<name>.ts`                     | `defineSchedule` cron pattern                                  |
 | `module:make-test <m> [name]`       | `__tests__/<name>.test.ts`              | Vitest unit test                                               |

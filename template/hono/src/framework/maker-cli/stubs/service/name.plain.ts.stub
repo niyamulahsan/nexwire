@@ -10,10 +10,10 @@ import { db } from "@/framework/facade.js";
  *   import { {{tableVariable}} } from "@/modules/{{module}}/database/models/{{controller}}.js";
  *   return db.select().from({{tableVariable}});
  */
-export const {{controller}}Service = {  
+export const {{ServiceName}} = {  
   /**
   * Why: CRUD service for {{controller}}.
-  * When: Consumed directly by the controller as `{{controller}}Service.list()`, etc.
+  * When: Consumed directly by the controller as `{{ServiceName}}.list()`, etc.
   * Where: Wired into the module's controller handlers.
   */
   list: async () => {

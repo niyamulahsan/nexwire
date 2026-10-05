@@ -9,6 +9,6 @@
  * When: Replace this with real logic and rename it.
  * Where: Anywhere inside the {{module}} module.
  */
-export function {{name}}Helper<T>(value: T): T {
+export function {{Name}}Helper<T>(value: T): T {
   return value;
 }

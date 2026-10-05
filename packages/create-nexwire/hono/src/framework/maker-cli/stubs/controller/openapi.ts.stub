@@ -1,6 +1,6 @@
 import type { Handler } from "hono";
 import { HttpStatusCodes } from "@/framework/facade.js";
-import { {{controller}}Service } from "@/modules/{{module}}/services/{{controller}}.js";
+import { {{ServiceName}} } from "@/modules/{{module}}/services/{{controller}}.js";
 
 /**
  * Why: Returns every {{controller}} row for list screens.
@@ -8,7 +8,7 @@ import { {{controller}}Service } from "@/modules/{{module}}/services/{{controlle
  * Where: GET /{{controller}} route.
  */
 export const index: Handler = async (c: any) => {
-  const data = await {{controller}}Service.list();
+  const data = await {{ServiceName}}.list();
 
   return c.json({ message: "{{controller}} list fetched successfully", data });
 };
@@ -20,7 +20,7 @@ export const index: Handler = async (c: any) => {
  */
 export const show: Handler = async (c: any) => {
   const { id } = c.req.valid("param");
-  const data = await {{controller}}Service.findOne(id);
+  const data = await {{ServiceName}}.findOne(id);
 
   if (!data) return c.json({ message: "{{controller}} not found" }, HttpStatusCodes.NOT_FOUND);
 
@@ -34,7 +34,7 @@ export const show: Handler = async (c: any) => {
  */
 export const store: Handler = async (c: any) => {
   const body = c.req.valid("json");
-  const data = await {{controller}}Service.create(body);
+  const data = await {{ServiceName}}.create(body);
 
   return c.json({ message: "{{controller}} created successfully", data }, HttpStatusCodes.CREATED);
 };
@@ -47,7 +47,7 @@ export const store: Handler = async (c: any) => {
 export const update: Handler = async (c: any) => {
   const { id } = c.req.valid("param");
   const body = c.req.valid("json");
-  const data = await {{controller}}Service.update(id, body);
+  const data = await {{ServiceName}}.update(id, body);
 
   if (!data) return c.json({ message: "{{controller}} not found" }, HttpStatusCodes.NOT_FOUND);
 
@@ -61,7 +61,7 @@ export const update: Handler = async (c: any) => {
  */
 export const destroy: Handler = async (c: any) => {
   const { id } = c.req.valid("param");
-  const data = await {{controller}}Service.remove(id);
+  const data = await {{ServiceName}}.remove(id);
 
   if (!data) return c.json({ message: "{{controller}} not found" }, HttpStatusCodes.NOT_FOUND);
 

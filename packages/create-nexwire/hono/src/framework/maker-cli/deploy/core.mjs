@@ -69,7 +69,6 @@ const STUBS = {
   },
   controller: {
     openapi: "controller/openapi.ts.stub",
-    openapiWithModel: "controller/openapi.with-model.ts.stub",
     plain: "controller/plain.ts.stub",
     schema: {
       openapi: "controller/schema.ts.stub",

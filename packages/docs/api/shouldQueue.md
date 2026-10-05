@@ -110,7 +110,7 @@ shouldQueue("report.export", "default", async (job) => {
 ## Notes
 
 - Worker startup (`maker queue:work --queue=default,mail`) auto-discovers and imports every `**/jobs/**/*.ts` file.
-- Handlers throw only when Redis is unavailable — the queueing side (`queueJob`/`dispatchEvent`) never throws.
+- Handlers throw only when Redis is unavailable — the queueing side (`queueJob`/`dispatchEvent`) never throws, it warns and returns `null`.
 - Job + queue names must match the enqueueing call: `dispatchEvent(name, …)` → `shouldQueue(name, queue, …)`.
 
 ## Related

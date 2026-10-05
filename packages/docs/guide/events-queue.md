@@ -24,13 +24,24 @@ Controller                           BullMQ Worker
 
 The framework **gracefully degrades** — if Redis is unavailable, `queueJob()` returns `null` and the queue system becomes a no-op. Your app never crashes from a missing Redis.
 
+It is not silent, though. A `null` return means the job was **never queued and never ran**, so `queueJob()` warns once per queue and job name:
+
+```text
+[queue] Dropped job "orders.exported" on queue "reports". Redis is not available,
+so this job was never queued and never ran. Enable REDIS in .env and run a queue
+worker, or call dispatchCommand("orders.exported", payload) without
+{ async: true } to run it in-process now.
+```
+
+The warning repeats for a different job, and for the same job name on a different queue, but not on every call — a job queued from a request hot path will not flood your log. If you would rather run that work immediately instead of dropping it, use [`dispatchCommand`](../api/dispatchCommand) without `{ async: true }`, which never touches the queue.
+
 ## Environment Variables
 
 | Variable       | Default                  | Description                                 |
 | -------------- | ------------------------ | ------------------------------------------- |
 | `REDIS`        | `false`                  | Master toggle for all Redis-backed features |
 | `REDIS_URL`    | `redis://127.0.0.1:6379` | Redis connection string                     |
-| `REDIS_PREFIX` | `nexwire`                 | Key prefix for BullMQ queues in Redis       |
+| `REDIS_PREFIX` | `nexwire`                | Key prefix for BullMQ queues in Redis       |
 
 ## Queue Configuration
 
@@ -301,11 +312,13 @@ allowedEmails="admin@example.com,dev@example.com"
 
 When `REDIS=false` or Redis is unreachable:
 
-- `queueJob()` returns `null` — no crash
+- `queueJob()` returns `null` — no crash, and it warns once per job so the lost work is visible
 - `getQueue()` returns `null`
 - BullBoard shows "unavailable"
 
 This lets you develop with SQLite and no Redis, then add Redis later for production.
+
+Note what this does *not* give you. A job that was dropped is gone: it is not retried, not persisted, and not visible to BullBoard. If your work must survive a restart — or must not run on the request thread — the only fix is Redis. For work that does not need to survive anything, use [`dispatchCommand`](../api/dispatchCommand) without `{ async: true }`.
 
 ## Queue Commands
 

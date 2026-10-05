@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { HttpStatusCodes } from "@/framework/facade.js";
-import { {{controller}}Service } from "@/modules/{{module}}/services/{{controller}}.js";
+import { {{ServiceName}} } from "@/modules/{{module}}/services/{{controller}}.js";
 
 /**
  * Why: Returns every {{controller}} row for list screens.
@@ -8,7 +8,7 @@ import { {{controller}}Service } from "@/modules/{{module}}/services/{{controlle
  * Where: GET /{{controller}} route.
  */
 export const index = async (_req: Request, res: Response) => {
-  const data = await {{controller}}Service.list();
+  const data = await {{ServiceName}}.list();
 
   res.json({ message: "{{controller}} list fetched successfully", data });
 };
@@ -19,7 +19,7 @@ export const index = async (_req: Request, res: Response) => {
  * Where: GET /{{controller}}/{id} route.
  */
 export const show = async (req: Request, res: Response) => {
-  const data = await {{controller}}Service.findOne(Number(req.params.id));
+  const data = await {{ServiceName}}.findOne(Number(req.params.id));
 
   if (!data) {
     res.status(HttpStatusCodes.NOT_FOUND).json({ message: "{{controller}} not found" });
@@ -35,7 +35,7 @@ export const show = async (req: Request, res: Response) => {
  * Where: POST /{{controller}} route.
  */
 export const store = async (req: Request, res: Response) => {
-  const data = await {{controller}}Service.create(req.body);
+  const data = await {{ServiceName}}.create(req.body);
 
   res.status(HttpStatusCodes.CREATED).json({ message: "{{controller}} created successfully", data });
 };
@@ -46,7 +46,7 @@ export const store = async (req: Request, res: Response) => {
  * Where: PUT/PATCH /{{controller}}/{id} route.
  */
 export const update = async (req: Request, res: Response) => {
-  const data = await {{controller}}Service.update(Number(req.params.id), req.body);
+  const data = await {{ServiceName}}.update(Number(req.params.id), req.body);
 
   if (!data) {
     res.status(HttpStatusCodes.NOT_FOUND).json({ message: "{{controller}} not found" });
@@ -62,7 +62,7 @@ export const update = async (req: Request, res: Response) => {
  * Where: DELETE /{{controller}}/{id} route.
  */
 export const destroy = async (req: Request, res: Response) => {
-  const data = await {{controller}}Service.remove(Number(req.params.id));
+  const data = await {{ServiceName}}.remove(Number(req.params.id));
 
   if (!data) {
     res.status(HttpStatusCodes.NOT_FOUND).json({ message: "{{controller}} not found" });

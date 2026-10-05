@@ -11,10 +11,8 @@ export default async function {{ClassName}}Seeder() {
     // { name: "{{ClassName}} 2", description: "This is the second {{name}}" }
   ];
 
-  for (const row of rows) {
-    await db.insert({{tableVariable}}).values(row);
-  }
+  for (const row of rows) await db.insert({{tableVariable}}).values(row);
 
-  console.log("{{ClassName}} seeder completed");
+  console.log("{{ClassName}}: " + rows.length + " row(s) prepared");
 }
 

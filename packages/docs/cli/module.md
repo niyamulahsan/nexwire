@@ -22,6 +22,86 @@ bun maker <command> [options]
 
 :::
 
+## Naming
+
+Every command takes a name in any casing you like. The CLI folds it to one
+canonical form and derives four shapes from it, so `gameConfig`, `GameConfig`,
+`game_config` and `game-config` all produce exactly the same files.
+
+| Used for | Form | Example |
+| --- | --- | --- |
+| File name and import path | kebab-case | `game-config.ts` |
+| Table in the database | snake_case | `game_configs` |
+| Variable in code | camelCase | `gameConfigs` |
+| Class and schema names | PascalCase | `GameConfigSeeder` |
+
+These forms were always the convention; from 4.2.0 the generators enforce them
+instead of writing whatever you typed.
+
+### What gets normalised
+
+| You type | Canonical name |
+| --- | --- |
+| `game-config` | `game-config` |
+| `game_config` | `game-config` |
+| `game-SUITE`, `GAME-SUITE` | `game-suite` |
+| `gameSuite`, `GameSuite` | `game-suite` |
+| `game-config_2` | `game-config-2` |
+| `gamesuite`, `GAMESUITE` | `gamesuite` |
+| `gamE-SUITE-Engine` | `gam-e-suite-engine` |
+
+Two rules produce that last row. A capital inside a word marks a boundary, the
+same way it does in `gameSuite` — so the `E` in `gamE` splits it into `gam` and
+`e`, and the result keeps that capital in the PascalCase form
+(`GamESuiteEngine`). A word written without any separator carries no boundary at
+all, so `gamesuite` stays a single word rather than guessing where `game` ends.
+
+Both readings are valid TypeScript and produce the same file every time, and any
+later casing of the same words resolves back to the module you already created:
+
+```bash
+bun maker module:make gamE-SUITE-Engine   # creates src/modules/gam-e-suite-engine
+bun maker module:make-model GAM-E-SUITE-ENGINE game-config   # same module
+```
+
+Normalisation only folds separators and case. A name that cannot become a safe
+identifier is still rejected, with a suggestion, e.g. `game config` → *"Use
+\"game-config\" instead."*
+
+### Table name pluralisation
+
+The SQL table name is the plural of the model name. The rule is deliberately
+small: a consonant followed by `y` becomes `ies`, anything else takes a plain
+`s`.
+
+| Model name | Table | Exported identifier |
+| --- | --- | --- |
+| `spin` | `spins` | `spins` |
+| `audit-entry` | `audit_entries` | `auditEntries` |
+| `game-config` | `game_configs` | `gameConfigs` |
+| `ledger-entry` | `ledger_entries` | `ledgerEntries` |
+
+English irregulars (`person` → `people`, `address` → `addresses`) are not
+modelled. If your model needs one, rename the table and the export by hand
+after generating.
+
+::: warning Upgrading from before 4.2.0
+If you generated a multi-word name before 4.2.0, the files it produced do not
+compile — the name was written into identifier positions, so
+`game-configService` was read as subtraction. Re-run the generator with
+`--force` to regenerate them:
+
+```bash
+npm run maker module:make-model <module> game-config --force
+npm run maker module:make-seeder <module> game-config --force
+```
+
+`--force` only rewrites files; it never renames or deletes anything. A module
+folder that uses an older separator (for example `game_config` rather than
+`game-config`) is still found, so existing projects keep working without being
+renamed.
+:::
+
 ## Scaffold Commands
 
 ### `module:make <name>`
@@ -159,7 +239,39 @@ bun maker module:make-model posts
 
 ### `module:make-seeder <module> [name]`
 
-Generate a seeder file at `database/seeders/<name>.ts`. The seeder needs a matching model — it falls back to the module's own model when no `<name>` model exists.
+Generate a seeder file at `database/seeders/<name>.ts`.
+
+**If a model called `<name>` exists** in that module, the seeder is wired to it: the model is imported, `table` is exported, and the insert loop is pre-filled. When `<name>` does not match a model but the module has its own model, that one is used instead and the CLI says so.
+
+**If no matching model exists**, the seeder is still generated, as a *standalone* seeder that imports no model and inserts nothing until you fill it in. The CLI prints what it found and what to do next:
+
+```bash
+bun maker module:make-seeder game-suite xyz
+```
+
+```
+No model 'xyz' in module game-suite, so this is a standalone seeder: it imports
+no model and writes nothing until you fill it in.
+  Models in this module: abc. Run module:make-seeder game-suite <one of these>
+  for a seeder with the model already imported.
+Seeder ready: game-suite/xyz
+```
+
+This is deliberate. A seeder does not have to belong to the module that owns the table it writes to, and does not have to write to only one table — so the three reasonable requests below are all supported:
+
+```bash
+# 1. seed a table owned by ANOTHER module: generate here, then import that
+#    module's model yourself
+bun maker module:make-seeder game-suite posts
+
+# 2. assemble rows from several models: same thing, several imports
+bun maker module:make-seeder game-suite sign-up-flow
+
+# 3. seed a table whose model does not exist yet
+bun maker module:make-seeder game-suite post-comments
+```
+
+A standalone seeder lives in the module you named, so `module:seed <module>` is what runs it. If you want `module:seed posts` to seed the `posts` table, generate the seeder in `posts` instead — that keeps "which module owns this seeder" and "which table does it write" aligned. Every other generator makes the same trade when its dependency is missing: a controller with no service falls back to a standalone shape, and a service with no model falls back to a plain one.
 
 ::: code-group
 

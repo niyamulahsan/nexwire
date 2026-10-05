@@ -5,7 +5,7 @@ import { drizzleGenerateArgs, ensureDatabaseDirectory, ensureMigrationMeta, sync
 import { detectDialect, openApiEnabled } from "../utils/env-db.mjs";
 import { writeFiles } from "../utils/file-ops.mjs";
 import { hasFlag } from "../utils/flags.mjs";
-import { assertName, camelCase, pascal } from "../utils/naming.mjs";
+import { assertName, camelCase, normalizeName, pascal, plural, snakeCase } from "../utils/naming.mjs";
 import { packageScript, runNodeScript } from "../utils/process.mjs";
 
 const stubsRoot = path.resolve(import.meta.dirname, "../stubs");
@@ -18,7 +18,6 @@ const STUBS = {
   },
   controller: {
     openapi: "controller/openapi.ts.stub",
-    openapiWithModel: "controller/openapi.with-model.ts.stub",
     plain: "controller/plain.ts.stub",
     standalone: "controller/standalone.ts.stub"
   },
@@ -36,7 +35,8 @@ const STUBS = {
     }
   },
   seeder: {
-    named: "seeder/name.ts.stub"
+    named: "seeder/name.ts.stub",
+    standalone: "seeder/standalone.ts.stub"
   },
   service: {
     named: "service/name.ts.stub",
@@ -185,6 +185,35 @@ function resolveModuleRef(rawModule, ...flagGroups) {
   return { moduleName, leaf: leafName(moduleName) };
 }
 
+/**
+ * Find an existing module directory whose folder name spells the requested
+ * module differently, only in the separators used (`my_module` vs `my-module`).
+ *
+ * Names are canonicalised to kebab-case, so a module scaffolded before this
+ * happened can live in a folder the canonical name no longer resolves to.
+ * Without this lookup, normalising the name would lock a developer out of their
+ * own module. Matching is segment by segment so a panel path such as
+ * `admin/reporting` keeps working, and each candidate is a real directory
+ * inside src/modules, so the result cannot escape it.
+ */
+async function resolveExistingModuleDir(moduleName) {
+  let current = path.resolve(process.cwd(), "src/modules");
+  for (const segment of moduleName.split("/").filter(Boolean)) {
+    let entries;
+    try {
+      entries = await fs.readdir(current, { withFileTypes: true });
+    } catch {
+      return "";
+    }
+    const directories = entries.filter((entry) => entry.isDirectory());
+    const exact = directories.find((entry) => entry.name === segment);
+    const loose = exact ?? directories.find((entry) => normalizeName(entry.name) === normalizeName(segment));
+    if (!loose) return "";
+    current = path.join(current, loose.name);
+  }
+  return current;
+}
+
 /** Ensure a module directory exists, throwing a helpful error if not. */
 async function assertModuleExists(moduleName) {
   const root = moduleRoot(moduleName);
@@ -192,6 +221,8 @@ async function assertModuleExists(moduleName) {
   try {
     stats = await fs.stat(root);
   } catch {
+    const legacy = await resolveExistingModuleDir(moduleName);
+    if (legacy) return legacy;
     throw new Error(`Module does not exist: ${moduleName}. Create it first with: bun maker module:make ${moduleName}`);
   }
   if (!stats.isDirectory()) {
@@ -200,14 +231,28 @@ async function assertModuleExists(moduleName) {
   return root;
 }
 
-/** Build the placeholder substitution map shared by module file generators. */
+/**
+ * Build the placeholder substitution map shared by module file generators.
+ *
+ * The same developer-supplied name reaches four different places in a stub, and
+ * each needs a different shape: import paths use the kebab file name, the
+ * service identifier is camelCase, the table identifier is camelCase plural and
+ * the SQL table name is snake_case plural. Deriving all of them from one
+ * canonical name is what keeps a multi-word name from landing in an identifier
+ * position as `game-configService`, which parses as subtraction.
+ */
 function moduleFileVars(moduleName, controller) {
+  const base = normalizeName(controller);
   return {
     module: moduleName,
-    controller,
-    ClassName: pascal(controller),
+    // File name on disk and therefore every import path that points at it.
+    controller: base,
+    // Identifier the stubs export and call.
+    ServiceName: `${camelCase(base)}Service`,
+    ClassName: pascal(base),
     name: leafName(moduleName),
-    tableVariable: `${controller}s`
+    tableName: plural(snakeCase(base)),
+    tableVariable: plural(camelCase(base))
   };
 }
 
@@ -244,8 +289,7 @@ async function serviceFile(moduleName, controllerName, withModel) {
 async function moduleFiles(moduleName, openApi) {
   const name = leafName(moduleName);
   const vars = moduleFileVars(moduleName, name);
-  // The with-model controller variant only exists for the openapi style.
-  const controllerStub = openApi ? STUBS.controller.openapiWithModel : STUBS.controller.plain;
+  const controllerStub = openApi ? STUBS.controller.openapi : STUBS.controller.plain;
   return {
     "facade.ts": await stub(STUBS.facade.named, vars),
     [`controllers/${name}.ts`]: await stub(controllerStub, vars),
@@ -286,25 +330,28 @@ async function standaloneRouteTemplate(moduleName, routeName) {
 
 /** Generate a named model file for a module. */
 async function namedModelTemplate(moduleName, name, dialect) {
+  const base = normalizeName(name);
   return await stub(STUBS.model.named[dialect], {
     module: moduleName,
-    name,
-    controller: name,
-    ClassName: pascal(name),
-    tableName: `${name}s`,
-    tableVariable: `${name}s`
+    name: base,
+    controller: base,
+    ClassName: pascal(base),
+    tableName: plural(snakeCase(base)),
+    tableVariable: plural(camelCase(base))
   });
 }
 
 /** Generate a seeder file for a module model. */
 async function namedSeederTemplate(moduleName, modelName, className) {
+  const base = normalizeName(modelName);
   return await stub(STUBS.seeder.named, {
     module: moduleName,
-    name: modelName,
+    // Import path: the model file is named after the model, in kebab-case.
+    name: base,
     controller: className,
     ClassName: pascal(className),
-    tableName: `${modelName}s`,
-    tableVariable: `${modelName}s`
+    tableName: plural(snakeCase(base)),
+    tableVariable: plural(camelCase(base))
   });
 }
 
@@ -714,7 +761,16 @@ export async function makeModel(rawModule, rawNameOrFlag, extraFlags = []) {
   await writeFileSafe(modelPath, await namedModelTemplate(moduleName, name, dialect), flags, "Model file");
 }
 
-/** Generate a seeder file for an existing module model. */
+/**
+ * Generate a seeder file.
+ *
+ * A seeder does not have to own the table it writes to, and does not have to
+ * write to only one table, so a missing model is not fatal. When the model is
+ * there we import it and pre-wire the insert; when it is not we emit the
+ * standalone shape and let the developer choose what to write. That is the
+ * same trade the controller makes when there is no service, and the service
+ * makes when there is no model. Seeder was the only generator that refused.
+ */
 export async function makeSeeder(rawModule, rawNameOrFlag, extraFlags = []) {
   const { moduleName, leaf } = resolveModuleRef(rawModule, rawNameOrFlag, extraFlags);
   const flags = [];
@@ -725,34 +781,56 @@ export async function makeSeeder(rawModule, rawNameOrFlag, extraFlags = []) {
   }
   flags.push(...extraFlags);
   const root = await assertModuleExists(moduleName);
-  let modelName = name;
-  let modelPath = path.join(root, "database", "models", `${modelName}.ts`);
 
-  try {
-    await fs.access(modelPath);
-  } catch {
-    // Fall back to the module's own model. This must use the leaf, not
-    // moduleName: for a panel module moduleName is "admin/testme", so using it
-    // would probe database/models/admin/testme.ts and never match.
-    modelName = leaf;
-    modelPath = path.join(root, "database", "models", `${modelName}.ts`);
-
-    try {
-      await fs.access(modelPath);
+  // The fallback probes the leaf, not moduleName: for a panel module moduleName
+  // is "admin/testme", so using it would look for database/models/admin/testme.ts
+  // and never match.
+  const modelName = await existingModelName(root, name, leaf);
+  let seeder;
+  if (modelName) {
+    seeder = await namedSeederTemplate(moduleName, modelName, name);
+    if (modelName !== name) {
       console.log(`Model '${name}' not found, using module model '${modelName}' for seeder '${name}'.`);
-    } catch {
-      const panel = panelOf(moduleName);
-      const suggest = panel ? `${leaf} ${name} --path=${panel}` : `${leaf} ${name}`;
-      throw new Error(
-        `Model not found for seeder: src/modules/${moduleName}/database/models/${name}.ts. Create it first with: bun maker module:make-model ${suggest}`
-      );
     }
+  } else {
+    seeder = await stub(STUBS.seeder.standalone, {
+      module: moduleName,
+      name,
+      ClassName: pascal(name),
+      // The stub shows this as the conventional table name, so derive it the
+      // same way the bound stub does - it is what a model of this name exports.
+      tableVariable: plural(camelCase(name))
+    });
+    const available = await listModels(root);
+    console.log(`No model '${name}' in module ${moduleName}, so this is a standalone seeder: it imports no model and writes nothing until you fill it in.`);
+    console.log(
+      available.length
+        ? `  Models in this module: ${available.join(", ")}. Run module:make-seeder ${moduleName} <one of these> for a seeder with the model already imported.`
+        : `  This module has no models yet. Create one with: bun maker module:make-model ${moduleName} ${name}`
+    );
   }
 
-  const seeder = await namedSeederTemplate(moduleName, modelName, name);
   await writeFileSafe(path.join(root, `database/seeders/${name}.ts`), seeder, flags, "Seeder file");
 
   console.log(`Seeder ready: ${moduleName}/${name}`);
+}
+
+/** The model a seeder binds to: the requested one, else the module's own. Null when neither exists. */
+async function existingModelName(root, name, leaf) {
+  for (const candidate of [name, leaf]) {
+    if (await pathExists(path.join(root, "database", "models", `${candidate}.ts`))) return candidate;
+  }
+  return null;
+}
+
+/** Model file names in a module, without the extension. Empty when there are none. */
+async function listModels(root) {
+  try {
+    const entries = await fs.readdir(path.join(root, "database", "models"));
+    return entries.filter((f) => f.endsWith(".ts")).map((f) => f.slice(0, -3));
+  } catch {
+    return [];
+  }
 }
 
 /** Generate a job file for an existing module. */
