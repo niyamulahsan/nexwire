@@ -7,6 +7,7 @@ import { registerMiddlewareCommands } from "./middleware/index.mjs";
 import { registerModuleCommands } from "./module/index.mjs";
 import { registerRuntimeCommands } from "./runtime/index.mjs";
 import { makerCommandPrefix, showHelp } from "./utils/help.mjs";
+import { registerProjectCommands } from "./utils/project-commands.mjs";
 
 const args = process.argv.slice(2);
 const [command] = args;
@@ -41,6 +42,12 @@ try {
   registerDeployCommands(program, args);
   registerDbCommands(program, args);
   registerRuntimeCommands(program, args);
+
+  // The project's own commands come last, so a built-in always wins a name
+  // clash. Absent file is silent and free; a file that is present but broken
+  // throws, and the catch below reports it and exits rather than leaving the
+  // developer with commands that silently do not exist.
+  await registerProjectCommands(program, args);
 
   if (!command) {
     showHelp(program);

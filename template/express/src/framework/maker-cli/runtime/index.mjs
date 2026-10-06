@@ -1,4 +1,5 @@
 import { clearViteCache, runRuntime, runTest, runTestCoverage, runTestUI, runTestWatch, runUi, runVite } from "./core.mjs";
+import { initProjectCommands, PROJECT_COMMANDS_PATH } from "../utils/project-commands.mjs";
 
 /** Register runtime commands (dev, serve, queue, schedule, UI tools) on the CLI program. */
 export function registerRuntimeCommands(program, rawArgs) {
@@ -69,6 +70,21 @@ export function registerRuntimeCommands(program, rawArgs) {
     .description("Clear Vite cache folders (cross-platform)")
     .allowUnknownOption(true)
     .action(async () => clearViteCache());
+  program
+    .command("maker:init")
+    .description(`Create ${PROJECT_COMMANDS_PATH} for your own commands`)
+    .option("--force", "Overwrite an existing file")
+    .allowUnknownOption(true)
+    .action(async (options) => {
+      const { created, overwritten } = await initProjectCommands(process.cwd(), { force: Boolean(options?.force) });
+      // created = written into a new file; overwritten = replaced under --force.
+      // Neither means the file was already there and was left alone.
+      console.log(
+        created || overwritten
+          ? `Add your commands to ${PROJECT_COMMANDS_PATH}, then run: maker --help`
+          : `${PROJECT_COMMANDS_PATH} already exists and was left alone. Edit it to add commands, or re-run with --force to replace it.`
+      );
+    });
   program
     .command("test")
     .description("Run Vitest backend tests")

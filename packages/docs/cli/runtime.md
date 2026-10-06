@@ -470,6 +470,84 @@ bun maker vite:cache:clear
 
 :::
 
+## Custom Commands
+
+Your project can add its own maker commands. The file you own is `maker/commands.mjs` in the project root — the same idea as Laravel's `routes/console.php`.
+
+It is deliberately outside `src/`. Anything under `src/framework/` is copied into the published package, so an edit there is lost on the next framework update, and `src/modules/` is swept by the route, job and seeder globs.
+
+### `maker:init`
+
+Creates `maker/commands.mjs` with a working example. It will not overwrite an existing file unless you pass `--force`.
+
+::: code-group
+
+```bash [npm]
+npm run maker maker:init
+```
+
+```bash [pnpm]
+pnpm maker maker:init
+```
+
+```bash [yarn]
+yarn maker maker:init
+```
+
+```bash [bun]
+bun maker maker:init
+```
+
+:::
+
+### Writing them
+
+`program` is the same [commander](https://github.com/tj/commander.js) object the built-in commands are built with, so `.command()`, `.description()`, `.option()` and `.action()` behave exactly as they do everywhere else in the maker CLI.
+
+```js
+// maker/commands.mjs
+import { sendInvoice } from "../src/invoices/send.js";
+
+export default function register(program) {
+  program
+    .command("invoice:send <customer>")
+    .description("Send an invoice to a customer")
+    .option("--dry-run", "Print what would be sent")
+    .action(async (customer, options) => {
+      await sendInvoice(customer, { dryRun: options.dryRun });
+    });
+}
+```
+
+```bash
+maker invoice:send acme --dry-run
+maker --help          # your commands appear alongside the built-ins
+```
+
+Export a `default` function, or a named `register` export — either is accepted.
+
+### Three things that will bite you
+
+**Absent is silent.** If the file does not exist, nothing happens and nothing is printed. That is the common case, so it has to be free.
+
+**Broken is loud.** If the file exists but cannot be parsed, throws while loading, or exports the wrong shape, `maker` stops with an error naming `maker/commands.mjs` and exits non-zero. It is never swallowed — a developer's commands silently not existing is far worse than a message. Every failure names the file:
+
+```text
+Could not load maker/commands.mjs: Unexpected end of input
+maker/commands.mjs must export a default function (program, args) => void. Found: undefined.
+```
+
+**Framework names win.** Commander refuses to register a command whose name is already taken, so a project cannot shadow a built-in it did not write. The error names both the file and the name, so rename yours:
+
+```text
+Could not register commands from maker/commands.mjs: cannot add command
+'module:list' as already have command 'module:list'
+```
+
+::: warning Stubs are not overridable
+A custom command does not get a custom stub. `module:make-*` reads from `src/framework/maker-cli/stubs/`, which is framework-owned and replaced on every update. If you need your own template, write the file yourself from your command — that is the honest trade, and it keeps the generated file under your control.
+:::
+
 ## Summary
 
 | Command            | Development                           | Production             |
@@ -487,3 +565,4 @@ bun maker vite:cache:clear
 | `maildev:view`     | Email testing                         | —                      |
 | `redis:view`       | Redis inspection                      | —                      |
 | `vite:cache:clear` | Cache cleanup                         | —                      |
+| `maker:init`       | Create `maker/commands.mjs`           | —                      |
