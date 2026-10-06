@@ -48,6 +48,11 @@ jobs:
       - name: Clear npm cache
         run: npm cache clean --force 2>/dev/null || true
 
+      # Node 22 bundles npm 11.x which can fail with "Cannot read properties of null (reading 'edgesOut')"
+      # when resolving some transitive dependencies. Downgrade to npm 10.
+      - name: Pin npm to 10.x
+        run: npm install -g npm@10
+
       # Deliberately `npm install`, not `npm ci`. No lockfile is tracked for the
       # templates - .gitignore excludes package-lock.json on the grounds that each
       # developer regenerates it with their own package manager - so there is
@@ -55,7 +60,7 @@ jobs:
       # The cost is that this job resolves upstream versions fresh each run, so a
       # new upstream release can turn the job red without any change on this side.
       - name: Install
-        run: npm install --no-audit --no-fund 2>&1 | tee npm-install.log
+        run: npm install --no-audit --no-fund
 
       - name: Typecheck
         run: npx tsc --noEmit
