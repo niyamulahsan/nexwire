@@ -21,7 +21,11 @@ pnpm-debug.log*
 Thumbs.db
 
 # Lock files — regenerated per developer's package manager
+# bun.lockb is the binary format used by bun before 1.2; bun.lock is the
+# current text format. Both are ignored, so upgrading bun cannot turn a
+# developer's local install into an untracked file.
 bun.lock
+bun.lockb
 package-lock.json
 pnpm-lock.yaml
 yarn.lock
