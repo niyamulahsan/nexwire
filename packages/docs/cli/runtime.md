@@ -537,6 +537,12 @@ Could not load maker/commands.mjs: Unexpected end of input
 maker/commands.mjs must export a default function (program, args) => void. Found: undefined.
 ```
 
+::: warning A broken file blocks every maker command
+This includes the framework's own. Until the file parses, `module:make` and the rest are unavailable too — the CLI cannot know which of your commands were supposed to work.
+
+To get out, fix the file, or delete it. Deleting leaves nothing behind: nothing caches a registration and no framework update refers to it, so `maker` returns immediately to exactly the state it was in before `maker maker:init`.
+:::
+
 **Framework names win.** Commander refuses to register a command whose name is already taken, so a project cannot shadow a built-in it did not write. The error names both the file and the name, so rename yours:
 
 ```text
