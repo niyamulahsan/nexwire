@@ -3,6 +3,7 @@ import fsPromises from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { writeFileAlways, writeFileIfMissing } from "./file-ops.mjs";
+import { PROJECT_COMMAND_FLAG } from "./help.mjs";
 
 /**
  * Where a project keeps its own maker commands.
@@ -105,7 +106,15 @@ export async function registerProjectCommands(program, rawArgs, cwd = process.cw
     });
   }
 
-  const added = program.commands.filter((command) => !before.has(command)).map((command) => command.name());
+  const added = [];
+
+  for (const command of program.commands) {
+    if (before.has(command)) continue;
+    // Tagged so `maker --help` files these under "Your commands" beside
+    // `maker:init`, rather than in the section for unclassified commands.
+    command[PROJECT_COMMAND_FLAG] = true;
+    added.push(command.name());
+  }
 
   return { loaded: true, file, added };
 }

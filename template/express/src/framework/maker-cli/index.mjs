@@ -6,7 +6,7 @@ import { registerDbCommands } from "./db/index.mjs";
 import { registerMiddlewareCommands } from "./middleware/index.mjs";
 import { registerModuleCommands } from "./module/index.mjs";
 import { registerRuntimeCommands } from "./runtime/index.mjs";
-import { makerCommandPrefix, showHelp } from "./utils/help.mjs";
+import { configureGroupedHelp, makerCommandPrefix, showHelp } from "./utils/help.mjs";
 import { registerProjectCommands } from "./utils/project-commands.mjs";
 
 const args = process.argv.slice(2);
@@ -34,8 +34,11 @@ try {
     .name(namePrefix ? `${namePrefix} maker` : "maker")
     .allowUnknownOption(true)
     .allowExcessArguments(true)
-    .helpOption("-h, --help")
-    .addHelpText("beforeAll", "nexwire maker\n");
+    .helpOption("-h, --help");
+
+  // Grouped command list. Must be set before anything prints help. Per-command
+  // help is untouched, so `maker <command> --help` still uses commander's layout.
+  configureGroupedHelp(program);
 
   registerMiddlewareCommands(program, args);
   registerModuleCommands(program, args);

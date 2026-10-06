@@ -554,6 +554,71 @@ Could not register commands from maker/commands.mjs: cannot add command
 A custom command does not get a custom stub. `module:make-*` reads from `src/framework/maker-cli/stubs/`, which is framework-owned and replaced on every update. If you need your own template, write the file yourself from your command — that is the honest trade, and it keeps the generated file under your control.
 :::
 
+## Finding a command
+
+`maker --help` shows the nexwire wordmark, then groups the commands by what you are trying to do, so you can answer a question instead of reading a flat list of every name.
+
+::: details When you will not see the wordmark
+The wordmark is decoration, so it stays out of the way rather than insisting on itself:
+
+- **A terminal narrower than 41 columns** gets plain `nexwire maker` text instead. Art that overflows wraps into an unreadable mess.
+- **Piped or redirected output** gets plain text. `maker --help > help.txt` produces a file a human can read, not a file that opens with ASCII art.
+- **Per-command help** gets no wordmark at all. `maker module:make --help` is for checking a flag, not for branding.
+
+```text
+Getting started
+  dev                Start API + Vue 3 UI plus optional workers/tools
+  serve              Start HTTP server (dist first if built, else src)
+
+Generators - global
+  middleware:make    Generate a middleware file in src/middlewares
+
+Generators - modules
+  module:make        Create one or more modules with facade, schema, service...
+  module:make-model  Generate a model file for an existing module
+
+Modules - manage
+  module:list        List all discovered modules
+  module:delete      Move a module directory to storage trash (soft delete)
+
+Database
+  db:migrate         Generate then run Drizzle migrations
+```
+
+The full set of sections is **Getting started**, **Generators - global**, **Generators - modules**, **Modules - manage**, **Database**, **Queue and scheduler**, **Deploy**, **Testing**, and **Your commands**.
+
+::: tip Generators - global is not the same as Generators - modules
+`middleware:make` writes to `src/middlewares` and applies to the whole app. `module:make-middleware` writes inside a single module and applies only to it. They are near-identical names doing different things, so they are deliberately listed in different sections.
+:::
+
+The listing shows command names and descriptions only. For the options and arguments of one command:
+
+::: code-group
+
+```bash [npm]
+npm run maker <command> --help
+```
+
+```bash [pnpm]
+pnpm maker <command> --help
+```
+
+```bash [yarn]
+yarn maker <command> --help
+```
+
+```bash [bun]
+bun maker <command> --help
+```
+
+:::
+
+`maker help <command>` does the same thing and still works.
+
+::: details Why your own commands appear under "Your commands"
+Commands you register in `maker/commands.mjs` are listed beside `maker:init`, not mixed in with the built-ins, so it is obvious which commands you added.
+:::
+
 ## Summary
 
 | Command            | Development                           | Production             |
