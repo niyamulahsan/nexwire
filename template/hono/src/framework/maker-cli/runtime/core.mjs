@@ -498,24 +498,42 @@ export async function runVite(configPath) {
   await runCommand(localBin("vite"), ["--config", configPath]);
 }
 
-/** Run Vitest tests (backend). */
+/**
+ * Strip the argument separator npm inserts.
+ *
+ * `npm run maker test -- posts` reaches us as `test posts`, but
+ * `npm run maker test -- -- posts` reaches us as `test -- posts`, because npm
+ * eats one separator and forwards the other. Vitest reads a bare `--` as a
+ * positional filter that matches no test file, which silently runs the whole
+ * suite instead of the one you asked for - so the command appears to work while
+ * doing something else. Dropping a leading `--` makes both spellings behave the
+ * same, and makes the passthrough behave identically across package managers.
+ */
+function vitestArgs(rawArgs) {
+  return rawArgs[0] === "--" ? rawArgs.slice(1) : rawArgs;
+}
+
+/** Run Vitest tests once (backend). */
 export async function runTest(rawArgs = []) {
-  await runCommand(localBin("vitest"), rawArgs);
+  // "run" is required. Bare `vitest` is watch mode, which never exits - so
+  // without this, `maker test` hung in any interactive terminal while CI and
+  // piped runs exited normally, and the two looked identical from a log.
+  await runCommand(localBin("vitest"), ["run", ...vitestArgs(rawArgs)]);
 }
 
 /** Run Vitest in watch mode (backend). */
 export async function runTestWatch(rawArgs = []) {
-  await runCommand(localBin("vitest"), rawArgs);
+  await runCommand(localBin("vitest"), vitestArgs(rawArgs));
 }
 
-/** Run Vitest with coverage (backend). */
+/** Run Vitest once with coverage (backend). */
 export async function runTestCoverage(rawArgs = []) {
-  await runCommand(localBin("vitest"), ["--coverage", ...rawArgs]);
+  await runCommand(localBin("vitest"), ["run", "--coverage", ...vitestArgs(rawArgs)]);
 }
 
 /** Run Vitest in UI mode (backend). */
 export async function runTestUI(rawArgs = []) {
-  await runCommand(localBin("vitest"), ["--ui", ...rawArgs]);
+  await runCommand(localBin("vitest"), ["--ui", ...vitestArgs(rawArgs)]);
 }
 
 /** Clear Vite cache directories. */

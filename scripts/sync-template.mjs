@@ -88,7 +88,7 @@ function syncEngine(name, { src, dest }) {
   }
 
   const rootName = basename(src);
-  const skipDirs = new Set(["node_modules", "dist"]);
+  const skipDirs = new Set(["node_modules", "dist", "coverage"]);
   const skipRootDirs = new Set(["deploy"]);
   const skipFiles = new Set(["bun.lock", "package-lock.json", "pnpm-lock.yaml", "yarn.lock"]);
 

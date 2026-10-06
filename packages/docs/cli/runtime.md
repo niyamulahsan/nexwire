@@ -277,78 +277,128 @@ bun maker schedule:work --prod
 
 ### `test`
 
-Run Vitest backend tests once.
+Run Vitest backend tests once and exit.
+
+Pass anything after the command straight through to Vitest, so all of Vitest's
+own options work here — `--coverage`, `--reporter=verbose`, `--bail`, and so on.
 
 ::: code-group
 
 ```bash [npm]
 npm run maker test
-npm run maker test -- -- --filter=posts
+npm run maker test -- posts
+npm run maker test -- --reporter=verbose
 ```
 
 ```bash [pnpm]
 pnpm maker test
-pnpm maker test --filter=posts
+pnpm maker test posts
+pnpm maker test --reporter=verbose
 ```
 
 ```bash [yarn]
 yarn maker test
-yarn maker test --filter=posts
+yarn maker test posts
+yarn maker test --reporter=verbose
 ```
 
 ```bash [bun]
 bun maker test
-bun maker test --filter=posts
+bun maker test posts
+bun maker test --reporter=verbose
 ```
 
 :::
 
+::: tip Filtering is positional, not a flag
+To run part of the suite, name it — `maker test posts` matches test files whose
+path contains `posts`. There is no `--filter` option; Vitest has no such flag and
+errors with `Unknown option \`--filter\`` if you try one.
+:::
+
+::: warning The npm form needs one separator, not two
+`npm run maker test -- posts` is right. `npm run maker test -- -- posts` also
+works, but for a confusing reason: npm consumes the first `--` and forwards the
+second, which arrives as Vitest's argument separator and reads as a filter
+matching nothing. Because that quietly runs **the whole suite** instead of the
+part you asked for, it looks like it worked.
+
+pnpm, yarn and bun need no separator at all.
+:::
+
 ### `test:watch`
 
-Run Vitest backend tests in watch mode — re-runs on file changes.
+Run Vitest in watch mode — re-runs when a file changes.
 
 ::: code-group
 
 ```bash [npm]
 npm run maker test:watch
+npm run maker test:watch -- posts
 ```
 
 ```bash [pnpm]
 pnpm maker test:watch
+pnpm maker test:watch posts
 ```
 
 ```bash [yarn]
 yarn maker test:watch
+yarn maker test:watch posts
 ```
 
 ```bash [bun]
 bun maker test:watch
+bun maker test:watch posts
 ```
 
 :::
 
+::: tip This one keeps running
+`test` runs once and exits; `test:watch` stays open until you stop it, which is
+why it does not finish in CI and is not wired into the test workflow.
+:::
+
 ### `test:coverage`
 
-Run Vitest backend tests with code coverage reporting.
+Run Vitest once with a code coverage report.
 
 ::: code-group
 
 ```bash [npm]
 npm run maker test:coverage
+npm run maker test:coverage -- auth
 ```
 
 ```bash [pnpm]
 pnpm maker test:coverage
+pnpm maker test:coverage auth
 ```
 
 ```bash [yarn]
 yarn maker test:coverage
+yarn maker test:coverage auth
 ```
 
 ```bash [bun]
 bun maker test:coverage
+bun maker test:coverage auth
 ```
 
+:::
+
+The report is written to `coverage/` — a text summary in the terminal plus an
+HTML report you can open at `coverage/index.html`. That directory is gitignored,
+so it never shows up in a commit.
+
+::: info This reports; it does not judge
+A new project has no coverage threshold, so this always succeeds and simply
+tells you the number. That is deliberate: the percentage includes the whole
+framework, not just your code, so a threshold calibrated for the framework
+itself would fail your project on its first run with every test passing.
+
+See [Testing](./../guide/testing) for how to set one that is worth having once
+you have written enough tests.
 :::
 
 ### `test:ui`

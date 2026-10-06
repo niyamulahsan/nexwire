@@ -20,6 +20,13 @@ const events = new Map<string, QueueEvents>();
 const handlers = new Map<string, QueueHandler>();
 const durableHandlers = new Map<string, DurableQueueHandler>();
 const workers: Worker[] = [];
+/**
+ * Queue names this process already has a worker for. Each BullMQ `Worker` holds
+ * its own blocking Redis connection, so starting the runtime twice for one queue
+ * would silently double that connection for no benefit. Cleared by
+ * `stopQueueRuntime` so a later boot in the same process still works.
+ */
+const workedQueues = new Set<string>();
 let durableStateStore: RedisStateStore | null = null;
 
 /**
@@ -93,7 +100,9 @@ export function getQueue(queue = "default") {
  * When: Durable queue/worker construction.
  * Where: Queue facade internals.
  * How: Creates one `RedisStateStore` reusing the shared Redis client so durable
- *      state lives in Redis without opening extra connections.
+ *      state lives in Redis. Note the store opens its own client on first use -
+ *      bullmq-durable does this so that merely constructing a store costs no
+ *      connection - which is why `stopQueueRuntime` must call `close()` on it.
  */
 function durableStateStoreIfReady() {
   const client = redisClientIfReady();
@@ -277,6 +286,12 @@ export async function startQueueWorker(queueNames = ["default"]) {
   if (!client) throw new Error("Redis is required for queue workers");
 
   for (const queueName of queueNames) {
+    // Already working this queue in this process: a second worker would add a
+    // second blocking connection and a second copy of every log line, and would
+    // never process a job the first one was not already getting.
+    if (workedQueues.has(queueName)) continue;
+    workedQueues.add(queueName);
+
     if (!events.has(queueName)) {
       events.set(queueName, new QueueEvents(queueName, { connection: client as any, prefix: queuePrefix() }));
     }
@@ -364,11 +379,15 @@ export async function clearQueue() {
  * Why: Gracefully stops all workers/events/queues.
  * When: Process shutdown.
  * Where: Server/worker lifecycle hooks.
- * How: Closes resources with Promise.allSettled and clears registries.
+ * How: Closes resources with Promise.allSettled and clears registries. The
+ *      durable state store is closed too: it owns a Redis client of its own, and
+ *      dropping the reference without closing it would leak that connection on
+ *      every restart until Redis runs out of clients.
  */
 export async function stopQueueRuntime() {
   await Promise.allSettled(workers.map((worker) => worker.close()));
   workers.length = 0;
+  workedQueues.clear();
 
   await Promise.allSettled(Array.from(events.values()).map((queueEvents) => queueEvents.close()));
   events.clear();
@@ -376,5 +395,8 @@ export async function stopQueueRuntime() {
   await Promise.allSettled(Array.from(queues.values()).map((queue) => queue.close()));
   queues.clear();
 
-  durableStateStore = null;
+  if (durableStateStore) {
+    await Promise.allSettled([durableStateStore.close()]);
+    durableStateStore = null;
+  }
 }

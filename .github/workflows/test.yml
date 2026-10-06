@@ -71,7 +71,7 @@ jobs:
       # cause and cannot fix. This is a guard on this repository, so it lives
       # here.
       #
-      # Set from express, which sits just below hono (14.25% vs 14.74%
+      # Set from express, which sits just below hono (21.24% vs 22.16%
       # statements) because it carries engine-specific files hono does not. Both
       # engines run, so a drop in either one fails.
       #
@@ -79,7 +79,7 @@ jobs:
       - name: Test with coverage floor
         run: >-
           npm run test:run -- --coverage
-          --coverage.thresholds.statements=14
-          --coverage.thresholds.branches=11
-          --coverage.thresholds.functions=9
-          --coverage.thresholds.lines=14
+          --coverage.thresholds.statements=30
+          --coverage.thresholds.branches=23
+          --coverage.thresholds.functions=27
+          --coverage.thresholds.lines=30

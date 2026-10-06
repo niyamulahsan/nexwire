@@ -170,12 +170,12 @@ This creates `__tests__/user-test.test.ts` instead.
 
 ### Scripts
 
-| Script          | Purpose                                                |
-| --------------- | ------------------------------------------------------ |
-| `test`          | Run all tests in watch mode                            |
-| `test:run`      | Run all tests once (CI mode)                           |
+| Script          | Purpose                              |
+| --------------- | ------------------------------------ |
+| `test`          | Run all tests in watch mode          |
+| `test:run`      | Run all tests once (CI mode)         |
 | `test:coverage` | Run once and print a coverage report |
-| `test:ui`       | Open Vitest visual UI in browser                       |
+| `test:ui`       | Open Vitest visual UI in browser     |
 
 ::: code-group
 
@@ -314,16 +314,6 @@ Raise it in the same change as the tests that earned the increase. If your new t
 ::: warning Do not lower it
 Lowering a threshold is the one edit that quietly removes the protection. If a test was deleted and coverage dropped, that is information worth keeping, not a number to edit away.
 :::
-
-### Coverage will not find your bug
-
-A percentage counts lines that ran. It cannot see the failures that actually reach production:
-
-- **A leaked resource.** Every line of a function that opens a connection, subscribes a listener, or starts a timer can be covered and still leak. Coverage has no way to count handles.
-- **State that survives a request.** A rate-limit counter that never resets, or session data appearing in the next user's response, is fully covered code with a bug in it.
-- **A wrong answer on an unusual input.** Two developers call the same function; only one gets the wrong result. That is a missing case, not a missing line.
-
-For those, write the test that reproduces the specific failure — and for anything that holds a resource, assert on the resource. Count the connections, count the listeners, call it a hundred times and check nothing grew.
 
 ### Coverage will not find your bug
 
