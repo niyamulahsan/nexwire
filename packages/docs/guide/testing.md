@@ -54,7 +54,6 @@ bun run test:run
 Vitest is pre-configured in `vitest.config.ts` at your project root:
 
 ```ts
-import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { defineConfig } from "vitest/config";
@@ -82,19 +81,21 @@ export default defineConfig({
         "src/**/*.test.ts",
         "src/**/*.spec.ts",
       ],
+      // No `thresholds` here. See "Coverage thresholds" below for why, and for
+      // how to set one for your own project.
     },
   },
 });
 ```
 
-| Option | Value |
-|---|---|
-| **Globals** | `true` — `describe`, `it`, `expect` available without imports |
-| **Include** | `src/**/*.test.ts`, `src/**/*.spec.ts` |
-| **Exclude** | UI resources, storage, node_modules, dist |
-| **Environment** | `node` |
-| **Path alias** | `@` → `./src` |
-| **Coverage** | V8 provider, text + JSON + HTML reporters |
+| Option          | Value                                                         |
+| --------------- | ------------------------------------------------------------- |
+| **Globals**     | `true` — `describe`, `it`, `expect` available without imports |
+| **Include**     | `src/**/*.test.ts`, `src/**/*.spec.ts`                        |
+| **Exclude**     | UI resources, storage, node_modules, dist                     |
+| **Environment** | `node`                                                        |
+| **Path alias**  | `@` → `./src`                                                 |
+| **Coverage**    | V8 provider, text + JSON + HTML reporters, with a floor       |
 
 ## Writing Tests
 
@@ -169,12 +170,12 @@ This creates `__tests__/user-test.test.ts` instead.
 
 ### Scripts
 
-| Script | Purpose |
-|---|---|
-| `test` | Run all tests in watch mode |
-| `test:run` | Run all tests once (CI mode) |
-| `test:coverage` | Run with code coverage report |
-| `test:ui` | Open Vitest visual UI in browser |
+| Script          | Purpose                                                |
+| --------------- | ------------------------------------------------------ |
+| `test`          | Run all tests in watch mode                            |
+| `test:run`      | Run all tests once (CI mode)                           |
+| `test:coverage` | Run once and print a coverage report |
+| `test:ui`       | Open Vitest visual UI in browser                       |
 
 ::: code-group
 
@@ -275,3 +276,61 @@ Output includes:
 - **HTML** — browsable report at `coverage/index.html`
 
 Coverage includes all `src/**/*.ts` files except UI resources, storage, maker-cli internals, and test files themselves.
+
+## Coverage thresholds
+
+Your new project's `vitest.config.ts` ships **without** a `thresholds` block, so `npm run test:coverage` always reports and never fails.
+
+This is deliberate, and worth understanding before you add one. The coverage percentage includes the whole framework, not just your code — and the framework's own tests are not published with your project, because they test the framework rather than the application you are building. A brand new project therefore measures around **8.5%**, almost all of it framework code you did not write and cannot practically cover.
+
+A threshold copied from the framework's repository (14%) would make `npm run test:coverage` fail on a fresh install, with every one of your tests passing, for a number you did not cause. That is a bad first experience, so the floor is kept on the framework side, in its own CI, where it guards the framework.
+
+### Adding one to your project
+
+Once you have written enough tests for your own code, a floor is genuinely useful: it stops you adding a module with no tests and lowering the number without noticing.
+
+Set it in `vitest.config.ts`:
+
+```ts
+coverage: {
+  // ...
+  thresholds: {
+    statements: 25,
+    branches: 20,
+    functions: 25,
+    lines: 25,
+  },
+},
+```
+
+Or set it for one run without editing the file:
+
+```bash
+npm run test:run -- --coverage --coverage.thresholds.statements=25
+```
+
+Raise it in the same change as the tests that earned the increase. If your new tests take statements to 30%, set `statements: 30`.
+
+::: warning Do not lower it
+Lowering a threshold is the one edit that quietly removes the protection. If a test was deleted and coverage dropped, that is information worth keeping, not a number to edit away.
+:::
+
+### Coverage will not find your bug
+
+A percentage counts lines that ran. It cannot see the failures that actually reach production:
+
+- **A leaked resource.** Every line of a function that opens a connection, subscribes a listener, or starts a timer can be covered and still leak. Coverage has no way to count handles.
+- **State that survives a request.** A rate-limit counter that never resets, or session data appearing in the next user's response, is fully covered code with a bug in it.
+- **A wrong answer on an unusual input.** Two developers call the same function; only one gets the wrong result. That is a missing case, not a missing line.
+
+For those, write the test that reproduces the specific failure — and for anything that holds a resource, assert on the resource. Count the connections, count the listeners, call it a hundred times and check nothing grew.
+
+### Coverage will not find your bug
+
+A percentage counts lines that ran. It cannot see the failures that actually reach production:
+
+- **A leaked resource.** Every line of a function that opens a connection, subscribes a listener, or starts a timer can be covered and still leak. Coverage has no way to count handles.
+- **State that survives a request.** A rate-limit counter that never resets, or session data appearing in the next user's response, is fully covered code with a bug in it.
+- **A wrong answer on an unusual input.** Two developers call the same function; only one gets the wrong result. That is a missing case, not a missing line.
+
+For those, write the test that reproduces the specific failure — and for anything that holds a resource, assert on the resource. Count the connections, count the listeners, call it a hundred times and check nothing grew.
