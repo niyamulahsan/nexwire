@@ -60,7 +60,7 @@ The route file is picked up automatically. The model is used by the migration sy
 - Growing teams that need consistent conventions and clear module boundaries — so a codebase can expand without becoming a pile of glue code.
 - Backend developers moving into full-stack who want a familiar server setup (Hono/Express + Drizzle + Redis) with a UI that just works.
 - Startup founders who need to move fast — scaffold, run dev, ship features.
-- Laravel / Rails / Django developers looking for a TypeScript equivalent with routing, ORM, queues, cache, auth, realtime, and deployment in one package.
+- Developers coming from Rails, Django, or similar stacks who want routing, ORM, queues, cache, auth, realtime, and deployment in one TypeScript package.
 - Teams scaling past their first architecture who want module isolation, engine choice, and one-command deployment without adopting a heavyweight DI framework.
 
 ## Who nexwire is not for

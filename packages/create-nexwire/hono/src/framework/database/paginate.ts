@@ -183,7 +183,7 @@ export async function paginate<T = any>(
 }
 
 /**
- * Why: Laravel-style pagination for Drizzle relational queries.
+ * Why: Pagination for Drizzle relational queries.
  * When: Controllers need eager loading via `db.query.table.findMany({ with })`.
  * Where: Use beside `paginate`; this targets model/relational API, not select builders.
  * How: Counts the base table separately, then runs `findMany` with limit/offset.

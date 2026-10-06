@@ -370,7 +370,7 @@ npm run maker db seed
 
 ## Unsupported Commands
 
-Drizzle Kit does not support Laravel-style rollback or refresh operations:
+Drizzle Kit does not support rollback or refresh operations:
 
 | Attempted             | Why it fails              | Use instead                                 |
 | --------------------- | ------------------------- | ------------------------------------------- |

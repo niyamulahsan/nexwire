@@ -472,7 +472,7 @@ bun maker vite:cache:clear
 
 ## Custom Commands
 
-Your project can add its own maker commands. The file you own is `maker/commands.mjs` in the project root — the same idea as Laravel's `routes/console.php`.
+Your project can add its own maker commands. The file you own is `maker/commands.mjs` in the project root.
 
 It is deliberately outside `src/`. Anything under `src/framework/` is copied into the published package, so an edit there is lost on the next framework update, and `src/modules/` is swept by the route, job and seeder globs.
 

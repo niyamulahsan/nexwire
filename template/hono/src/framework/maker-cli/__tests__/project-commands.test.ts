@@ -7,9 +7,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { initProjectCommands, PROJECT_COMMANDS_PATH, registerProjectCommands } from "../utils/project-commands.mjs";
 
 /**
- * A project can add its own maker commands from a file it owns, the way Laravel
- * does with `routes/console.php`. Two properties matter more than the feature
- * itself, and both are easy to get wrong:
+ * A project can add its own maker commands from a file it owns. Two properties
+ * matter more than the feature itself, and both are easy to get wrong:
  *
  * 1. Absent must be silent. Almost every project will not have the file, so the
  *    common path has to cost nothing and say nothing.

@@ -130,7 +130,7 @@ Each facade function has its own page. Every export below is a documented part o
 
 - **HTTP & OpenAPI** — `createRouter`/`group` build the router; `createRoute` documents a route; `z` writes the schemas; `jsonContent` + `HttpStatusCodes` describe responses.
 - **Input safety** — `validate` runs a schema anywhere (outside routes) and throws a structured `422` on failure.
-- **Data** — `db` is the Drizzle client; `paginate` / `paginateModel` / `paginateQuery` / `paginateTable` wrap queries in a Laravel-style page (see the [Which one?](./paginate) table).
+- **Data** - `db` is the Drizzle client; `paginate` / `paginateModel` / `paginateQuery` / `paginateTable` wrap queries into a single page of results (see the [Which one?](./paginate) table).
 - **Caching** — `cache` stores JSON with TTL and degrades to a no-op when Redis is off.
 - **Background work** — `command`/`dispatchCommand` run in-process handlers; `dispatchEvent` fans out to sockets and/or queues; `queueJob`/`shouldQueue` are the raw BullMQ surface.
 - **Realtime** — `broadcast` emits a Socket.IO event to targeted audiences.

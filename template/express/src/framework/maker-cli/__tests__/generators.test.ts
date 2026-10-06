@@ -268,8 +268,8 @@ describe.skipIf(!canChdir)("name normalisation across generators", () => {
  * missing, `module:make-seeder` threw and produced nothing. That made three
  * reasonable requests impossible - seeding a table owned by another module,
  * seeding rows assembled from several models, and seeding a table that does
- * not exist yet. Laravel has no such binding: `make:seeder` emits an empty
- * class and the developer chooses what it writes.
+ * not exist yet. A seeder has no reason to require a model: it is a function
+ * that inserts rows, and what it inserts is the developer's choice.
  *
  * So a missing model now yields a standalone seeder that imports no model,
  * which is the same trade every other dependent generator already makes:

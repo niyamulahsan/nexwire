@@ -42,7 +42,7 @@ function assertName(value, label) {
 
 function unsupported() {
   console.error(
-    'Drizzle Kit does not support Laravel-style rollback/refresh migrations. Use "npm run maker db:fresh -- --seed" (or "bun maker db:fresh --seed") for a SQLite development reset, or manage rollback SQL manually for production databases.'
+    'Drizzle Kit does not support rollback/refresh migrations. Use "npm run maker db:fresh -- --seed" (or "bun maker db:fresh --seed") for a SQLite development reset, or manage rollback SQL manually for production databases.'
   );
   process.exit(1);
 }
