@@ -356,7 +356,7 @@ bun maker test:watch posts
 
 ::: tip This one keeps running
 `test` runs once and exits; `test:watch` stays open until you stop it, which is
-why it does not finish in CI and is not wired into the test workflow.
+why `test:run` is the one to reach for when you want an answer and an exit code.
 :::
 
 ### `test:coverage`

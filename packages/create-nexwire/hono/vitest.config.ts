@@ -25,14 +25,14 @@ export default defineConfig({
       // framework's own tests under `src/framework/**/__tests__/` are not
       // published, because they test the framework rather than the application.
       // That measures 8.49% statements, so a floor calibrated for this repository
-      // (14%) reports a failure for a developer who has done nothing wrong and
-      // whose 56 tests all pass.
+      // reports a failure for a developer who has done nothing wrong and whose
+      // 56 tests all pass.
       //
-      // The floor is a guard on this repository, so it is applied by CI, which
-      // passes --coverage.thresholds.* on the command line. That keeps this file
-      // byte-identical across both engines, keeps it free of a number that would
-      // be meaningless in someone else's project, and still fails the build when
-      // untested code is added here.
+      // The floor is a guard on this repository, not on yours, so it is passed on
+      // the command line when the framework's own suite is run - it is never read
+      // from this file. That keeps this file byte-identical across both engines,
+      // keeps it free of a number that would be meaningless in someone else's
+      // project, and still fails when untested code is added here.
     }
   }
 });

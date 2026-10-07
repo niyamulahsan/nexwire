@@ -95,7 +95,7 @@ export default defineConfig({
 | **Exclude**     | UI resources, storage, node_modules, dist                     |
 | **Environment** | `node`                                                        |
 | **Path alias**  | `@` → `./src`                                                 |
-| **Coverage**    | V8 provider, text + JSON + HTML reporters, with a floor       |
+| **Coverage**    | V8 provider, text + JSON + HTML reporters, no threshold      |
 
 ## Writing Tests
 
@@ -173,7 +173,7 @@ This creates `__tests__/user-test.test.ts` instead.
 | Script          | Purpose                              |
 | --------------- | ------------------------------------ |
 | `test`          | Run all tests in watch mode          |
-| `test:run`      | Run all tests once (CI mode)         |
+| `test:run`      | Run all tests once (no watch mode)   |
 | `test:coverage` | Run once and print a coverage report |
 | `test:ui`       | Open Vitest visual UI in browser     |
 
@@ -283,7 +283,7 @@ Your new project's `vitest.config.ts` ships **without** a `thresholds` block, so
 
 This is deliberate, and worth understanding before you add one. The coverage percentage includes the whole framework, not just your code — and the framework's own tests are not published with your project, because they test the framework rather than the application you are building. A brand new project therefore measures around **8.5%**, almost all of it framework code you did not write and cannot practically cover.
 
-A threshold copied from the framework's repository (14%) would make `npm run test:coverage` fail on a fresh install, with every one of your tests passing, for a number you did not cause. That is a bad first experience, so the floor is kept on the framework side, in its own CI, where it guards the framework.
+A threshold copied from the framework's repository would make `npm run test:coverage` fail on a fresh install, with every one of your tests passing, for a number you did not cause. That is a bad first experience, so the floor is kept on the framework side and passed on the command line when the framework's own suite is run, where it guards the framework without judging your project.
 
 ### Adding one to your project
 
