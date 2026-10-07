@@ -13,6 +13,6 @@ export default async function {{ClassName}}Seeder() {
 
   for (const row of rows) await db.insert({{tableVariable}}).values(row);
 
-  console.log("{{ClassName}}: " + rows.length + " row(s) prepared");
+  console.log(`{{ClassName}}: ${rows.length} row(s) prepared`);
 }
 
