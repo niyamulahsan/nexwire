@@ -88,6 +88,17 @@ Use `createRouter()` directly only when a single file needs multiple independent
 | `group(middleware)`                | Simple single-group export, no sub-grouping needed                 |
 | `createRouter().group(middleware)` | Multiple independent groups in the same file (public vs protected) |
 
+Group middleware is scoped to the router it was declared on. It is merged into each `api()` call rather than registered as a catch-all, so mounting both groups at the same prefix keeps them independent:
+
+```ts
+const publicRoutes = createRouter().group(loginLimiter).api(registerRoute, register);
+const protectedRoutes = createRouter().group(authMiddleware).api(meRoute, me);
+
+// /auth/register runs only the limiter; /auth/me runs only auth.
+// Neither group sees the other's middleware, at any mount depth.
+export default createRouter().route("/", publicRoutes).route("/", protectedRoutes);
+```
+
 ## Handlers
 
 A handler receives the request and must return/send a response. Read the input, then respond:

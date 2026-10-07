@@ -127,8 +127,16 @@ export function createRouter(): NexwireRouter {
   const nativeRoute = router.route.bind(router);
   states.set(router, { routes: [], children: [] });
 
+  // Group middlewares are kept here rather than registered with router.use(),
+  // because a catch-all use() also matches requests whose route lives in a
+  // sibling router or in the parent. They are merged into every .api() call
+  // instead, so they travel with the routes they were declared on.
+  const groupMiddlewares: RequestHandler[] = [];
+
   router.group = function (...middlewares: RequestHandler[]) {
-    if (middlewares.length) router.use(...middlewares);
+    for (const middleware of middlewares) {
+      groupMiddlewares.push(middleware);
+    }
     return this;
   };
 
@@ -140,7 +148,13 @@ export function createRouter(): NexwireRouter {
       throw new Error("api(route, middlewares, handler) requires a handler function");
     }
 
-    (router as any)[route.method](expressPath(route.path), validationMiddleware(route), ...middlewares, finalHandler);
+    (router as any)[route.method](
+      expressPath(route.path),
+      validationMiddleware(route),
+      ...groupMiddlewares,
+      ...middlewares,
+      finalHandler
+    );
     stateOf(router).routes.push(route);
     return this;
   };

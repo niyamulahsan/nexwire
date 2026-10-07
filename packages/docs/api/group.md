@@ -6,8 +6,8 @@ Shorthand for `createRouter().group(...)`, plus the building block when spreadin
 
 ## Signature
 
-| Function | Signature                          | Description                                                                               |
-| -------- | ---------------------------------- | ----------------------------------------------------------------------------------------- |
+| Function | Signature                           | Description                                                                               |
+| -------- | ----------------------------------- | ----------------------------------------------------------------------------------------- |
 | `group`  | `(...middlewares) => NexwireRouter` | `createRouter().group(...middlewares)` — applies middleware to routes registered after it |
 
 ## Use cases
@@ -45,7 +45,8 @@ export default createRouter()
 
 ## Notes
 
-- Middleware given to `group()` runs for every route registered after it on that router.
+- Middleware given to `group()` runs for every route registered after it on that router, and only those: it travels with the routes through `.route()` mounts and never reaches a sibling group or a route added to the parent afterwards. Two groups mounted at the same prefix stay independent — see [Routing](./../guide/routing).
+- Group middleware runs before the per-route middleware in `api(route, [middlewares], handler)`, and after request validation.
 - `requireRole(...roles)` is a middleware factory — spread an array of role names as shown above.
 - Prefer `group()` (no `createRouter`) when exporting the default route object from a module.
 
