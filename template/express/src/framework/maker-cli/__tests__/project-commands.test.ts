@@ -4,7 +4,12 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { initProjectCommands, PROJECT_COMMANDS_PATH, registerProjectCommands } from "../utils/project-commands.mjs";
+import {
+  initProjectCommands,
+  PROJECT_COMMANDS_PATH,
+  PROJECT_COMMANDS_TS_PATH,
+  registerProjectCommands
+} from "../utils/project-commands.mjs";
 
 /**
  * A project can add its own maker commands from a file it owns. Two properties
@@ -54,6 +59,13 @@ function programWith(frameworkCommand = "module:make") {
 
 async function writeProjectFile(source: string) {
   const file = path.join(workdir, PROJECT_COMMANDS_PATH);
+  await mkdir(path.dirname(file), { recursive: true });
+  await writeFile(file, source, "utf8");
+  return file;
+}
+
+async function writeTsProjectFile(source: string) {
+  const file = path.join(workdir, PROJECT_COMMANDS_TS_PATH);
   await mkdir(path.dirname(file), { recursive: true });
   await writeFile(file, source, "utf8");
   return file;
@@ -113,6 +125,108 @@ describe("maker: a valid project command file", () => {
     }`);
     const result = await registerProjectCommands(programWith(), [], workdir);
     expect(result.added).toEqual(["report:daily"]);
+  });
+});
+
+/**
+ * maker/commands.ts - the TypeScript twin of maker/commands.mjs. Plain node
+ * cannot load it, so the loader registers tsx first; every rule from the
+ * .mjs describes above applies unchanged: absent silent, broken loud with the
+ * file named, framework names authoritative. The only new question is what
+ * happens when a project keeps both files, and the answer follows the
+ * collision rule: the incumbent (.mjs) keeps running and the developer is
+ * told the other file was skipped - never a silent second registration.
+ */
+describe("maker: a TypeScript project command file", () => {
+  it("loads maker/commands.ts, strips its types and registers the commands", async () => {
+    await writeTsProjectFile(`const spoken: string = "ts says hi";
+export default function register(program: any): void {
+  program.command("ts:hello <name>").action((name: string) => {
+    console.log(spoken + " " + name);
+  });
+}`);
+
+    const program = programWith();
+    const result = await registerProjectCommands(program, [], workdir);
+
+    expect(result.loaded).toBe(true);
+    expect(result.file.replace(/\\/g, "/")).toContain(PROJECT_COMMANDS_TS_PATH);
+    expect(result.added).toEqual(["ts:hello"]);
+
+    // A registration that cannot dispatch is worse than none: prove the
+    // command runs end to end, types and all.
+    await program.parseAsync(["ts:hello", "ada"], { from: "user" });
+    expect(output.join("\n")).toContain("ts says hi ada");
+  });
+
+  it("resolves the project's @/ alias inside the TypeScript file", async () => {
+    // The whole reason a project reaches for commands.ts: importing its own
+    // source through the tsconfig alias, which plain node cannot do. The
+    // value must travel all the way to the registered command.
+    await writeTsProjectFile(`import { PROJECT_COMMANDS_PATH } from "@/framework/maker-cli/utils/project-commands.mjs";
+
+export default function register(program: any): void {
+  program
+    .command("ts:alias")
+    .description("loaded via @/: " + PROJECT_COMMANDS_PATH)
+    .action(() => {});
+}`);
+
+    const program = programWith();
+    const result = await registerProjectCommands(program, [], workdir);
+
+    expect(result.loaded).toBe(true);
+    const alias = program.commands.find((c) => c.name() === "ts:alias");
+    expect(alias?.description()).toBe("loaded via @/: maker/commands.mjs");
+  });
+
+  it("supports importing TypeScript from inside a command action", async () => {
+    // The developer's real workload: simulate.ts/certify.ts live in src/ and
+    // are imported when the command runs, not when it registers.
+    await mkdir(path.join(workdir, "tooling"), { recursive: true });
+    await writeFile(
+      path.join(workdir, "tooling", "greet.ts"),
+      `export function greet(name: string): string {
+  return "hello " + name;
+}
+`,
+      "utf8"
+    );
+    await writeTsProjectFile(`import { greet } from "../tooling/greet.ts";
+
+export default function register(program: any): void {
+  program.command("ts:greet <name>").action((name: string) => console.log(greet(name)));
+}`);
+
+    const program = programWith();
+    await registerProjectCommands(program, [], workdir);
+    await program.parseAsync(["ts:greet", "ada"], { from: "user" });
+
+    expect(output.join("\n")).toContain("hello ada");
+  });
+
+  it("names maker/commands.ts when the TypeScript file throws at load", async () => {
+    await writeTsProjectFile(`throw new Error("boom from the ts project file");`);
+
+    await expect(registerProjectCommands(programWith(), [], workdir)).rejects.toThrow(
+      /Could not load maker\/commands\.ts: boom from the ts project file/
+    );
+  });
+
+  it("keeps maker/commands.mjs running when both files exist, and says so", async () => {
+    await writeProjectFile(validProject);
+    await writeTsProjectFile(`export default function register(program: any): void {
+  program.command("ts:should-not-load").action(() => {});
+}`);
+
+    const program = programWith();
+    const result = await registerProjectCommands(program, [], workdir);
+
+    // The .mjs already ran in this project; a stray .ts must not silently
+    // take over or double-register. The loser is named so it gets deleted.
+    expect(result.added).toEqual(["invoice:make"]);
+    expect(program.commands.map((c) => c.name())).not.toContain("ts:should-not-load");
+    expect(output.join("\n")).toContain(PROJECT_COMMANDS_TS_PATH);
   });
 });
 

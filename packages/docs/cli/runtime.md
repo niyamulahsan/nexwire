@@ -522,13 +522,13 @@ bun maker vite:cache:clear
 
 ## Custom Commands
 
-Your project can add its own maker commands. The file you own is `maker/commands.mjs` in the project root.
+Your project can add its own maker commands. The files you own are `maker/commands.mjs` (plain JavaScript) or `maker/commands.ts` (TypeScript) in the project root.
 
 It is deliberately outside `src/`. Anything under `src/framework/` is copied into the published package, so an edit there is lost on the next framework update, and `src/modules/` is swept by the route, job and seeder globs.
 
 ### `maker:init`
 
-Creates `maker/commands.mjs` with a working example. It will not overwrite an existing file unless you pass `--force`.
+Creates `maker/commands.mjs` with a working example. It will not overwrite an existing file unless you pass `--force`. It always creates the `.mjs` — to write your commands in TypeScript instead, create `maker/commands.ts` yourself and delete the `.mjs`, as described under [TypeScript commands](#typescript-commands).
 
 ::: code-group
 
@@ -576,11 +576,52 @@ maker --help          # your commands appear alongside the built-ins
 
 Export a `default` function, or a named `register` export — either is accepted.
 
-### Three things that will bite you
+### TypeScript commands
 
-**Absent is silent.** If the file does not exist, nothing happens and nothing is printed. That is the common case, so it has to be free.
+Name the file `maker/commands.ts` instead of `maker/commands.mjs` and the loader reads it through tsx, with your project's `tsconfig.json` applied — so `@/` imports and your path aliases work exactly as they do inside `src/`:
 
-**Broken is loud.** If the file exists but cannot be parsed, throws while loading, or exports the wrong shape, `maker` stops with an error naming `maker/commands.mjs` and exits non-zero. It is never swallowed — a developer's commands silently not existing is far worse than a message. Every failure names the file:
+```ts
+// maker/commands.ts
+import { sendInvoice } from "@/invoices/send.js";
+
+export default function register(program) {
+  program
+    .command("invoice:send <customer>")
+    .description("Send an invoice to a customer")
+    .option("--dry-run", "Print what would be sent")
+    .action(async (customer, options) => {
+      await sendInvoice(customer, { dryRun: options.dryRun });
+    });
+}
+```
+
+Everything above still applies — same exports, same commander object, same error behaviour, with `maker/commands.ts` named in the messages instead.
+
+- **`maker/commands.mjs` never touches tsx.** The tsx hooks are registered only when the `.ts` file is the one being loaded, once per process. Plain-JavaScript projects and production installs without devDependencies are therefore unaffected; a project that uses `maker/commands.ts` needs `tsx` in its devDependencies (the scaffold includes it).
+- **Actions can import TypeScript too.** The hooks stay registered for the life of the process, so an action handler can `await import("@/modules/…/something.js")` at dispatch time.
+- **Your editor type-checks this file — the build does not.** `maker/` stays out of the root tsconfig's `include`: adding it would change the common source directory and relocate every emitted file under `dist/`. Instead the scaffold ships `maker/tsconfig.json` — extends the root config, `noEmit`, `rootDir: ".."` — and that is the config your editor picks up for anything under `maker/`, so `@/` paths, node types and imports from `src/` all resolve with no red squiggles. `build:backend`'s `tsc -p tsconfig.json` never reads it, so `dist/` is untouched; at run time tsx transpiles without type-checking, and biome still lints the file.
+
+If your project predates 4.2.2, create that file yourself — it is the whole thing:
+
+```json
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": { "noEmit": true, "rootDir": ".." },
+  "include": ["./**/*.ts"]
+}
+```
+
+### Four things that will bite you
+
+**Absent is silent.** If neither `maker/commands.mjs` nor `maker/commands.ts` exists, nothing happens and nothing is printed. That is the common case, so it has to be free.
+
+**One file at a time.** If both exist, `maker/commands.mjs` wins — it is the incumbent, and a project already using it must not change behaviour because a `.ts` file appeared. The `.ts` is not left silently dead: `maker` prints which file it ignored and why.
+
+```text
+maker/commands.ts is ignored because maker/commands.mjs exists. Keep one - delete the file you are not using.
+```
+
+**Broken is loud.** If the file exists but cannot be parsed, throws while loading, or exports the wrong shape, `maker` stops with an error naming the file — `maker/commands.mjs` or `maker/commands.ts` — and exits non-zero. It is never swallowed — a developer's commands silently not existing is far worse than a message. Every failure names the file:
 
 ```text
 Could not load maker/commands.mjs: Unexpected end of input
@@ -666,7 +707,7 @@ bun maker <command> --help
 `maker help <command>` does the same thing and still works.
 
 ::: details Why your own commands appear under "Your commands"
-Commands you register in `maker/commands.mjs` are listed beside `maker:init`, not mixed in with the built-ins, so it is obvious which commands you added.
+Commands you register in `maker/commands.mjs` or `maker/commands.ts` are listed beside `maker:init`, not mixed in with the built-ins, so it is obvious which commands you added.
 :::
 
 ## Summary
