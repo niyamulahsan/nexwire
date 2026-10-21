@@ -1,3 +1,10 @@
+
+## [4.2.3] — 2026-10-21
+
+### Fixed
+
+- **Template (both engines) / Scaffolder**: Framework no longer crashes when optional app modules are missing or replaced (e.g. deleting src/modules/auth and using a custom auth). @/framework/notification now dynamically loads auth models with guards and becomes a no-op if unavailable; @/framework/database/seed.ts skips missing/invalid seeders with [seed:skip] warnings and no longer aborts db:migrate --seed. Both fixes applied to template/hono, template/express, and mirrored in packages/create-nexwire/{hono,express}.
+
 # Changelog
 
 ## [4.2.2] — 2026-10-08

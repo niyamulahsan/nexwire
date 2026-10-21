@@ -3,8 +3,27 @@ import { db } from "@/framework/database/connection.js";
 import { dispatchEvent } from "@/framework/events/dispatcher.js";
 import { redisClientIfReady } from "@/framework/redis/client.js";
 import { mail } from "@/framework/support/mail.js";
-import { notifications } from "@/modules/auth/database/models/notification.js";
-import { users } from "@/modules/auth/database/models/user.js";
+
+let notifications: any = null;
+let users: any = null;
+let modelsLoaded = false;
+let modelsLoadAttempted = false;
+
+async function loadAuthModels() {
+  if (modelsLoaded) return true;
+  if (modelsLoadAttempted) return false;
+  modelsLoadAttempted = true;
+  try {
+    const notificationMod = await import("@/modules/auth/database/models/notification.js").catch(() => null);
+    const userMod = await import("@/modules/auth/database/models/user.js").catch(() => null);
+    if (notificationMod?.notifications) notifications = notificationMod.notifications;
+    if (userMod?.users) users = userMod.users;
+    modelsLoaded = !!(notifications && users);
+    return modelsLoaded;
+  } catch {
+    return false;
+  }
+}
 
 /** Extra JSON metadata attached to the notification (e.g. entity IDs, links). */
 export type NotificationOptions = {
@@ -29,6 +48,11 @@ export type NotificationOptions = {
 
 /** Create a notification and persist it to the database. Optionally broadcast via Socket.IO and/or send by email. */
 export async function notify(userId: number, options: NotificationOptions) {
+  const ok = await loadAuthModels();
+  if (!ok || !notifications) {
+    console.warn("[notification] skipped: auth models not available (notifications/users). Delete or replace auth module without breaking framework.");
+    return null;
+  }
   const insertResult = await db.insert(notifications).values({
     userId,
     type: options.type || "info",
@@ -63,6 +87,8 @@ async function sendMailChannel(
   notification: { id: number; title: string; body: string | null },
   options: NotificationOptions
 ) {
+  const ok = await loadAuthModels();
+  if (!ok || !users) return;
   const [user] = await db.select({ email: users.email, name: users.name }).from(users).where(eq(users.id, userId));
 
   if (!user?.email) return;
@@ -95,7 +121,7 @@ function escapeHtml(str: string) {
 }
 
 /** Convert a DB row into the normalized response shape, parsing the `data` JSON column. */
-function normalize(row: typeof notifications.$inferSelect) {
+function normalize(row: any) {
   let parsed: unknown = null;
   if (row.data) {
     try {

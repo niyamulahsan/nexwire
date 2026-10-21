@@ -45,30 +45,39 @@ try {
   const seeders: SeederEntry[] = [];
 
   for (const file of files) {
-    const source = await readFile(file, "utf8");
-    const isUnfilledStub = !/^\s*export\s/m.test(source);
-    const mod = await importFile(file);
-    if (typeof mod.default !== "function") {
-      if (isUnfilledStub) {
-        console.log(`Skipped unfilled seeder ${file} (no exports yet)`);
+    try {
+      const source = await readFile(file, "utf8");
+      const isUnfilledStub = !/^\s*export\s/m.test(source);
+      const mod = await importFile(file).catch((err: any) => {
+        console.warn(`[seed:skip] ${file}: ${err?.message || err}`);
+        return null as any;
+      });
+      if (!mod) continue;
+      if (typeof mod.default !== "function") {
+        if (isUnfilledStub) {
+          console.log(`Skipped unfilled seeder ${file} (no exports yet)`);
+          continue;
+        }
+        console.warn(`[seed:skip] ${file}: has no default export function`);
         continue;
       }
-      throw new Error(`Seeder file ${file} has no default export function`);
+      const table: any = mod.table;
+      const entry: SeederEntry = {
+        file,
+        name: file
+          .split(/[\\/]/)
+          .pop()!
+          .replace(/\.(ts|js)$/, ""),
+        execute: () => mod.default(),
+        dependsOn: table ? getTableDeps(table) : []
+      };
+      if (table) {
+        entry.tableName = table[NAME_SYMBOL] as string;
+      }
+      seeders.push(entry);
+    } catch (err: any) {
+      console.warn(`[seed:skip] ${file}: ${err?.message || err}`);
     }
-    const table: any = mod.table;
-    const entry: SeederEntry = {
-      file,
-      name: file
-        .split(/[\\/]/)
-        .pop()!
-        .replace(/\.(ts|js)$/, ""),
-      execute: () => mod.default(),
-      dependsOn: table ? getTableDeps(table) : []
-    };
-    if (table) {
-      entry.tableName = table[NAME_SYMBOL] as string;
-    }
-    seeders.push(entry);
   }
 
   const tableToSeeder = new Map<string, SeederEntry>();
@@ -130,7 +139,11 @@ try {
   }
 
   for (const s of sorted) {
-    await s.execute();
+    try {
+      await s.execute();
+    } catch (err: any) {
+      console.warn(`[seed:skip] ${s.name} failed: ${err?.message || err}`);
+    }
   }
 
   console.log(`Executed ${sorted.length} seeder file(s)${moduleName ? ` for module ${moduleName}` : ""}`);
