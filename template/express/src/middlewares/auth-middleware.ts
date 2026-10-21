@@ -16,10 +16,10 @@ export async function authMiddleware(req, res, next) {
   const accessToken = await cookie.getAuth(req);
 
   if (accessToken) {
-    const accessPayload = await jwt.verifyToken(accessToken, "access");
+    const accessPayload: any = await jwt.verifyToken(accessToken, "access");
 
     if (accessPayload) {
-      const user = await provider.getUserById(accessPayload.id);
+      const user = await provider.getUserById((accessPayload as any)?.id);
 
       if (!user) {
         cookie.deleteAuth(res);
@@ -52,7 +52,7 @@ export async function authMiddleware(req, res, next) {
     return res.status(HttpStatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
   }
 
-  const refreshPayload = await jwt.verifyToken(refreshToken, "refresh");
+  const refreshPayload: any = await jwt.verifyToken(refreshToken, "refresh");
 
   if (!refreshPayload?.jti) {
     cookie.deleteAuth(res);
@@ -60,7 +60,7 @@ export async function authMiddleware(req, res, next) {
     return res.status(HttpStatusCodes.UNAUTHORIZED).json({ message: "Invalid token" });
   }
 
-  const storedToken = await provider.findRefreshToken(refreshPayload.jti);
+  const storedToken = await provider.findRefreshToken((refreshPayload as any)?.jti);
 
   if (!storedToken || storedToken.revoked) {
     cookie.deleteAuth(res);
@@ -80,7 +80,7 @@ export async function authMiddleware(req, res, next) {
     }
   }
 
-  const user = await provider.getUserById(refreshPayload.id);
+  const user = await provider.getUserById((refreshPayload as any)?.id);
 
   if (!user) {
     cookie.deleteAuth(res);
