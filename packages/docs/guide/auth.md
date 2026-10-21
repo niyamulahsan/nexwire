@@ -143,41 +143,81 @@ Returns `401` if unauthenticated, `403` if wrong role.
 
 ## Custom Auth Provider
 
-You can replace the default auth entirely. Create your own provider and register it before routes/middleware are used.
+You can replace the default auth entirely. Create your own provider and **register it as early as possible** (before routes/middleware are mounted).
+
+### Where to register
+
+Register in your app bootstrap. Common places:
+- `src/app.ts` (top, before registering routes)
+- `src/bootstrap.ts` or `src/server.ts`
+- A dedicated file like `src/auth/provider.ts` imported early
 
 ```ts
+// src/auth/provider.ts
 import { registerAuthProvider } from "@/framework/auth/registry.js";
 import type { AuthProvider } from "@/framework/auth/contracts.js";
 
-const myProvider: AuthProvider = {
+export const myProvider: AuthProvider = {
   async getUserById(id) {
     // return user object with any extra fields (tenantId, plan, etc.)
-    return { id, email: "user@example.com", tenantId: 123, role: "admin" };
+    const user = await db.query.users.findFirst({ where: eq(users.id, id) });
+    return user; // can include role, tenantId, permissions, etc.
   },
   async findRefreshToken(jti) {
-    // find stored refresh token by jti
-    return { id: 1, jti, revoked: false, expiresAt: new Date() };
+    return await db.query.refreshTokens.findFirst({ where: eq(refreshTokens.jti, jti) });
   },
   async revokeRefreshToken(tokenId) {
-    // revoke/delete as needed
+    await db.delete(refreshTokens).where(eq(refreshTokens.id, tokenId));
   },
   async getAuthContext(user, payload) {
     // shape what ends up in c.get('auth') / res.locals.auth
-    return { id: user.id, email: user.email, tenantId: user.tenantId, role: user.role };
+    return {
+      id: user.id,
+      email: user.email,
+      roleId: user.roleId ?? null,
+      role: user.role?.name ?? user.role ?? null,
+      tenantId: user.tenantId ?? null,
+      ...user
+    };
   },
   async getUserContact(userId) {
     // used by notification for email delivery
-    return { email: "user@example.com", name: "User" };
+    const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
+    if (!user?.email) return null;
+    return { email: user.email, name: user.name ?? null };
   }
 };
 
 registerAuthProvider(myProvider);
 ```
 
+```ts
+// src/app.ts (Hono example)
+import "./auth/provider.js"; // register before routes
+import { createApp } from "@/framework/facade.js";
+// ...
+```
+
+```ts
+// src/app.ts (Express example)
+import "./auth/provider.js"; // register before routes
+// ...
+```
+
+### Contract reference
+
+| Method | Required | Notes |
+| --- | --- | --- |
+| `getUserById(id)` | Yes | Return user object or `null`. Extra fields are passed through to `auth` context. |
+| `findRefreshToken(jti)` | Yes | Return token object or `null`. Check `revoked` and `expiresAt` in middleware. |
+| `revokeRefreshToken(tokenId)` or `deleteRefreshToken(tokenId)` | No | Used on refresh token expiry/revocation. |
+| `getAuthContext(user, payload)` | No | Override to shape `c.get("auth")` / `res.locals.auth`. If omitted, middleware builds a flexible shape and spreads user. |
+| `getUserContact(userId)` | No | Used by `notify()` for email. If omitted or returns `null`, notification falls back to default `users` model or `mail.to`. |
+
 **Notes:**
 - If no provider is registered, the adapter tries to auto-load the default from `@/modules/auth/database/models/user.js`. If both are missing, `auth-middleware` logs a warning and skips auth (calls `next()`), allowing you to fully replace auth without crashing the app.
 - `auth-middleware` passes through extra fields from your user/context object, so you can add custom checks anywhere.
-- You can delete `src/modules/auth/` entirely if you implement your own provider.
+- You can delete `src/modules/auth/` entirely if you implement your own provider. You can also keep your own user model/tables with different column names — just map them in your provider.
 
 ### Token Verification
 

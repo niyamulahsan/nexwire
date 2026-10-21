@@ -4,6 +4,8 @@
 
 The notification system is a backend module with real-time support via Socket.IO. The CLI generates only the backend (controllers, routes, job). UI integration is manual — see the Vue guide below or build your own components for React, Svelte, Solid, Astro, etc.
 
+Notifications resolve recipients via the auth provider (`getUserContact()`), fall back to the default auth models, or use `mail.to` directly. You can delete/replace the default auth module and still use notifications with a custom auth provider.
+
 ## CLI Commands
 
 ### Create
