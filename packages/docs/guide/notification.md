@@ -134,7 +134,7 @@ await notify(userId, {
 | `link`      | `string`  | —        | Click-through URL                                   |
 | `data`      | `object`  | —        | Arbitrary JSON stored in `data` column              |
 | `broadcast` | `boolean` | `false`  | Emit `"notification.created"` via Socket.IO to user |
-| `mail`      | `object`  | —        | `{ subject?, html? }` — sends email via mail queue  |
+| `mail`      | `object`  | —        | `{ subject?, html?, to? }` — sends email via mail queue. Recipient resolved via auth provider `getUserContact()`, falls back to default users model, or uses `mail.to` explicitly. |
 
 ### Lifecycle
 

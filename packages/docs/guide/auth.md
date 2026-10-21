@@ -56,13 +56,13 @@ The `authMiddleware` protects routes. It always returns 401 if unauthenticated:
 import { authMiddleware } from "@/middlewares/auth-middleware.js";
 ```
 
-**Logic:**
+**Logic (provider-agnostic):**
 
-1. Read `{cookie.name}_access` cookie → verify JWT → put `auth` on the request context (`c.set("auth", ...)` on Hono, `res.locals.auth` on Express)
-2. If access token expired/missing → read `{cookie.name}_refresh` cookie → verify JWT → check `jti` in DB → issue **new** access token → set new cookie
-3. If nothing valid → return 401
+1. Read `{cookie.name}_access` cookie → verify JWT → resolve via `AuthProvider.getUserById()` → put `auth` on the request context (`c.set("auth", ...)` on Hono, `res.locals.auth` on Express)
+2. If access token expired/missing → read `{cookie.name}_refresh` cookie → verify JWT → check token via `AuthProvider.findRefreshToken()` → issue **new** access token → set new cookie
+3. If nothing valid or no provider available → return 401 (middleware logs a warning and can skip only if explicitly configured; by default it returns 401)
 
-The `auth` object is available in all protected handlers:
+The `auth` object is available in all protected handlers and is shaped by your provider (extra fields are passed through):
 
 ::: code-group
 
@@ -71,7 +71,7 @@ import type { Handler } from "hono";
 
 export const me: Handler = async (c: any) => {
   const auth = c.get("auth");
-  // auth.id, auth.email, auth.roleId, auth.role
+  // auth.id, auth.email, auth.roleId, auth.role, ...custom fields
 };
 ```
 
@@ -80,7 +80,7 @@ import type { Request, Response } from "express";
 
 export const me = (req: Request, res: Response) => {
   const auth = res.locals.auth;
-  // auth.id, auth.email, auth.roleId, auth.role
+  // auth.id, auth.email, auth.roleId, auth.role, ...custom fields
 };
 ```
 
@@ -138,8 +138,46 @@ Returns `401` if unauthenticated, `403` if wrong role.
 - Default expiry: 1 hour (`config/jwt.ts` → `refreshExpirySeconds`)
 - With "remember me": 30 days (`config/jwt.ts` → `refreshRememberExpirySeconds`)
 - Stored in cookie: `{cookie.name}_refresh`
-- Tracked in DB: `refresh_tokens` table by `jti` (unique JWT ID)
+- Tracked by auth provider (`findRefreshToken` / `revokeRefreshToken`) — default provider uses `refresh_tokens` table by `jti` (unique JWT ID)
 - Can be revoked (logout, password reset)
+
+## Custom Auth Provider
+
+You can replace the default auth entirely. Create your own provider and register it before routes/middleware are used.
+
+```ts
+import { registerAuthProvider } from "@/framework/auth/registry.js";
+import type { AuthProvider } from "@/framework/auth/contracts.js";
+
+const myProvider: AuthProvider = {
+  async getUserById(id) {
+    // return user object with any extra fields (tenantId, plan, etc.)
+    return { id, email: "user@example.com", tenantId: 123, role: "admin" };
+  },
+  async findRefreshToken(jti) {
+    // find stored refresh token by jti
+    return { id: 1, jti, revoked: false, expiresAt: new Date() };
+  },
+  async revokeRefreshToken(tokenId) {
+    // revoke/delete as needed
+  },
+  async getAuthContext(user, payload) {
+    // shape what ends up in c.get('auth') / res.locals.auth
+    return { id: user.id, email: user.email, tenantId: user.tenantId, role: user.role };
+  },
+  async getUserContact(userId) {
+    // used by notification for email delivery
+    return { email: "user@example.com", name: "User" };
+  }
+};
+
+registerAuthProvider(myProvider);
+```
+
+**Notes:**
+- If no provider is registered, the adapter tries to auto-load the default from `@/modules/auth/database/models/user.js`. If both are missing, `auth-middleware` logs a warning and skips auth (calls `next()`), allowing you to fully replace auth without crashing the app.
+- `auth-middleware` passes through extra fields from your user/context object, so you can add custom checks anywhere.
+- You can delete `src/modules/auth/` entirely if you implement your own provider.
 
 ### Token Verification
 
