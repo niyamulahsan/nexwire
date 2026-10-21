@@ -1,4 +1,15 @@
 
+## [4.2.3] — 2026-10-22
+
+### Added
+
+- Template (both engines) / Scaffolder: Provider-agnostic auth via framework/auth/{contracts,registry,adapter}. Register custom auth via registerAuthProvider(); framework no longer hard-depends on @/modules/auth/* for middleware/notification. auth-middleware uses resolveAuthProvider() and passes through user-shaped context (extra fields supported). @/framework/notification uses auth provider getUserContact() with fallback and supports explicit mail.to.
+
+### Fixed
+
+- Template (both engines) / Scaffolder: Auth middleware and notification now boot safely when auth/notification models are missing or replaced; seeder remains resilient with [seed:skip].
+
+
 ## [4.2.3] — 2026-10-21
 
 ### Fixed
@@ -664,3 +675,4 @@ First stable release of **nexgen** — a full-stack TypeScript framework built o
 - **Runtime**: Node.js >= 24 or Bun >= 1.3
 - **Database**: SQLite (default), MySQL, or PostgreSQL
 - **Optional**: Redis (for cache, session, queue, realtime, scheduler)
+---

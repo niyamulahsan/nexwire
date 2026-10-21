@@ -3,22 +3,20 @@ import { db } from "@/framework/database/connection.js";
 import { dispatchEvent } from "@/framework/events/dispatcher.js";
 import { redisClientIfReady } from "@/framework/redis/client.js";
 import { mail } from "@/framework/support/mail.js";
+import { resolveAuthProvider } from "@/framework/auth/adapter.js";
 
 let notifications: any = null;
-let users: any = null;
 let modelsLoaded = false;
 let modelsLoadAttempted = false;
 
-async function loadAuthModels() {
+async function loadNotificationModel() {
   if (modelsLoaded) return true;
   if (modelsLoadAttempted) return false;
   modelsLoadAttempted = true;
   try {
     const notificationMod = await import("@/modules/auth/database/models/notification.js").catch(() => null);
-    const userMod = await import("@/modules/auth/database/models/user.js").catch(() => null);
     if (notificationMod?.notifications) notifications = notificationMod.notifications;
-    if (userMod?.users) users = userMod.users;
-    modelsLoaded = !!(notifications && users);
+    modelsLoaded = !!notifications;
     return modelsLoaded;
   } catch {
     return false;
@@ -48,9 +46,9 @@ export type NotificationOptions = {
 
 /** Create a notification and persist it to the database. Optionally broadcast via Socket.IO and/or send by email. */
 export async function notify(userId: number, options: NotificationOptions) {
-  const ok = await loadAuthModels();
+  const ok = await loadNotificationModel();
   if (!ok || !notifications) {
-    console.warn("[notification] skipped: auth models not available (notifications/users). Delete or replace auth module without breaking framework.");
+    console.warn("[notification] skipped: notification model not available (@/modules/auth/database/models/notification.js). Delete or replace auth/notification without breaking framework.");
     return null;
   }
   const insertResult = await db.insert(notifications).values({
@@ -87,11 +85,36 @@ async function sendMailChannel(
   notification: { id: number; title: string; body: string | null },
   options: NotificationOptions
 ) {
-  const ok = await loadAuthModels();
-  if (!ok || !users) return;
-  const [user] = await db.select({ email: users.email, name: users.name }).from(users).where(eq(users.id, userId));
+  let to: string | null = (options.mail as any)?.to || null;
+  let name: string | null = null;
 
-  if (!user?.email) return;
+  if (!to) {
+    try {
+      const provider = await resolveAuthProvider();
+      if (provider?.getUserContact) {
+        const contact = await provider.getUserContact(userId);
+        if (contact?.email) {
+          to = contact.email as string;
+          name = (contact.name as string) || null;
+        }
+      }
+    } catch {}
+  }
+
+  if (!to) {
+    try {
+      const userMod = await import("@/modules/auth/database/models/user.js").catch(() => null);
+      if (userMod?.users) {
+        const [user] = await db.select({ email: userMod.users.email, name: (userMod.users as any).name }).from(userMod.users).where(eq(userMod.users.id, userId));
+        if (user?.email) {
+          to = user.email as string;
+          name = (user as any).name || null;
+        }
+      }
+    } catch {}
+  }
+
+  if (!to) return;
 
   const subject = options.mail?.subject || notification.title;
   const html = options.mail?.html || defaultMailHtml(notification.title, notification.body);
@@ -100,14 +123,14 @@ async function sendMailChannel(
     await dispatchEvent(
       "notification:mail",
       {
-        to: user.email,
+        to,
         subject,
         html
       },
       { queue: "mail" }
     );
   } else {
-    await mail.sendMail({ to: user.email, subject, html });
+    await mail.sendMail({ to, subject, html });
   }
 }
 
