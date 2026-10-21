@@ -1,9 +1,33 @@
 import { eq } from "drizzle-orm";
 import type { Context, Next } from "hono";
 import { cookie, db, HttpStatusCodes, jwt } from "@/framework/facade.js";
-import { refreshTokens, users } from "@/modules/auth/database/models/user.js";
+
+let refreshTokens: any = null;
+let users: any = null;
+let modelsLoaded = false;
+let modelsLoadAttempted = false;
+
+async function loadAuthModels() {
+  if (modelsLoaded) return true;
+  if (modelsLoadAttempted) return false;
+  modelsLoadAttempted = true;
+  try {
+    const userMod = await import("@/modules/auth/database/models/user.js").catch(() => null);
+    if (userMod?.users) users = userMod.users;
+    if (userMod?.refreshTokens) refreshTokens = userMod.refreshTokens;
+    modelsLoaded = !!(users && refreshTokens);
+    return modelsLoaded;
+  } catch {
+    return false;
+  }
+}
 
 export async function authMiddleware(c: Context, next: Next) {
+  const ok = await loadAuthModels();
+  if (!ok || !users || !refreshTokens) {
+    console.warn("[auth-middleware] auth models not available; skipping auth (no /@/modules/auth/database/models/user.js). Replace with your own auth middleware if needed.");
+    return await next();
+  }
   const accessToken = await cookie.getAuth(c);
 
   if (accessToken) {

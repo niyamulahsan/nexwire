@@ -1,7 +1,7 @@
 import type { Handler } from "hono";
 import { and, count, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/framework/facade.js";
-import { notifications } from "@/modules/auth/database/models/notifications.js";
+import { notifications } from "@/modules/auth/database/models/notification.js";
 
 export const list: Handler = async (c: any) => {
   const userId = c.get("auth").id;
