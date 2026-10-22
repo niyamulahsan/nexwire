@@ -1,11 +1,19 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/framework/database/connection.js";
 import type { AuthProvider } from "./contracts.js";
+import { loadProviders } from "./loader.js";
 import { getAuthProvider } from "./registry.js";
 
 let defaultProvider: AuthProvider | null = null;
 let defaultLoadAttempted = false;
 
+/**
+ * Why: Builds the built-in auth provider from the default auth module.
+ * When: No custom provider was registered by the application.
+ * Where: Auth provider adapter.
+ * How: Lazily imports the default user/refresh-token models. When the default
+ *      auth module was deleted or replaced, no provider is produced.
+ */
 async function loadDefaultProvider(): Promise<AuthProvider | null> {
   if (defaultProvider) return defaultProvider;
   if (defaultLoadAttempted) return null;
@@ -99,7 +107,16 @@ async function loadDefaultProvider(): Promise<AuthProvider | null> {
   }
 }
 
+/**
+ * Why: Resolves the auth provider the framework should use.
+ * When: The auth middleware or the notification mailer needs user data.
+ * Where: Auth provider adapter.
+ * How: Application providers are loaded first, so a file in `src/providers/`
+ *      wins. Otherwise the built-in provider from the default auth module is
+ *      used. When neither exists the framework degrades gracefully.
+ */
 export async function resolveAuthProvider(): Promise<AuthProvider | null> {
+  await loadProviders();
   const registered = getAuthProvider();
   if (registered) return registered;
   const def = await loadDefaultProvider();

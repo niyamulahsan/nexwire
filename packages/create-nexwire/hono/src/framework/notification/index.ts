@@ -1,9 +1,9 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/framework/database/connection.js";
 import { dispatchEvent } from "@/framework/events/dispatcher.js";
+import { resolveAuthProvider } from "@/framework/providers/adapter.js";
 import { redisClientIfReady } from "@/framework/redis/client.js";
 import { mail } from "@/framework/support/mail.js";
-import { resolveAuthProvider } from "@/framework/auth/adapter.js";
 
 let notifications: any = null;
 let modelsLoaded = false;
@@ -39,6 +39,8 @@ export type NotificationOptions = {
   broadcast?: boolean;
   /** Email delivery options */
   mail?: {
+    /** Explicit recipient. Skips the auth provider contact lookup. */
+    to?: string;
     subject?: string;
     html?: string;
   };
@@ -48,7 +50,9 @@ export type NotificationOptions = {
 export async function notify(userId: number, options: NotificationOptions) {
   const ok = await loadNotificationModel();
   if (!ok || !notifications) {
-    console.warn("[notification] skipped: notification model not available (@/modules/auth/database/models/notification.js). Delete or replace auth/notification without breaking framework.");
+    console.warn(
+      "[notification] skipped: notification model not available (@/modules/auth/database/models/notification.js). Delete or replace auth/notification without breaking framework."
+    );
     return null;
   }
   const insertResult = await db.insert(notifications).values({
@@ -105,7 +109,10 @@ async function sendMailChannel(
     try {
       const userMod = await import("@/modules/auth/database/models/user.js").catch(() => null);
       if (userMod?.users) {
-        const [user] = await db.select({ email: userMod.users.email, name: (userMod.users as any).name }).from(userMod.users).where(eq(userMod.users.id, userId));
+        const [user] = await db
+          .select({ email: userMod.users.email, name: (userMod.users as any).name })
+          .from(userMod.users)
+          .where(eq(userMod.users.id, userId));
         if (user?.email) {
           to = user.email as string;
           name = (user as any).name || null;

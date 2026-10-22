@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { databaseConfig } from "@/config/index.js";
-import * as schema from "@/database/schema.js";
+import { loadAppSchema } from "@/framework/database/app-schema.js";
 
 export type Dialect = "sqlite" | "mysql" | "postgresql";
 
@@ -36,6 +36,8 @@ export async function initDatabase() {
   if (databaseInstance) return databaseInstance;
 
   dialect = detectDialect();
+
+  const schema = await loadAppSchema();
 
   if (dialect === "sqlite") {
     let drizzleSqlite: any;

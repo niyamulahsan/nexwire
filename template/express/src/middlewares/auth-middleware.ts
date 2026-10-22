@@ -1,11 +1,13 @@
 import { type NextFunction, type Request, type Response } from "express";
 import { cookie, HttpStatusCodes, jwt } from "@/framework/facade.js";
-import { resolveAuthProvider } from "@/framework/auth/adapter.js";
+import { resolveAuthProvider } from "@/framework/providers/adapter.js";
 
 export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const provider = await resolveAuthProvider();
   if (!provider) {
-    console.warn("[auth-middleware] auth provider not available; skipping auth. Register a provider via registerAuthProvider() or restore @/modules/auth.");
+    console.warn(
+      "[auth-middleware] auth provider not available; skipping auth. Register one in src/providers/ or restore src/modules/auth."
+    );
     return next();
   }
 

@@ -4,6 +4,7 @@ import { initDatabase } from "@/framework/database/connection.js";
 import { createHttpApp } from "@/framework/http/app.js";
 import { ensurePublicDir, hasUiBuild, uiIndexMiddleware, uiStaticMiddleware } from "@/framework/http/static.js";
 import { registerModuleRoutes } from "@/framework/modules/routes.js";
+import { loadProviders } from "@/framework/providers/loader.js";
 import { bootQueueJobs } from "@/framework/queue/queue.js";
 import { setupQueueDashboard } from "@/framework/queue/ui.js";
 import { initRedis } from "@/framework/redis/client.js";
@@ -25,6 +26,7 @@ export async function createKernel() {
   const app = createHttpApp();
 
   await initDatabase();
+  await loadProviders();
   await bootQueueJobs();
   await registerModuleRoutes(app);
 
