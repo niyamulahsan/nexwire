@@ -2,7 +2,7 @@ import { registerProvider } from "@/framework/facade.js";
 
 /**
  * Why: Plugs the {{name}} implementation into the application.
- * When: Imported automatically at boot - src/modules/*/providers/*.ts is.
+ * When: Imported automatically at boot from src/modules/*/providers/*.ts.
  * Where: src/modules/{{module}}/providers/{{name}}.ts
  *
  * Reach it from anywhere in the app:
