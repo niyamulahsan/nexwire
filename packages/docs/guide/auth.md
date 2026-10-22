@@ -60,7 +60,7 @@ import { authMiddleware } from "@/middlewares/auth-middleware.js";
 
 1. Read `{cookie.name}_access` cookie → verify JWT → resolve via `AuthProvider.getUserById()` → put `auth` on the request context (`c.set("auth", ...)` on Hono, `res.locals.auth` on Express)
 2. If access token expired/missing → read `{cookie.name}_refresh` cookie → verify JWT → check token via `AuthProvider.findRefreshToken()` → issue **new** access token → set new cookie
-3. If nothing valid or no provider available → return 401 (middleware logs a warning and can skip only if explicitly configured; by default it returns 401)
+3. If nothing valid → return 401. When **no** auth provider is available at all (the auth module was deleted and no provider was registered) the middleware logs a warning and lets the request through instead of crashing the app.
 
 The `auth` object is available in all protected handlers and is shaped by your provider (extra fields are passed through):
 
@@ -143,81 +143,58 @@ Returns `401` if unauthenticated, `403` if wrong role.
 
 ## Custom Auth Provider
 
-You can replace the default auth entirely. Create your own provider and **register it as early as possible** (before routes/middleware are mounted).
+The built-in auth module is optional. The framework never imports it directly — it asks an **auth provider** for the user behind a token. Replace that provider and you can delete `src/modules/auth/` entirely.
 
-### Where to register
-
-Register in your app bootstrap. Common places:
-- `src/app.ts` (top, before registering routes)
-- `src/bootstrap.ts` or `src/server.ts`
-- A dedicated file like `src/auth/provider.ts` imported early
+Providers live in `src/providers/` and are imported automatically at boot. **There is no wiring step** — no edit to `app.ts`, no import of framework internals.
 
 ```ts
-// src/auth/provider.ts
-import { registerAuthProvider } from "@/framework/auth/registry.js";
-import type { AuthProvider } from "@/framework/auth/contracts.js";
+// src/providers/auth.ts
+import { registerAuthProvider } from "@/framework/facade.js";
+import type { AuthProvider } from "@/framework/facade.js";
 
-export const myProvider: AuthProvider = {
+const authProvider: AuthProvider = {
   async getUserById(id) {
-    // return user object with any extra fields (tenantId, plan, etc.)
-    const user = await db.query.users.findFirst({ where: eq(users.id, id) });
-    return user; // can include role, tenantId, permissions, etc.
+    // Return any user shape you like. Extra fields (tenantId, plan, status, ...)
+    // are passed straight through to `c.get("auth")` / `res.locals.auth`.
+    return { id, email: "user@example.com", tenantId: 42, plan: "pro" };
   },
   async findRefreshToken(jti) {
-    return await db.query.refreshTokens.findFirst({ where: eq(refreshTokens.jti, jti) });
+    // Return the stored refresh token, or null when it is unknown.
+    return { id: 1, jti, revoked: false, expiresAt: new Date() };
   },
   async revokeRefreshToken(tokenId) {
-    await db.delete(refreshTokens).where(eq(refreshTokens.id, tokenId));
+    // Optional. Called when a refresh token is expired or revoked.
   },
   async getAuthContext(user, payload) {
-    // shape what ends up in c.get('auth') / res.locals.auth
-    return {
-      id: user.id,
-      email: user.email,
-      roleId: user.roleId ?? null,
-      role: user.role?.name ?? user.role ?? null,
-      tenantId: user.tenantId ?? null,
-      ...user
-    };
+    // Optional. Shapes what handlers receive as the auth context.
+    return { id: user.id, email: user.email, tenantId: user.tenantId };
   },
   async getUserContact(userId) {
-    // used by notification for email delivery
-    const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
-    if (!user?.email) return null;
-    return { email: user.email, name: user.name ?? null };
+    // Optional. Used by `notify()` to find the email address of a user.
+    return { email: "user@example.com", name: "User" };
   }
 };
 
-registerAuthProvider(myProvider);
-```
-
-```ts
-// src/app.ts (Hono example)
-import "./auth/provider.js"; // register before routes
-import { createApp } from "@/framework/facade.js";
-// ...
-```
-
-```ts
-// src/app.ts (Express example)
-import "./auth/provider.js"; // register before routes
-// ...
+registerAuthProvider(authProvider);
 ```
 
 ### Contract reference
 
 | Method | Required | Notes |
 | --- | --- | --- |
-| `getUserById(id)` | Yes | Return user object or `null`. Extra fields are passed through to `auth` context. |
-| `findRefreshToken(jti)` | Yes | Return token object or `null`. Check `revoked` and `expiresAt` in middleware. |
+| `getUserById(id)` | Yes | Return user object or `null`. Extra fields are passed through to the `auth` context. |
+| `findRefreshToken(jti)` | Yes | Return token object or `null`. Check `revoked` and `expiresAt` in the middleware. |
 | `revokeRefreshToken(tokenId)` or `deleteRefreshToken(tokenId)` | No | Used on refresh token expiry/revocation. |
-| `getAuthContext(user, payload)` | No | Override to shape `c.get("auth")` / `res.locals.auth`. If omitted, middleware builds a flexible shape and spreads user. |
-| `getUserContact(userId)` | No | Used by `notify()` for email. If omitted or returns `null`, notification falls back to default `users` model or `mail.to`. |
+| `getAuthContext(user, payload)` | No | Override to shape `c.get("auth")` / `res.locals.auth`. If omitted, the middleware builds a flexible shape and spreads the user. |
+| `getUserContact(userId)` | No | Used by `notify()` for email. If omitted or returns `null`, notification falls back to the default `users` model or `mail.to`. |
 
 **Notes:**
-- If no provider is registered, the adapter tries to auto-load the default from `@/modules/auth/database/models/user.js`. If both are missing, `auth-middleware` logs a warning and skips auth (calls `next()`), allowing you to fully replace auth without crashing the app.
-- `auth-middleware` passes through extra fields from your user/context object, so you can add custom checks anywhere.
-- You can delete `src/modules/auth/` entirely if you implement your own provider. You can also keep your own user model/tables with different column names — just map them in your provider.
+- `registerAuthProvider` and the `AuthProvider` type come from `@/framework/facade.js` — the facade is the framework's public API. Never import from `@/framework/...` internals.
+- If no provider is registered, the adapter falls back to the built-in one from `@/modules/auth/database/models/user.js`. When that module was deleted too, `auth-middleware` logs a warning and lets the request through instead of crashing the app.
+- The middleware passes extra fields from your user/context object through, so custom checks (`auth.tenantId`, `auth.plan`, …) work anywhere.
+- You can keep your own user model and tables with different column names — map them inside your provider.
+
+See [Providers](./providers) for the full extension mechanism, and how modules register their own implementations.
 
 ### Token Verification
 

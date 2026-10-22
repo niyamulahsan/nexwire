@@ -121,6 +121,7 @@ const config = defineConfig({
             { text: mi("grid4", "Convention"), link: "/guide/conventions" },
             { text: mi("database", "Database"), link: "/guide/database" },
             { text: mi("lock", "Authentication"), link: "/guide/auth" },
+            { text: mi("puzzle", "Providers"), link: "/guide/providers" },
             { text: mi("flask", "Unit Testing"), link: "/guide/testing" },
           ],
         },
@@ -292,6 +293,13 @@ const config = defineConfig({
             { text: mi("fileText", "logger"), link: "/api/logger" },
             { text: mi("link", "urls"), link: "/api/urls" },
             { text: mi("boxes", "lodash"), link: "/api/lodash" },
+          ],
+        },
+        {
+          text: mi("puzzle", "Providers"),
+          items: [
+            { text: mi("checks", "registerProvider"), link: "/api/registerProvider" },
+            { text: mi("list", "getProvider"), link: "/api/getProvider" },
           ],
         },
         { text: mi("fileText", "Changelog"), link: "/changelog" },
