@@ -32,8 +32,9 @@ let loading = false;
  * Why: Collects every provider file that should run at boot.
  * When: The loader runs.
  * Where: Provider loader.
- * How: Globs `src/providers/**` for app-wide providers and `src/modules/**\/providers.ts`
- *      for module-scoped ones. Tests and declaration files are ignored.
+ * How: Globs `src/providers/**` for app-wide providers, and
+ *      `src/modules/**\/providers.ts` plus `src/modules/**\/providers/*.ts` for
+ *      module-scoped ones. Tests and declaration files are ignored.
  */
 async function collectProviderFiles(): Promise<string[]> {
   const files: string[] = [];
@@ -50,8 +51,11 @@ async function collectProviderFiles(): Promise<string[]> {
   }
 
   try {
+    // A module plugs its own implementation in either from a single file
+    // (providers.ts) or from a folder (providers/*.ts). Both are imported.
     const moduleFiles = await discoverModuleFiles("**/providers.{ts,js}");
-    files.push(...moduleFiles);
+    const moduleProviderFiles = await discoverModuleFiles("**/providers/*.{ts,js}");
+    files.push(...moduleFiles, ...moduleProviderFiles);
   } catch {}
 
   return [...new Set(files)].sort();

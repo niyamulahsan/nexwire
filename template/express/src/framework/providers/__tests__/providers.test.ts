@@ -78,9 +78,12 @@ describe("provider registry", () => {
 describe("provider loader", () => {
   const providersDir = path.resolve(process.cwd(), "src/providers");
   const fixture = path.join(providersDir, "__loader-fixture.ts");
+  const moduleFixtureDir = path.resolve(process.cwd(), "src/modules/__loader-fixture-module/providers");
+  const moduleFixture = path.join(moduleFixtureDir, "__loader-fixture.ts");
 
   afterEach(async () => {
     await rm(fixture, { force: true });
+    await rm(path.resolve(process.cwd(), "src/modules/__loader-fixture-module"), { recursive: true, force: true });
     delete (globalThis as any).__nexwireProviderFixture;
     vi.resetModules();
   });
@@ -95,6 +98,20 @@ describe("provider loader", () => {
     const loaded = await loader.loadProviders();
 
     expect(loaded).toBeGreaterThan(0);
+    expect((globalThis as any).__nexwireProviderFixture).toBe(true);
+  });
+
+  it("imports a provider file dropped into a module's providers folder", async () => {
+    // A module offers its implementation to the whole app the same way the app
+    // does: by dropping a file where the loader looks for it.
+    await mkdir(moduleFixtureDir, { recursive: true });
+    await writeFile(moduleFixture, "globalThis.__nexwireProviderFixture = true;\n", "utf8");
+
+    vi.resetModules();
+    const loader = await import("@/framework/providers/loader.js");
+
+    await loader.loadProviders();
+
     expect((globalThis as any).__nexwireProviderFixture).toBe(true);
   });
 

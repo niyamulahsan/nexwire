@@ -1,0 +1,21 @@
+import { registerProvider } from "@/framework/facade.js";
+
+/**
+ * Why: Plugs the {{name}} implementation into the application.
+ * When: Imported automatically at boot - src/modules/*/providers/*.ts is.
+ * Where: src/modules/{{module}}/providers/{{name}}.ts
+ *
+ * Reach it from anywhere in the app:
+ *
+ *   import { getProvider } from "@/framework/facade.js";
+ *   const {{camel}} = getProvider<typeof {{camel}}Provider>("{{name}}");
+ *
+ * Rule: a provider never imports another module's provider implementation.
+ */
+export const {{camel}}Provider = {
+  async handle(input: unknown) {
+    return input;
+  }
+};
+
+registerProvider("{{name}}", {{camel}}Provider);

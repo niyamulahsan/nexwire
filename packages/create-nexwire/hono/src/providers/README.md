@@ -11,7 +11,9 @@ There is no wiring step: drop a file in here and it runs.
 1. Every `src/providers/**/*.{ts,js,mjs}` file is imported at boot.
 2. Every `src/modules/<module>/providers.ts` file is imported at boot too, so a
    module can plug itself into the app without the app knowing about it.
-3. A provider file claims a contract by registering an implementation.
+3. Every `src/modules/<module>/providers/*.ts` file is imported at boot as well,
+   for a module that offers more than one implementation.
+4. A provider file claims a contract by registering an implementation.
 
 ```ts
 // src/providers/payment.ts
@@ -31,6 +33,17 @@ import { getProvider } from "@/framework/facade.js";
 
 const payment = getProvider<any>("payment");
 ```
+
+## Generating one
+
+```bash
+npm run maker provider:make payment
+npm run maker module:make-provider billing stripe
+```
+
+`provider:make` writes `src/providers/<name>.ts` for the whole app.
+`module:make-provider` writes `src/modules/<module>/providers/<name>.ts` for a
+single module. Both files register themselves when they are imported.
 
 ## Replacing the built-in auth
 

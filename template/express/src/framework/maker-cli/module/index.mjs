@@ -12,6 +12,7 @@ import {
   makeLocalMiddleware,
   makeModel,
   makeModule,
+  makeModuleProvider,
   makeModules,
   makeNotificationModule,
   makeRoute,
@@ -28,7 +29,7 @@ import {
 export function registerModuleCommands(program, rawArgs) {
   program
     .command("module:make <names...>")
-    .description("Create one or more modules with facade, schema, service, controller, route, model, and seeder folders")
+    .description("Create one or more modules with facade, providers, schema, service, controller, route, model, and seeder folders")
     .option("--path <panel>", "Nest the module(s) under a panel folder (e.g. --path=admin)")
     .option("--force", "Overwrite the files of modules that already exist")
     .allowUnknownOption(true)
@@ -128,6 +129,14 @@ export function registerModuleCommands(program, rawArgs) {
     .option("--path <panel>", "Address a module inside a panel folder (e.g. --path=admin)")
     .allowUnknownOption(true)
     .action(async (moduleName, name) => makeLocalMiddleware(moduleName, name, rawArgs.slice(name ? 3 : 2)));
+  program
+    .command("module:make-provider <module> [name]")
+    .description("Generate a provider file in the module's providers folder")
+    .option("--force", "Overwrite existing provider file")
+    .option("--dry-run", "Print what would be created without executing")
+    .option("--path <panel>", "Address a module inside a panel folder (e.g. --path=admin)")
+    .allowUnknownOption(true)
+    .action(async (moduleName, name) => makeModuleProvider(moduleName, name, rawArgs.slice(name ? 3 : 2)));
   program
     .command("module:make-type <module> [name]")
     .description("Generate a types file for an existing module")

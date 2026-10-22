@@ -1,0 +1,17 @@
+/**
+ * Providers for the {{module}} module.
+ *
+ * This file is imported automatically at boot, so whatever it registers is
+ * available to the whole application:
+ *
+ *   import { registerProvider } from "@/framework/facade.js";
+ *
+ *   registerProvider("{{module}}", { ... });
+ *
+ * A module with more than one provider keeps them in providers/*.ts instead -
+ * those files are imported at boot too.
+ *
+ * Rule: a module never imports another module's provider implementation.
+ */
+
+export {};

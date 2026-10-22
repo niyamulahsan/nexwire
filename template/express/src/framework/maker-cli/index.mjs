@@ -5,6 +5,7 @@ import { config } from "dotenv";
 import { registerDbCommands } from "./db/index.mjs";
 import { registerMiddlewareCommands } from "./middleware/index.mjs";
 import { registerModuleCommands } from "./module/index.mjs";
+import { registerProviderCommands } from "./provider/index.mjs";
 import { registerRuntimeCommands } from "./runtime/index.mjs";
 import { configureGroupedHelp, makerCommandPrefix, showHelp } from "./utils/help.mjs";
 import { registerProjectCommands } from "./utils/project-commands.mjs";
@@ -42,6 +43,7 @@ try {
 
   registerMiddlewareCommands(program, args);
   registerModuleCommands(program, args);
+  registerProviderCommands(program, args);
   registerDeployCommands(program, args);
   registerDbCommands(program, args);
   registerRuntimeCommands(program, args);

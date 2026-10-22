@@ -4,6 +4,7 @@ import { registerDbCommands } from "../db/index.mjs";
 import { registerDeployCommands } from "../deploy/index.mjs";
 import { registerMiddlewareCommands } from "../middleware/index.mjs";
 import { registerModuleCommands } from "../module/index.mjs";
+import { registerProviderCommands } from "../provider/index.mjs";
 import { registerRuntimeCommands } from "../runtime/index.mjs";
 import {
   configureGroupedHelp,
@@ -35,6 +36,7 @@ function realProgram(stream?: NodeJS.WriteStream): Command {
   program.name("maker").description("nexwire maker");
   registerMiddlewareCommands(program, []);
   registerModuleCommands(program, []);
+  registerProviderCommands(program, []);
   registerDeployCommands(program, []);
   registerDbCommands(program, []);
   registerRuntimeCommands(program, []);
@@ -152,6 +154,15 @@ describe("maker --help: a developer finds the command they need", () => {
     expect(groupOf("middleware:make")).toBe("Generators - global");
     expect(groupOf("module:make-middleware")).toBe("Generators - modules");
     expect(groupOf("middleware:make")).not.toBe(groupOf("module:make-middleware"));
+  });
+
+  it("separates the global provider generator from the module-local one", () => {
+    // Same split as the middleware generators: provider:make writes
+    // src/providers for the whole app, module:make-provider writes inside one
+    // module's providers folder. They look interchangeable and are not.
+    expect(groupOf("provider:make")).toBe("Generators - global");
+    expect(groupOf("module:make-provider")).toBe("Generators - modules");
+    expect(groupOf("provider:make")).not.toBe(groupOf("module:make-provider"));
   });
 
   it("keeps generators separate from module management", () => {
