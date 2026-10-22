@@ -16,10 +16,20 @@ There is **no container, no decorators and no auto-wiring**. A provider is a pla
 | --------------------- | ---------------------------------------- | ------------------------------- |
 | `src/providers/**`    | The whole application                    | Automatically, at boot          |
 | `src/modules/<m>/providers.ts` | One module, plugged into the app | Automatically, at boot          |
+| `src/modules/<m>/providers/*.ts` | One module, several implementations | Automatically, at boot |
 
-Both are discovered by the framework at startup. Drop a file in and it runs — there is nothing to edit in `app.ts`, and nothing to import from `@/framework/...` internals.
+All three are discovered by the framework at startup. Drop a file in and it runs — there is nothing to edit in `app.ts`, and nothing to import from `@/framework/...` internals.
 
-The scaffold ships an empty `src/providers/` folder with a short `README.md` next to it.
+The scaffold ships an empty `src/providers/` folder with a short `README.md` next to it, and every new module gets a `providers.ts` next to its `facade.ts`.
+
+### Generating one
+
+```bash
+npm run maker provider:make payment          # -> src/providers/payment.ts
+npm run maker module:make-provider billing stripe  # -> src/modules/billing/providers/stripe.ts
+```
+
+`provider:make` writes an app-wide provider, `module:make-provider` writes one inside a module. Both files register themselves when they are imported. See [Provider Commands](../cli/provider).
 
 ## Registering an implementation
 
@@ -107,6 +117,19 @@ registerProvider("billing", {
 });
 ```
 
+When a module offers more than one implementation, they live in its `providers/` folder — those files are imported at boot as well:
+
+```ts
+// src/modules/billing/providers/stripe.ts
+import { registerProvider } from "@/framework/facade.js";
+
+registerProvider("stripe", {
+  async charge(order) {
+    return { id: "ch_123" };
+  }
+});
+```
+
 The module ships the implementation, the application decides to use it. Nothing in `src/modules/billing/` has to know whether the app consumed it.
 
 ## Module-to-module communication
@@ -183,4 +206,5 @@ import { registerProvider, getProvider, hasProvider, clearProvider, listProvider
 
 - [Authentication](./auth) — the built-in auth provider and its contract.
 - [Modules](./modules) — how modules are structured.
+- [Provider Commands](../cli/provider) — `provider:make` and `module:make-provider`.
 - [Events & Queue](./events-queue) — `dispatchEvent` / `dispatchCommand`.

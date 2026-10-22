@@ -205,6 +205,7 @@ const config = defineConfig({
         { text: mi("terminal", "CLI Reference"), link: "/cli/reference" },
         { text: mi("puzzle", "Module Commands"), link: "/cli/module" },
         { text: mi("shield", "Middleware Commands"), link: "/cli/middleware" },
+        { text: mi("list", "Provider Commands"), link: "/cli/provider" },
         { text: mi("database", "Database Commands"), link: "/cli/database" },
         { text: mi("play", "Runtime Commands"), link: "/cli/runtime" },
         { text: mi("rocket", "Deploy Commands"), link: "/cli/deploy" },
