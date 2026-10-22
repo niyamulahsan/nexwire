@@ -1,16 +1,34 @@
 export * as lodash from "lodash-es";
 export { z } from "zod";
-export { registerOpenApiRoute } from "@/framework/http/openapi.js";
-export type { RouteConfig } from "@/framework/http/router.js";
-export { createRoute, createRouter, group, jsonContent } from "@/framework/http/router.js";
-export { validate } from "@/framework/http/validation.js";
-export * as HttpStatusCodes from "@/framework/support/status-codes.js";
 export { cache } from "@/framework/cache/cache.js";
 export { database, db } from "@/framework/database/connection.js";
 export type { PaginatedResult } from "@/framework/database/paginate.js";
 export { paginate, paginateModel, paginateQuery, paginateTable } from "@/framework/database/paginate.js";
 export { command, dispatchCommand, dispatchEvent } from "@/framework/events/dispatcher.js";
+export { registerOpenApiRoute } from "@/framework/http/openapi.js";
+export type { RouteConfig } from "@/framework/http/router.js";
+export { createRoute, createRouter, group, jsonContent } from "@/framework/http/router.js";
+export { validate } from "@/framework/http/validation.js";
 export { notify } from "@/framework/notification/index.js";
+export type {
+  AuthProvider,
+  AuthProviderRefreshToken,
+  AuthProviderUser,
+  AuthUserContact,
+  AuthUserContext
+} from "@/framework/providers/contracts.js";
+export { loadProviders } from "@/framework/providers/loader.js";
+export {
+  clearAuthProvider,
+  clearProvider,
+  getAuthProvider,
+  getProvider,
+  hasAuthProvider,
+  hasProvider,
+  listProviders,
+  registerAuthProvider,
+  registerProvider
+} from "@/framework/providers/registry.js";
 export { queue, queueJob, shouldQueue } from "@/framework/queue/queue.js";
 export { broadcast } from "@/framework/realtime/index.js";
 export { defineSchedule } from "@/framework/scheduler/scheduler.js";
@@ -21,5 +39,6 @@ export { jwt } from "@/framework/support/jwt.js";
 export { logger } from "@/framework/support/logger.js";
 export { mail } from "@/framework/support/mail.js";
 export { password } from "@/framework/support/password.js";
+export * as HttpStatusCodes from "@/framework/support/status-codes.js";
 export { fields, upload } from "@/framework/support/upload.js";
 export { urls } from "@/framework/support/url.js";

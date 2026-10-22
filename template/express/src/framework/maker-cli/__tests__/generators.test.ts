@@ -9,6 +9,7 @@ import {
   makeJob,
   makeModel,
   makeModule,
+  makeModuleProvider,
   makeRoute,
   makeSchedule,
   makeSchema,
@@ -16,6 +17,7 @@ import {
   makeService,
   makeType
 } from "../module/core.mjs";
+import { makeProvider } from "../provider/core.mjs";
 
 /**
  * Every generator writes a developer-supplied name into generated TypeScript.
@@ -276,6 +278,53 @@ describe.skipIf(!canChdir)("name normalisation across generators", () => {
  * controller falls back to `standalone` with no service, service falls back to
  * `plain` with no model. Seeder was the only one that refused.
  */
+describe.skipIf(!canChdir)("provider generators", () => {
+  const mod = "blog-post";
+
+  it("writes an app-wide provider that registers itself", async () => {
+    await makeProvider("payment-gateway");
+
+    const source = await readFile(path.join(workdir, "src", "providers", "payment-gateway.ts"), "utf8");
+
+    expect(syntaxErrors("provider.ts", source)).toEqual([]);
+    // The whole point of the file: it registers itself, so no other file has
+    // to know that it exists.
+    expect(source).toContain('registerProvider("payment-gateway"');
+    expect(source).toContain("export const paymentGatewayProvider");
+    expect(source).toContain('import { registerProvider } from "@/framework/facade.js";');
+    expect(source).not.toMatch(/\{\{\s*\w+\s*\}\}/);
+  });
+
+  it("writes a module provider into the module's providers folder", async () => {
+    await makeModuleProvider(mod, "stripe");
+
+    const source = await readFile(path.join(workdir, "src", "modules", mod, "providers", "stripe.ts"), "utf8");
+
+    expect(syntaxErrors("provider.ts", source)).toEqual([]);
+    expect(source).toContain('registerProvider("stripe"');
+    expect(source).toContain("export const stripeProvider");
+    expect(source).not.toMatch(/\{\{\s*\w+\s*\}\}/);
+  });
+
+  it("gives every new module a providers folder path", async () => {
+    const created = await makeModule("shop");
+    const providersDir = path.join(workdir, "src", "modules", created.moduleName, "providers");
+
+    await expect(makeModuleProvider(created.moduleName, "demo")).resolves.not.toThrow();
+    const source = await readFile(path.join(providersDir, "demo.ts"), "utf8");
+
+    expect(syntaxErrors("provider.ts", source)).toEqual([]);
+    expect(source).toContain("registerProvider");
+  });
+
+  it("refuses to overwrite a provider unless forced", async () => {
+    await makeProvider("payment-gateway");
+
+    await expect(makeProvider("payment-gateway")).rejects.toThrow(/already exists/);
+    await expect(makeProvider("payment-gateway", ["--force"])).resolves.not.toThrow();
+  });
+});
+
 describe.skipIf(!canChdir)("module:make-seeder model binding", () => {
   const mod = "blog-post";
 

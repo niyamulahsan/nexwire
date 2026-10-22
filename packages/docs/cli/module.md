@@ -111,6 +111,7 @@ Create a complete module with all default scaffolding. Pass several names to cre
 | Generated  | Path                                            |
 | ---------- | ----------------------------------------------- |
 | Facade     | `src/modules/<name>/facade.ts`                  |
+| Providers  | `src/modules/<name>/providers.ts`               |
 | Controller | `src/modules/<name>/controllers/<name>.ts`      |
 | Schema     | `src/modules/<name>/schemas/<name>.ts`          |
 | Service    | `src/modules/<name>/services/<name>.ts`         |
@@ -133,10 +134,13 @@ src/modules/posts/
 │   └── posts.ts
 ├── services/
 │   └── posts.ts
-└── facade.ts
+├── facade.ts
+└── providers.ts
 ```
 
 The controller, schema, service and route adapt to the `OPEN_API` environment variable at scaffold time — see [OpenAPI Mode](/guide/modules#openapi-mode).
+
+The generated `providers.ts` is where the module plugs its own implementations into the application — it is imported automatically at boot. See [Providers](/guide/providers).
 
 ### `module:make-notification [name]`
 
@@ -397,6 +401,25 @@ bun maker module:make-middleware posts auth-check
 ```
 
 :::
+
+### `module:make-provider <module> [name]`
+
+Generate a provider at `providers/<name>.ts` inside the module. Module providers are imported automatically at boot, so the module can offer an implementation to the whole application without the application knowing anything about the module's internals.
+
+```bash
+npm run maker module:make-provider billing stripe
+```
+
+```bash
+npm run maker module:make-provider billing stripe -- --force
+```
+
+| Option      | Alias   | Description                                                       |
+| ----------- | ------- | ----------------------------------------------------------------- |
+| `--force`   | `--yes` | Overwrite an existing provider file (fails otherwise)              |
+| `--dry-run` | —       | Validate the name and print what would be created without writing |
+
+See [Provider Commands](/cli/provider) for the app-wide counterpart.
 
 ### `module:make-type <module> [name]`
 

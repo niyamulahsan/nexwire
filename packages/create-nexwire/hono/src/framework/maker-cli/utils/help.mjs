@@ -89,7 +89,11 @@ const COMMAND_GROUPS = [
     // `module:make-middleware` writes inside one module and applies only to it.
     // In the same section the two look interchangeable, which is exactly the
     // mistake a developer is about to make.
-    commands: ["middleware:make"]
+    //
+    // `provider:make` follows the same split: it writes to src/providers and
+    // applies to the whole app, `module:make-provider` writes inside one
+    // module and applies only to it.
+    commands: ["middleware:make", "provider:make"]
   },
   {
     title: "Generators - modules",
@@ -107,6 +111,7 @@ const COMMAND_GROUPS = [
       "module:make-test",
       "module:make-helper",
       "module:make-middleware",
+      "module:make-provider",
       "module:make-type"
     ]
   },

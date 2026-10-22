@@ -20,7 +20,11 @@ Creates a user-visible notification row and optionally broadcasts it over Socket
 | `link`      | `string`  | —        | Click-through URL                                        |
 | `data`      | `object`  | —        | Arbitrary JSON stored in the `data` column               |
 | `broadcast` | `boolean` | `false`  | Emit `"notification.created"` to the user's socket room  |
-| `mail`      | `object`  | —        | `{ subject?, html? }` — sends email via the `mail` queue |
+| `mail`      | `object`  | —        | `{ subject?, html?, to? }` — sends email via the `mail` queue |
+
+### Recipient resolution
+
+When `mail` is set, the recipient is resolved in this order: `mail.to` → the auth provider's `getUserContact(userId)` → the built-in `users` model → skipped. See [Providers](./../guide/providers).
 
 ## Use cases
 

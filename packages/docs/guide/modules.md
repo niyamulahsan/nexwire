@@ -494,6 +494,8 @@ import { sendNotification } from "@/modules/shared/notifications.js";
 | Generic, needed by 2+ modules                                    | `src/modules/shared/`                               |
 | Only used inside one module                                      | that module's `helpers/`                            |
 | Framework-stable, every app needs (e.g. `db`, `jwt`, `password`) | the facade (`@/framework/facade.js`)            |
+| A swappable implementation the whole app uses (e.g. auth, payments) | `src/providers/` — see [Providers](./providers) |
+| A swappable implementation one module offers the app | `src/modules/<name>/providers.ts` — see [Providers](./providers) |
 
 > If a module is the foundation every other module already depends on (like `auth`), other modules may import from its facade. For **any other** module, cross-module imports go through facades — reaching into internals is a smell; extract instead.
 
@@ -506,6 +508,7 @@ import { sendNotification } from "@/modules/shared/notifications.js";
 - **Schedules** from `*/schedules/*.ts` or `*/console/*.ts` with `defineSchedule`
 - **Models** from `*/database/models/*.ts`
 - **Seeders** from `*/database/seeders/*.ts`
+- **Providers** from `*/providers.ts` and `*/providers/*.ts` — a module can plug its own implementation into the app
 
 ## Managing Modules
 
@@ -527,6 +530,7 @@ Modules scaffolded before 4.1.0 kept schemas, helpers and services inside `contr
 ## Related
 
 - [Conventions](/guide/conventions) — naming rules, facades, circular imports
+- [Providers](/guide/providers) — app-wide and module-scoped implementations
 - [Module Commands](/cli/module) — the full `maker module:*` reference
 - [Architecture](/guide/architecture) — full project layout
 - [Notification](/guide/notification) — notification UI integration

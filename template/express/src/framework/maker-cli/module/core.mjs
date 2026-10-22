@@ -45,6 +45,11 @@ const STUBS = {
   facade: {
     named: "facade/name.ts.stub"
   },
+  provider: {
+    named: "provider/name.ts.stub",
+    module: "provider/module.ts.stub",
+    moduleBarrel: "provider/module-barrel.ts.stub"
+  },
   helper: {
     named: "helper/name.ts.stub"
   },
@@ -737,6 +742,31 @@ export async function makeLocalMiddleware(rawModule, rawNameOrFlag, extraFlags =
     Name: pascal(name)
   });
   await writeFileSafe(path.join(root, `middlewares/${name}.ts`), content, flags, "Middleware file");
+}
+
+/**
+ * Generate a provider file for an existing module.
+ *
+ * The file lands in the module's providers/ folder, which the framework
+ * imports at boot just like src/providers/. That is what lets a module offer
+ * an implementation to the whole application without the application knowing
+ * anything about the module's internals.
+ */
+export async function makeModuleProvider(rawModule, rawNameOrFlag, extraFlags = []) {
+  const { moduleName, leaf } = resolveModuleRef(rawModule, rawNameOrFlag, extraFlags);
+  const { name, flags } = parseNameArg(rawNameOrFlag, extraFlags, "Provider name", leaf);
+  const root = await assertModuleExists(moduleName);
+  const filePath = path.join(root, `providers/${name}.ts`);
+  if (hasFlag(flags, "--dry-run")) {
+    console.log(`Would create provider file: ${path.relative(process.cwd(), filePath)}`);
+    return;
+  }
+  const content = await stub(STUBS.provider.module, {
+    module: moduleName,
+    name,
+    camel: camelCase(name)
+  });
+  await writeFileSafe(filePath, content, flags, "Provider file");
 }
 
 /** Generate a types file for an existing module. */

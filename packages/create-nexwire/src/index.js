@@ -130,22 +130,30 @@ async function main() {
     console.log(`create-nexwire v${version}`);
     console.log();
     console.log("Usage:");
-    console.log("  npm create nexwire@latest <project-name> [--engine=<hono|express>]");
-    console.log("  pnpm create nexwire@latest <project-name> [--engine=<hono|express>]");
-    console.log("  bun create nexwire@latest <project-name> [--engine=<hono|express>]");
-    console.log("  npx create-nexwire@latest <project-name> [--engine=<hono|express>]");
+    console.log("  npm create nexwire@latest <project-name|.> [--engine=<hono|express>]");
+    console.log("  pnpm create nexwire@latest <project-name|.> [--engine=<hono|express>]");
+    console.log("  bun create nexwire@latest <project-name|.> [--engine=<hono|express>]");
+    console.log("  npx create-nexwire@latest <project-name|.> [--engine=<hono|express>]");
     console.log();
     console.log("Engines:");
     console.log("  hono     (default) Hono-based HTTP layer and OpenAPI");
     console.log("  express  Express-based HTTP layer and OpenAPI");
+    console.log();
+    console.log("Tip:");
+    console.log("  Use '.' to scaffold into the current directory (must be empty).");
     process.exit(0);
   }
 
   if (!projectName) {
-    projectName = await ask("Project name: ");
+    projectName = await ask("Project name or '.' for the current directory: ");
   }
 
-  if (!projectName || (projectName !== "." && !isValidProjectName(projectName))) {
+  if (!projectName) {
+    console.error("Error: Please provide a project name or '.' to scaffold into the current directory.");
+    process.exit(1);
+  }
+
+  if (projectName !== "." && !isValidProjectName(projectName)) {
     console.error("Error: Invalid project name. Use alphanumeric, dashes, or underscores, or '.' for the current directory.");
     process.exit(1);
   }

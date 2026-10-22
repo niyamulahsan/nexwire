@@ -46,8 +46,9 @@ The CLI auto-detects your package manager from the `npm_config_user_agent` env v
 
 | Category                      | File          | Commands | Purpose                                                                                                                                 |
 | ----------------------------- | ------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| [Module](/cli/module)         | `module/`     | 20       | Scaffold modules, facades, controllers, schemas, services, helpers, middlewares, types, models, routes, jobs, seeders, schedules, tests |
+| [Module](/cli/module)         | `module/`     | 21       | Scaffold modules, facades, providers, controllers, schemas, services, helpers, middlewares, types, models, routes, jobs, seeders, schedules, tests |
 | [Middleware](/cli/middleware) | `middleware/` | 1        | Generate middleware files in `src/middlewares`                                                                                          |
+| [Provider](/cli/provider)     | `provider/`   | 1        | Generate provider files in `src/providers`                                                                                              |
 | [Database](/cli/database)     | `database/`   | 14       | Schema generation, migrations, seeding, push, studio                                                                                    |
 | [Runtime](/cli/runtime)       | `runtime/`    | 14       | Dev server, queue worker, scheduler, UI, testing, dev tools                                                                             |
 | [Deploy](/cli/deploy)         | `deploy/`     | 6        | Docker scaffolding, local/remote compose, workflows, DB import                                                                          |
@@ -60,6 +61,7 @@ index.mjs (entry)
   ├─ Commander program
   ├─ registerMiddlewareCommands() → middleware/index.mjs → middleware/core.mjs
   ├─ registerModuleCommands()  → module/index.mjs → module/core.mjs
+  ├─ registerProviderCommands() → provider/index.mjs → provider/core.mjs
   ├─ registerDeployCommands()  → deploy/index.mjs → deploy/core.mjs
   ├─ registerDbCommands()      → db/index.mjs     → db/core.mjs
   └─ registerRuntimeCommands() → runtime/index.mjs → runtime/core.mjs

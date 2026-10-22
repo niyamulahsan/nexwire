@@ -11,6 +11,7 @@ my-project/
 │   │   └── maker-cli/      # CLI source and stubs
 │   ├── middlewares/        # Auth, role middlewares
 │   ├── modules/            # Application modules
+│   ├── providers/          # App-wide provider implementations (auto-imported)
 │   ├── resources/          # Vue 3 UI app
 │   ├── storage/            # Uploaded and generated files
 │   ├── types/              # TS global support
@@ -35,6 +36,7 @@ Modules are self-contained, but auth context helpers (`getCurrentUser`, `hasRole
 - **Generic multi-module logic** → `src/modules/<name>/facade.ts` (imports only the framework + DB models + module facade.ts, never facade.ts import to other module facade.ts -> circuler import will hapen)
 - **Single-module logic** → that module's own `helpers.ts` (Don't import own facade.ts its own module)
 - **Framework-stable utilities** → the facade (`@/framework/facade.js`)
+- **Swappable implementations** → `src/providers/` (auto-imported at boot) — see [Providers](./providers)
 
 ### it has three rules
 
@@ -71,6 +73,7 @@ server.ts
   │       │    └─ app.onError(onError)                Error handler
   │       │
   │       ├─ initDatabase()                           Connect database (SQLite/MySQL/Postgres)
+  │       ├─ loadProviders()                          Import src/providers/** + module providers
   │       ├─ bootQueueJobs()                          Register queue job handlers
   │       ├─ registerModuleRoutes(app)                Auto-discover & register module routes
   │       ├─ setupQueueDashboard()                    Setup BullMQ dashboard UI

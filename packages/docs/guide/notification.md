@@ -4,6 +4,8 @@
 
 The notification system is a backend module with real-time support via Socket.IO. The CLI generates only the backend (controllers, routes, job). UI integration is manual — see the Vue guide below or build your own components for React, Svelte, Solid, Astro, etc.
 
+Notifications resolve recipients via the auth provider (`getUserContact()`), fall back to the default auth models, or use `mail.to` directly. You can delete/replace the default auth module and still use notifications with a custom auth provider.
+
 ## CLI Commands
 
 ### Create
@@ -134,7 +136,30 @@ await notify(userId, {
 | `link`      | `string`  | —        | Click-through URL                                   |
 | `data`      | `object`  | —        | Arbitrary JSON stored in `data` column              |
 | `broadcast` | `boolean` | `false`  | Emit `"notification.created"` via Socket.IO to user |
-| `mail`      | `object`  | —        | `{ subject?, html? }` — sends email via mail queue  |
+| `mail`      | `object`  | —        | `{ subject?, html?, to? }` — sends email via mail queue. Recipient resolved via auth provider `getUserContact()`, falls back to default users model, or uses `mail.to` explicitly. |
+
+### Recipient resolution
+
+When `mail` is set, the recipient is resolved in this order:
+
+1. `mail.to` — an explicit address. No lookup happens.
+2. The **auth provider** — `getUserContact(userId)` returns `{ email, name, phone }`. See [Providers](./providers).
+3. The built-in `users` model — used when the default auth module is still present.
+4. Nothing — the email is skipped instead of failing the notification.
+
+That means notifications keep working after the default auth module is deleted, as long as a provider is registered — or without any auth at all, when `mail.to` is given.
+
+```ts
+await notify(userId, {
+  title: "Invoice ready",
+  body: "Your invoice #123 is ready.",
+  mail: {
+    to: "someone@example.com", // explicit recipient, no lookup
+    subject: "Invoice #123",
+    html: "<p>Download it from your dashboard.</p>",
+  },
+});
+```
 
 ### Lifecycle
 

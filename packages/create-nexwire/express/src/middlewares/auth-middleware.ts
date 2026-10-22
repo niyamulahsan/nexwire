@@ -1,43 +1,23 @@
-import { eq } from "drizzle-orm";
 import { type NextFunction, type Request, type Response } from "express";
-import { cookie, db, HttpStatusCodes, jwt } from "@/framework/facade.js";
-
-let refreshTokens: any = null;
-let users: any = null;
-let modelsLoaded = false;
-let modelsLoadAttempted = false;
-
-async function loadAuthModels() {
-  if (modelsLoaded) return true;
-  if (modelsLoadAttempted) return false;
-  modelsLoadAttempted = true;
-  try {
-    const userMod = await import("@/modules/auth/database/models/user.js").catch(() => null);
-    if (userMod?.users) users = userMod.users;
-    if (userMod?.refreshTokens) refreshTokens = userMod.refreshTokens;
-    modelsLoaded = !!(users && refreshTokens);
-    return modelsLoaded;
-  } catch {
-    return false;
-  }
-}
+import { cookie, HttpStatusCodes, jwt } from "@/framework/facade.js";
+import { resolveAuthProvider } from "@/framework/providers/adapter.js";
 
 export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
-  const ok = await loadAuthModels();
-  if (!ok || !users || !refreshTokens) {
-    console.warn("[auth-middleware] auth models not available; skipping auth (no /@/modules/auth/database/models/user.js). Replace with your own auth middleware if needed.");
+  const provider = await resolveAuthProvider();
+  if (!provider) {
+    console.warn(
+      "[auth-middleware] auth provider not available; skipping auth. Register one in src/providers/ or restore src/modules/auth."
+    );
     return next();
   }
+
   const accessToken = await cookie.getAuth(req);
 
   if (accessToken) {
-    const accessPayload = await jwt.verifyToken(accessToken, "access");
+    const accessPayload: any = await jwt.verifyToken(accessToken, "access");
 
     if (accessPayload) {
-      const user = await db.query.users.findFirst({
-        where: eq(users.id, accessPayload.id as number),
-        with: { role: true }
-      });
+      const user = await provider.getUserById((accessPayload as any)?.id);
 
       if (!user) {
         cookie.deleteAuth(res);
@@ -45,13 +25,20 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
         return res.status(HttpStatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
       }
 
-      res.locals.auth = {
-        ...accessPayload,
-        id: user.id,
-        email: user.email,
-        roleId: user.role?.id ?? null,
-        role: user.role?.name ?? null
-      };
+      let authCtx: any;
+      if (provider.getAuthContext) {
+        authCtx = await provider.getAuthContext(user, accessPayload);
+      } else {
+        authCtx = {
+          ...(accessPayload || {}),
+          id: (user as any).id,
+          email: (user as any).email,
+          roleId: (user as any).role?.id ?? (user as any).roleId ?? null,
+          role: (user as any).role?.name ?? (user as any).role ?? null,
+          ...(user as any)
+        };
+      }
+      res.locals.auth = authCtx;
       return next();
     }
   }
@@ -64,7 +51,7 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     return res.status(HttpStatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
   }
 
-  const refreshPayload = await jwt.verifyToken(refreshToken, "refresh");
+  const refreshPayload: any = await jwt.verifyToken(refreshToken, "refresh");
 
   if (!refreshPayload?.jti) {
     cookie.deleteAuth(res);
@@ -72,27 +59,27 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     return res.status(HttpStatusCodes.UNAUTHORIZED).json({ message: "Invalid token" });
   }
 
-  const storedToken = await db.query.refreshTokens.findFirst({
-    where: eq(refreshTokens.jti, refreshPayload.jti as string)
-  });
+  const storedToken = await provider.findRefreshToken((refreshPayload as any)?.jti);
 
-  if (!storedToken || storedToken.revoked) {
+  if (!storedToken || (storedToken as any).revoked) {
     cookie.deleteAuth(res);
     cookie.deleteRefresh(res);
     return res.status(HttpStatusCodes.UNAUTHORIZED).json({ message: "Invalid token" });
   }
 
-  if (storedToken.expiresAt.getTime() < Date.now()) {
-    await db.delete(refreshTokens).where(eq(refreshTokens.id, storedToken.id));
-    cookie.deleteAuth(res);
-    cookie.deleteRefresh(res);
-    return res.status(HttpStatusCodes.UNAUTHORIZED).json({ message: "Invalid token" });
+  const expiresAt = (storedToken as any).expiresAt;
+  if (expiresAt) {
+    const exp = expiresAt instanceof Date ? expiresAt.getTime() : new Date(expiresAt).getTime();
+    if (!Number.isNaN(exp) && exp < Date.now()) {
+      if (provider.deleteRefreshToken) await provider.deleteRefreshToken((storedToken as any).id);
+      else if (provider.revokeRefreshToken) await provider.revokeRefreshToken((storedToken as any).id);
+      cookie.deleteAuth(res);
+      cookie.deleteRefresh(res);
+      return res.status(HttpStatusCodes.UNAUTHORIZED).json({ message: "Invalid token" });
+    }
   }
 
-  const user = await db.query.users.findFirst({
-    where: eq(users.id, refreshPayload.id as number),
-    with: { role: true }
-  });
+  const user = await provider.getUserById((refreshPayload as any)?.id);
 
   if (!user) {
     cookie.deleteAuth(res);
@@ -100,23 +87,39 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     return res.status(HttpStatusCodes.UNAUTHORIZED).json({ message: "Unauthorized" });
   }
 
+  let baseCtx: any;
+  if (provider.getAuthContext) {
+    baseCtx = await provider.getAuthContext(user, refreshPayload);
+  } else {
+    baseCtx = {
+      ...(refreshPayload || {}),
+      id: (user as any).id,
+      email: (user as any).email,
+      roleId: (user as any).role?.id ?? (user as any).roleId ?? null,
+      role: (user as any).role?.name ?? (user as any).role ?? null,
+      ...(user as any)
+    };
+  }
+
   const newAccessToken = await jwt.generateToken(
     {
-      id: user.id,
-      email: user.email,
-      roleId: user.role?.id ?? null,
-      role: user.role?.name ?? null
+      id: (user as any).id,
+      email: (user as any).email,
+      roleId: baseCtx?.roleId ?? (user as any).role?.id ?? (user as any).roleId ?? null,
+      role: baseCtx?.role ?? (user as any).role?.name ?? (user as any).role ?? null
     },
     "access"
   );
 
   await cookie.setAuth(res, newAccessToken.token);
   res.locals.auth = {
-    id: user.id,
-    email: user.email,
-    roleId: user.role?.id ?? null,
-    role: user.role?.name ?? null,
-    type: "access"
+    ...(baseCtx || {}),
+    id: (user as any).id,
+    email: (user as any).email,
+    roleId: baseCtx?.roleId ?? (user as any).role?.id ?? (user as any).roleId ?? null,
+    role: baseCtx?.role ?? (user as any).role?.name ?? (user as any).role ?? null,
+    type: "access",
+    ...(user as any)
   };
   return next();
 }
