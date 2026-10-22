@@ -297,7 +297,6 @@ async function moduleFiles(moduleName, openApi) {
   const controllerStub = openApi ? STUBS.controller.openapi : STUBS.controller.plain;
   return {
     "facade.ts": await stub(STUBS.facade.named, vars),
-    "providers.ts": await stub(STUBS.provider.moduleBarrel, vars),
     [`controllers/${name}.ts`]: await stub(controllerStub, vars),
     [`schemas/${name}.ts`]: await schemaFile(moduleName, name, openApi),
     // module:make also writes database/models/<name>.ts, so the service can query it.

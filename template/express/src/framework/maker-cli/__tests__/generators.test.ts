@@ -306,12 +306,14 @@ describe.skipIf(!canChdir)("provider generators", () => {
     expect(source).not.toMatch(/\{\{\s*\w+\s*\}\}/);
   });
 
-  it("gives every new module a providers file", async () => {
+  it("gives every new module a providers folder path", async () => {
     const created = await makeModule("shop");
+    const providersDir = path.join(workdir, "src", "modules", created.moduleName, "providers");
 
-    const source = await readFile(path.join(workdir, "src", "modules", created.moduleName, "providers.ts"), "utf8");
+    await expect(makeModuleProvider(created.moduleName, "demo")).resolves.not.toThrow();
+    const source = await readFile(path.join(providersDir, "demo.ts"), "utf8");
 
-    expect(syntaxErrors("providers.ts", source)).toEqual([]);
+    expect(syntaxErrors("provider.ts", source)).toEqual([]);
     expect(source).toContain("registerProvider");
   });
 
