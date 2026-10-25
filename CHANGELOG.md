@@ -1,5 +1,15 @@
 # Changelog
 
+## [4.2.5] — 2026-10-26
+
+### Fixed
+
+- **Template (both engines) / Scaffolder**: the UI head instance sets the title template through `createHead({ init: [...] })` again. 4.2.4 passed `titleTemplate` directly to `createHead`, which `@unhead/vue@3` no longer reads from its options: it type-errors in the editor (`'titleTemplate' does not exist in type 'CreateClientHeadOptions'`, plus an implicit-`any` for the callback) and is silently ignored at runtime, so every page rendered its bare title (`Login`) without the `| nexwire` suffix. The documented v3 form, `init`, restores both: titles render as `Login | nexwire` again and the two editor errors are gone. The `entry-point` guide is updated with the same snippet.
+
+### Added
+
+- **Template (both engines) / Scaffolder**: `npm run typecheck:ui` (`vue-tsc --noEmit -p src/resources/tsconfig.json`) and `vue-tsc ^3.3.13` as a dev dependency. The root `tsc --noEmit` excludes `src/resources`, and the Vite build strips types without checking them, so the 4.2.4 head regression shipped even though the backend typecheck was green. `build:ui` now runs the UI typecheck first, so a red squiggle in `src/resources` fails the build instead of reaching npm.
+
 ## [4.2.4] — 2026-10-25
 
 ### Added

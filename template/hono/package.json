@@ -10,7 +10,8 @@
     "build": "npm run build:all",
     "build:all": "npm run build:backend && npm run build:ui",
     "build:backend": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json",
-    "build:ui": "node src/framework/maker-cli/runtime/build-ui.mjs",
+    "build:ui": "npm run typecheck:ui && node src/framework/maker-cli/runtime/build-ui.mjs",
+    "typecheck:ui": "vue-tsc --noEmit -p src/resources/tsconfig.json",
     "dev": "node src/framework/maker-cli/index.mjs dev",
     "backend": "node src/framework/maker-cli/index.mjs serve --src",
     "ui": "node src/framework/maker-cli/index.mjs ui:dev",
@@ -113,7 +114,8 @@
     "tsc-alias": "^1.9.9",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "vue-tsc": "^3.3.13"
   },
   "engines": {
     "node": ">=22.12.0",

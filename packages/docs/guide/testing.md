@@ -177,6 +177,8 @@ This creates `__tests__/user-test.test.ts` instead.
 | `test:coverage` | Run once and print a coverage report |
 | `test:ui`       | Open Vitest visual UI in browser     |
 
+The UI lives in its own TypeScript project (`src/resources/tsconfig.json`), which the root `tsc` does not include. `npm run typecheck:ui` checks it with `vue-tsc`, and `build:ui` runs that check before Vite builds.
+
 ::: code-group
 
 ```bash [npm]
