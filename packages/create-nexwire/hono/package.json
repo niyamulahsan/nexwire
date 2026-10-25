@@ -79,10 +79,14 @@
     "zod": "^4.6.7"
   },
   "overrides": {
+    "@esbuild-kit/core-utils": {
+      "esbuild": "^0.25.12"
+    },
     "@maildev/mcp": {
       "zod": "^4.6.7"
     },
     "@maildev/smtp": {
+      "jsdom": "^27.4.0",
       "nodemailer": "^10.2.1"
     },
     "redis-commander": {
@@ -91,6 +95,13 @@
       "bcrypt": "npm:bcryptjs@^3.0.3",
       "bcryptjs": "^3.0.3"
     }
+  },
+  "allowScripts": {
+    "@parcel/watcher": true,
+    "esbuild": true,
+    "msgpackr-extract": true,
+    "redis-commander": true,
+    "vue-demi": true
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.7",

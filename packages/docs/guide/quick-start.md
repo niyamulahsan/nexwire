@@ -122,7 +122,17 @@ There is nothing to copy before installing — the scaffolder writes a working `
 
 ## Package Manager Setup
 
-**npm** and **bun** work out of the box — no extra configuration needed.
+**Bun** works out of the box — no extra configuration needed.
+
+### npm
+
+npm 11.19+ blocks dependency install scripts by default. The template ships an `allowScripts` map covering the packages it uses (`esbuild`, `@parcel/watcher`, `msgpackr-extract`, `vue-demi` and `redis-commander`), so a fresh `npm install` finishes without the "install scripts not yet covered" warning. If you add a dependency that needs a build step, review and approve it:
+
+```bash
+npm install-scripts approve <package>
+```
+
+Older npm versions ignore the field; nothing else changes.
 
 ### pnpm
 
@@ -134,6 +144,7 @@ allowBuilds:
   "@parcel/watcher": true
   msgpackr-extract: true
   redis-commander: true
+  vue-demi: true
   bcrypt: true
 ```
 
@@ -154,7 +165,8 @@ Also add `dependenciesMeta` to your `package.json` to allow build scripts for re
   "dependenciesMeta": {
     "esbuild": { "built": true },
     "@parcel/watcher": { "built": true },
-    "msgpackr-extract": { "built": true }
+    "msgpackr-extract": { "built": true },
+    "vue-demi": { "built": true }
   }
 }
 ```
