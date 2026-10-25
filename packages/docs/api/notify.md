@@ -2,13 +2,15 @@
 
 Imported from the facade: `import { notify } from "@/framework/facade.js"`.
 
-Creates a user-visible notification row and optionally broadcasts it over Socket.IO and/or delivers it by email. The CLI-generated module exposes the CRUD endpoints under `/api/notification`. See [Notifications](./../guide/notification).
+Creates a user-visible notification through the registered notification provider, and optionally broadcasts it over Socket.IO and/or delivers it by email. The shipped `src/modules/notification` module exposes the CRUD endpoints under `/api/notification` and needs no setup beyond `db:migrate`. See [Notifications](./../guide/notification).
 
 ## Functions
 
-| Function | Signature                                    | Description                                             |
-| -------- | -------------------------------------------- | ------------------------------------------------------- |
-| `notify` | `(userId, options) => Promise<Notification>` | Insert a notification row; optionally broadcast + email |
+| Function | Signature                                                  | Description                                                        |
+| -------- | ---------------------------------------------------------- | ------------------------------------------------------------------ |
+| `notify` | `(target, options) => Promise<NotificationRecord \| null>` | Stores a notification; optionally broadcasts + emails. `null` when no provider is available. |
+
+`target` is `number | string | { type?: string; id: number | string }`. A bare number/string becomes `{ type: "user", id }`.
 
 `NotificationOptions`:
 
@@ -24,7 +26,7 @@ Creates a user-visible notification row and optionally broadcasts it over Socket
 
 ### Recipient resolution
 
-When `mail` is set, the recipient is resolved in this order: `mail.to` → the auth provider's `getUserContact(userId)` → the built-in `users` model → skipped. See [Providers](./../guide/providers).
+When `mail` is set, the recipient is resolved in this order: `mail.to` → the auth provider's `getUserContact(id)` → skipped. There is no users-model fallback. See [Providers](./../guide/providers).
 
 ## Use cases
 
@@ -115,11 +117,12 @@ channel.listen("notification.created", (payload) => {
 ## Lifecycle
 
 ```
-notify(userId, { broadcast: true, mail: { ... } })
-  ├─ 1. Insert row into notifications table
-  ├─ 2. dispatchEvent("notification.created", normalized, { broadcast: { users: [userId] } })
-  │      └─ Socket.IO emits to room "user:<userId>"
-  └─ 3. If mail option:
+notify(target, { broadcast: true, mail: { ... } })
+  ├─ 1. resolveNotificationProvider() — registered provider, else the shipped store
+  ├─ 2. provider.create(target, input)
+  ├─ 3. dispatchEvent("notification.created", normalized, { broadcast: { users: [target.id] } })
+  │      └─ Socket.IO emits to room "user:<id>"
+  └─ 4. If mail option:
          └─ dispatchEvent("notification:mail", ..., { queue: "mail" })
              └─ BullMQ worker sends the email
 ```
@@ -128,13 +131,14 @@ notify(userId, { broadcast: true, mail: { ... } })
 
 |                     | `dispatchEvent`                                     | `notify`                                                                  |
 | ------------------- | --------------------------------------------------- | ------------------------------------------------------------------------- |
-| **Persistence**     | No — fire-and-forget signal                         | Yes — inserts a row, returns the normalized notification                  |
+| **Persistence**     | No — fire-and-forget signal                         | Yes — stores through the notification provider, returns the normalized record |
 | **Broadcast scope** | Flexible (`all`, `auth`, `roles`, `users`, `rooms`) | Always to a single user (`users: [userId]`)                               |
 | **Email delivery**  | No                                                  | Yes — via `mail: { subject, html }`                                       |
 | **Queue option**    | Yes                                                 | Yes — internally calls `dispatchEvent` with `{ queue: "mail" }` for email |
 
 ## Notes
 
-- The notification table is shared, defined in `src/modules/auth/database/models/notifications.ts` (one row per user-notification).
+- The notification table is standalone: `src/modules/notification/database/models/notification.ts`, with no foreign key to auth. One row is one notification for one `(notifiable_type, notifiable_id)` owner.
 - `broadcast: true` emits the `"notification.created"` event — listen on the `user:<id>` room to update bell badges without polling.
-- Return value is the normalized row: `{ id, userId, type, title, body, data, link, readAt, createdAt }`.
+- Return value is the normalized record: `{ id, notifiableType, notifiableId, type, title, body, data, link, readAt, createdAt }`. `id` is a string (UUID by default), so it works whether the auth id is numeric or a UUID.
+- Numeric and string ids are both accepted and always stored as text.

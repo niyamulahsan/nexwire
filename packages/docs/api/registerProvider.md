@@ -10,9 +10,11 @@ Registers an implementation under a key so the framework — or your own code �
 | -------- | --------- | ----------- |
 | `registerProvider` | `(key, impl) => impl` | Registers an implementation under a key and returns it |
 | `registerAuthProvider` | `(provider) => provider` | Typed shorthand for the `auth` key |
+| `registerNotificationProvider` | `(provider) => provider` | Typed shorthand for the `notification` key |
 | `hasProvider` | `(key) => boolean` | Reports whether an implementation is registered |
 | `clearProvider` | `(key) => void` | Removes an implementation — mainly useful in tests |
 | `clearAuthProvider` | `() => void` | Removes the auth provider — mainly useful in tests |
+| `clearNotificationProvider` | `() => void` | Removes the notification provider — mainly useful in tests |
 | `listProviders` | `() => string[]` | Lists every registered key |
 
 ## Use cases
@@ -40,6 +42,29 @@ registerAuthProvider(authProvider);
 ```
 
 Files in `src/providers/` are imported automatically at boot — no import of this module is needed anywhere else.
+
+### Replace notification storage
+
+```ts
+// src/providers/notification.ts
+import { registerNotificationProvider } from "@/framework/facade.js";
+import type { NotificationProvider } from "@/framework/facade.js";
+
+const notificationProvider: NotificationProvider = {
+  async create(target, input) {
+    // persist and return a NotificationRecord
+  },
+  async list(target, options) {},
+  async unreadCount(target) {},
+  async markRead(target, id) {},
+  async markAllRead(target) {},
+  async remove(target, id) {}
+};
+
+registerNotificationProvider(notificationProvider);
+```
+
+A registered notification provider always wins over the shipped `src/modules/notification` store. Mail and realtime remain in the runtime, so `notify({ broadcast, mail })` keeps working.
 
 ### Register your own contract
 
@@ -78,6 +103,20 @@ Module provider files are imported at boot too, so a module can ship its own imp
 | `revokeRefreshToken(id)` | No | Revokes a refresh token. `deleteRefreshToken(id)` also works. |
 | `getAuthContext(user, payload)` | No | Shapes the object handlers receive as `auth`. |
 | `getUserContact(userId)` | No | Finds the email/name of a user — used by `notify()`. |
+
+Every id in the contract (`AuthProviderUser.id`, `AuthUserContext.id`, refresh-token ids, and the `getUserById` / `getUserContact` arguments) is `number | string`, so a UUID-backed auth provider is fully supported.
+
+### `NotificationProvider` contract
+
+| Method | Required | Purpose |
+| ------ | -------- | ------- |
+| `create(target, input)` | Yes | Store one notification and return it. |
+| `list(target, options)` | Yes | Return `{ data, total, unread, page, perPage }`. |
+| `unreadCount(target)` | Yes | Return the unread count. |
+| `markRead(target, id)` | Yes | Mark one read; return whether it existed. |
+| `markAllRead(target)` | Yes | Mark all read; return how many changed. |
+| `remove(target, id)` | Yes | Delete one; return whether it existed. |
+| `deleteForTarget(target)` | No | Delete everything owned by a target. |
 
 ## Notes
 

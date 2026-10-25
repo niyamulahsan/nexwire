@@ -1,86 +1,91 @@
 import type { Handler } from "hono";
-import { and, count, desc, eq, sql } from "drizzle-orm";
-import { db } from "@/framework/facade.js";
-import { notifications } from "@/modules/auth/database/models/notification.js";
+import { HttpStatusCodes, resolveNotificationProvider } from "@/framework/facade.js";
+import type { NotifiableTarget } from "@/framework/providers/contracts.js";
+
+/** Read the authenticated owner. A missing auth context means the request is anonymous. */
+function targetFrom(c: any): NotifiableTarget | null {
+  const auth = c.get("auth");
+  if (!auth || auth.id === undefined || auth.id === null) return null;
+  return { type: "{{notifiable}}", id: auth.id };
+}
 
 export const list: Handler = async (c: any) => {
-  const userId = c.get("auth").id;
+  const provider = await resolveNotificationProvider();
+  if (!provider) {
+    return c.json(
+      { message: "Notification provider not available. Restore src/modules/notification or register one in src/providers/." },
+      HttpStatusCodes.SERVICE_UNAVAILABLE
+    );
+  }
+
+  const target = targetFrom(c);
+  if (!target) return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
+
   const page = Math.max(1, Number(c.req.query("page")) || 1);
   const perPage = Math.min(50, Math.max(1, Number(c.req.query("perPage")) || 20));
 
-  const unread = await db.select({ count: count() }).from(notifications)
-    .where(and(eq(notifications.userId, userId), sql`${notifications.readAt} IS NULL`));
-
-  const total = await db.select({ count: count() }).from(notifications)
-    .where(eq(notifications.userId, userId));
-
-  const rows = await db.select().from(notifications)
-    .where(eq(notifications.userId, userId))
-    .orderBy(desc(notifications.createdAt))
-    .limit(perPage).offset((page - 1) * perPage);
-
-  return c.json({
-    data: rows.map(normalize),
-    total: total[0].count,
-    unread: unread[0].count,
-    page,
-    perPage,
-  });
+  return c.json(await provider.list(target, { page, perPage }));
 };
 
 export const unreadCount: Handler = async (c: any) => {
-  const userId = c.get("auth").id;
-  const rows = await db.select({ count: count() }).from(notifications)
-    .where(and(eq(notifications.userId, userId), sql`${notifications.readAt} IS NULL`));
-  return c.json({ count: rows[0].count });
+  const provider = await resolveNotificationProvider();
+  if (!provider) {
+    return c.json(
+      { message: "Notification provider not available. Restore src/modules/notification or register one in src/providers/." },
+      HttpStatusCodes.SERVICE_UNAVAILABLE
+    );
+  }
+
+  const target = targetFrom(c);
+  if (!target) return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
+
+  return c.json({ count: await provider.unreadCount(target) });
 };
 
 export const markRead: Handler = async (c: any) => {
-  const userId = c.get("auth").id;
-  const id = Number(c.req.param("id"));
+  const provider = await resolveNotificationProvider();
+  if (!provider) {
+    return c.json(
+      { message: "Notification provider not available. Restore src/modules/notification or register one in src/providers/." },
+      HttpStatusCodes.SERVICE_UNAVAILABLE
+    );
+  }
 
-  await db.update(notifications)
-    .set({ readAt: sql`now()` })
-    .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
+  const target = targetFrom(c);
+  if (!target) return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
 
+  await provider.markRead(target, c.req.param("id"));
   return c.json({ ok: true });
 };
 
 export const markAllRead: Handler = async (c: any) => {
-  const userId = c.get("auth").id;
+  const provider = await resolveNotificationProvider();
+  if (!provider) {
+    return c.json(
+      { message: "Notification provider not available. Restore src/modules/notification or register one in src/providers/." },
+      HttpStatusCodes.SERVICE_UNAVAILABLE
+    );
+  }
 
-  await db.update(notifications)
-    .set({ readAt: sql`now()` })
-    .where(and(eq(notifications.userId, userId), sql`${notifications.readAt} IS NULL`));
+  const target = targetFrom(c);
+  if (!target) return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
 
+  await provider.markAllRead(target);
   return c.json({ ok: true });
 };
 
 export const remove: Handler = async (c: any) => {
-  const userId = c.get("auth").id;
-  const id = Number(c.req.param("id"));
+  const provider = await resolveNotificationProvider();
+  if (!provider) {
+    return c.json(
+      { message: "Notification provider not available. Restore src/modules/notification or register one in src/providers/." },
+      HttpStatusCodes.SERVICE_UNAVAILABLE
+    );
+  }
 
-  await db.delete(notifications)
-    .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
+  const target = targetFrom(c);
+  if (!target) return c.json({ message: "Unauthorized" }, HttpStatusCodes.UNAUTHORIZED);
 
+  await provider.remove(target, c.req.param("id"));
   return c.json({ ok: true });
 };
-
-function normalize(row: typeof notifications.$inferSelect) {
-  let parsed: unknown = null;
-  if (row.data) {
-    try { parsed = JSON.parse(row.data); } catch {}
-  }
-  return {
-    id: row.id,
-    userId: row.userId,
-    type: row.type,
-    title: row.title,
-    body: row.body,
-    data: parsed,
-    link: row.link,
-    readAt: row.readAt?.toISOString() || null,
-    createdAt: row.createdAt.toISOString(),
-  };
-}
-

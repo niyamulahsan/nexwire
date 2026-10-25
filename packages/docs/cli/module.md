@@ -144,17 +144,40 @@ The generated `providers.ts` is where the module plugs its own implementations i
 
 ### `module:make-notification [name]`
 
-Generate a notification backend module with controller, routes, and job. Default name is `notification`.
+The standalone notification module ships in every new project, so this command is optional: use it when you deleted the module or want a second HTTP surface (for example under a panel). Default name is `notification`.
 
-| File                          | Purpose                                                      |
-| ----------------------------- | ------------------------------------------------------------ |
-| `controllers/notification.ts` | 5 handlers: list, unreadCount, markRead, markAllRead, remove |
-| `schemas/notification.ts`     | Zod/OpenAPI schemas                                          |
-| `routes/index.ts`             | 5 routes under `authMiddleware`                              |
-| `jobs/notification.ts`        | Queue handler for email delivery                             |
+The command always writes the HTTP surface. It writes the store only when no module already ships one, because the table, model and provider are a singleton.
+
+| File | Always | Purpose |
+| --- | --- | --- |
+| `controllers/notification.ts` | yes | 5 handlers: list, unreadCount, markRead, markAllRead, remove |
+| `schemas/notification.ts` | yes | Zod/OpenAPI schemas |
+| `routes/index.ts` | yes | 5 routes under `authMiddleware` |
+| `database/models/notification.ts` | first time | Polymorphic table, no auth foreign key |
+| `providers/notification.ts` | first time | Default Drizzle store, registers itself |
+| `jobs/mail.ts` | first time | Queue handler for `notification:mail` |
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `--path=<panel>` | — | Nest the module under a panel folder, e.g. `--path=admin` |
+| `--notifiable=<type>` | `user` | Owner type recorded by the generated controller |
+| `--force` | — | Overwrite the files of a module that already exists |
+
+```bash
+bun maker module:make-notification alerts --path=admin --notifiable=team
+```
+
+The output states whether the store was included or reused:
+
+```
+Notification module ready: admin/alerts
+Notification store reused: src/modules/notification/database/models/notification.ts
+Panel: admin  ->  /api/admin/alerts
+Notifiable type: team
+```
 
 ::: tip
-UI integration is manual  see [Notification Guide](/guide/notification) for Vue copy-paste components and setup instructions.
+UI integration is manual — see [Notification Guide](/guide/notification) for Vue copy-paste components and setup instructions.
 :::
 
 ## Component Commands

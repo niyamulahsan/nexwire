@@ -2,13 +2,25 @@
 
 ## Overview
 
-The notification system is a backend module with real-time support via Socket.IO. The CLI generates only the backend (controllers, routes, job). UI integration is manual — see the Vue guide below or build your own components for React, Svelte, Solid, Astro, etc.
+Notifications ship as a standalone backend module, `src/modules/notification/`. It is independent of auth: there is no foreign key, no import of `@/modules/auth`, and no users-model fallback. You can delete or replace auth and notifications keep working for numeric ids and string ids (UUID, ULID, ...) alike.
 
-Notifications resolve recipients via the auth provider (`getUserContact()`), fall back to the default auth models, or use `mail.to` directly. You can delete/replace the default auth module and still use notifications with a custom auth provider.
+The module is already present in a new project, so there is nothing to install. Once `db:migrate` has run, `notify()` and `/api/notification/*` both work out of the box.
+
+| Piece | Default |
+| --- | --- |
+| API | `/api/notification/*` behind `authMiddleware` |
+| Storage | `notifications` table owned by `src/modules/notification` |
+| Provider | `NotificationProvider` registered by the module automatically |
+| Realtime | Socket.IO event `notification.created` when `broadcast: true` |
+| Email | Queued `notification:mail` job (or direct send when Redis is off) |
+
+UI integration is manual — see the Vue guide below or build your own components for React, Svelte, Solid, Astro, etc.
 
 ## CLI Commands
 
 ### Create
+
+`module:make-notification` is optional: the default module is shipped. Use it when you want a second HTTP surface (for example a panel-specific mount) or when you deleted the shipped one.
 
 ::: code-group
 
@@ -30,14 +42,26 @@ bun maker module:make-notification notification
 
 :::
 
-Generates the backend module under `src/modules/notification/`:
+The command always writes the HTTP surface (controller, schemas, routes). It writes the store (model, provider, mail job) only when no module already ships one:
 
-| File                                     | Purpose                                                      |
-| ---------------------------------------- | ------------------------------------------------------------ |
-| `controllers/notification.controller.ts` | 5 handlers: list, unreadCount, markRead, markAllRead, remove |
-| `controllers/notification.schema.ts`     | Zod/OpenAPI schemas                                          |
-| `routes/api.ts`                          | 5 routes under `authMiddleware`                              |
-| `jobs/notification.ts`                   | Queue handler for email delivery                             |
+| File | Always | Purpose |
+| --- | --- | --- |
+| `controllers/<leaf>.ts` | yes | 5 handlers: list, unreadCount, markRead, markAllRead, remove |
+| `schemas/<leaf>.ts` | yes | Zod/OpenAPI schemas |
+| `routes/index.ts` | yes | 5 routes under `authMiddleware` |
+| `database/models/notification.ts` | first time | Polymorphic notification table, no auth FK |
+| `providers/notification.ts` | first time | Default Drizzle store, registers itself |
+| `jobs/mail.ts` | first time | Queue handler for `notification:mail` |
+
+The store is a singleton. A second notification module becomes another HTTP surface over the same table instead of creating a duplicate table and a second provider.
+
+Flags:
+
+| Flag | Default | Meaning |
+| --- | --- | --- |
+| `--path=<panel>` | — | Nest the module under a panel folder, e.g. `--path=admin` |
+| `--notifiable=<type>` | `user` | Owner type recorded by the generated controller |
+| `--force` | — | Overwrite the files of a module that already exists |
 
 ### Delete
 
@@ -75,21 +99,64 @@ All routes are mounted at `/api/notification` behind `authMiddleware`:
 | `PATCH`  | `/read-all`     | Mark all as read                 |
 | `DELETE` | `/{id}`         | Delete a notification            |
 
+The handlers answer `401` when no auth context is present, and `503` when no notification provider can be resolved (the shipped module was removed and nothing was registered).
+
+If you need a different owner type for a panel, generate it with `--notifiable=<type>` and the controller will read `{ type, id }` from the auth context accordingly.
+
 ## Database Model
 
-Notifications use a single shared table defined in `src/modules/auth/database/models/notifications.ts`:
+The table is defined by the notification module itself, in `src/modules/notification/database/models/notification.ts`. It has no foreign key to `users`, so deleting auth cannot cascade-delete notifications.
 
-| Column       | Type                    | Notes                                 |
-| ------------ | ----------------------- | ------------------------------------- |
-| `id`         | `INT` PK auto-increment |                                       |
-| `user_id`    | `INT` FK → users.id     | Cascade on delete                     |
-| `type`       | `VARCHAR(100)`          | `info`, `success`, `warning`, `error` |
-| `title`      | `VARCHAR(255)`          | Required                              |
-| `body`       | `TEXT`                  | Nullable                              |
-| `data`       | `TEXT`                  | JSON string — extra payload           |
-| `link`       | `VARCHAR(500)`          | Click-through URL                     |
-| `read_at`    | `TIMESTAMP`             | Nullable, set when read               |
-| `created_at` | `TIMESTAMP`             | Default now                           |
+| Column | Type | Notes |
+| --- | --- | --- |
+| `id` | `TEXT` PK | UUID generated by the default provider |
+| `notifiable_type` | `TEXT` | Owner class, default `user` |
+| `notifiable_id` | `TEXT` | Owner id, always stored as text |
+| `type` | `TEXT` | `info`, `success`, `warning`, `error`, ... |
+| `title` | `TEXT` | Required |
+| `body` | `TEXT` | Nullable |
+| `data` | `TEXT` | JSON string — extra payload |
+| `link` | `TEXT` | Click-through URL |
+| `read_at` | `TIMESTAMP` | Nullable, set when read |
+| `created_at` | `TIMESTAMP` | Default now |
+
+Two indexes cover the read paths: `(notifiable_type, notifiable_id, read_at)` and `(notifiable_type, notifiable_id, created_at)`.
+
+### Upgrading an existing project
+
+Before 4.2.4 the table lived in the auth module (`src/modules/auth/database/models/notification.ts`) with a required `user_id` FK. A project that already has data there should migrate it before removing the old model:
+
+```sql
+CREATE TABLE notifications_new (
+  id TEXT PRIMARY KEY NOT NULL,
+  notifiable_type TEXT DEFAULT 'user' NOT NULL,
+  notifiable_id TEXT NOT NULL,
+  type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  body TEXT,
+  data TEXT,
+  link TEXT,
+  read_at INTEGER,
+  created_at INTEGER NOT NULL
+);
+
+INSERT INTO notifications_new (id, notifiable_type, notifiable_id, type, title, body, data, link, read_at, created_at)
+SELECT
+  lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))), 2) || '-' ||
+  substr('89ab', abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))), 2) || '-' || lower(hex(randomblob(6))),
+  'user',
+  CAST(user_id AS TEXT),
+  type, title, body, data, link, read_at, created_at
+FROM notifications;
+
+DROP TABLE notifications;
+ALTER TABLE notifications_new RENAME TO notifications;
+
+CREATE INDEX notifications_notifiable_read_idx ON notifications (notifiable_type, notifiable_id, read_at);
+CREATE INDEX notifications_notifiable_created_idx ON notifications (notifiable_type, notifiable_id, created_at);
+```
+
+MySQL/Postgres projects can do the same with a UUID function (`UUID()` / `gen_random_uuid()`). Because the default provider generates ids in application code, a migrated numeric row id is also accepted by every provider operation.
 
 ## The `notify()` Function
 
@@ -98,11 +165,16 @@ Import from the facade:
 ```ts
 import { notify } from "@/framework/facade.js";
 
-// Save to database only
+// Save to database only — numeric auth id
 await notify(userId, {
   type: "info",
   title: "Profile Updated",
   body: "Your profile was saved.",
+});
+
+// String ids work the same way (UUID, ULID, ...)
+await notify("9b2f6f2e-4a9c-4a0e-9f1d-3f6a1c2b3d4e", {
+  title: "Welcome",
 });
 
 // Save + broadcast via Socket.IO in real-time
@@ -126,6 +198,20 @@ await notify(userId, {
 });
 ```
 
+### Target
+
+The first argument is either an id or an explicit notifiable target:
+
+```ts
+type NotificationTarget = number | string | { type?: string; id: number | string };
+
+await notify(42, { title: "..." });                          // { type: "user", id: 42 }
+await notify("9b2f…", { title: "..." });                     // { type: "user", id: "9b2f…" }
+await notify({ type: "team", id: 7 }, { title: "..." });     // { type: "team", id: 7 }
+```
+
+`type` defaults to `"user"`. The provider always receives the id as text, so the same call works whether auth uses auto-increment integers or UUIDs.
+
 ### Options
 
 | Option      | Type      | Default  | Description                                         |
@@ -136,16 +222,15 @@ await notify(userId, {
 | `link`      | `string`  | —        | Click-through URL                                   |
 | `data`      | `object`  | —        | Arbitrary JSON stored in `data` column              |
 | `broadcast` | `boolean` | `false`  | Emit `"notification.created"` via Socket.IO to user |
-| `mail`      | `object`  | —        | `{ subject?, html?, to? }` — sends email via mail queue. Recipient resolved via auth provider `getUserContact()`, falls back to default users model, or uses `mail.to` explicitly. |
+| `mail`      | `object`  | —        | `{ subject?, html?, to? }` — sends email via mail queue. Recipient resolved via `mail.to` or the auth provider's `getUserContact()`. |
 
 ### Recipient resolution
 
 When `mail` is set, the recipient is resolved in this order:
 
 1. `mail.to` — an explicit address. No lookup happens.
-2. The **auth provider** — `getUserContact(userId)` returns `{ email, name, phone }`. See [Providers](./providers).
-3. The built-in `users` model — used when the default auth module is still present.
-4. Nothing — the email is skipped instead of failing the notification.
+2. The **auth provider** — `getUserContact(id)` returns `{ email, name, phone }`. See [Providers](./providers).
+3. Nothing — the email is skipped instead of failing the notification. The framework does not read the users model directly.
 
 That means notifications keep working after the default auth module is deleted, as long as a provider is registered — or without any auth at all, when `mail.to` is given.
 
@@ -164,19 +249,27 @@ await notify(userId, {
 ### Lifecycle
 
 ```
-notify(userId, { broadcast: true, mail: { ... } })
+notify(target, { broadcast: true, mail: { ... } })
   │
-  ├─ 1. Insert row into notifications table
+  ├─ 1. resolveNotificationProvider()
+  │     ├─ a registered provider wins
+  │     └─ otherwise the shipped src/modules/notification store
   │
-  ├─ 2. dispatchEvent("notification.created", normalized, {
-  │       broadcast: { users: [userId] }
+  ├─ 2. provider.create(target, input)
+  │     └─ inserts a row into the notifications table
+  │
+  ├─ 3. If broadcast option:
+  │     dispatchEvent("notification.created", normalized, {
+  │       broadcast: { users: [target.id] }
   │     })
-  │     └─ Socket.IO emits to room "user:<userId>"
+  │     └─ Socket.IO emits to room "user:<id>"
   │
-  └─ 3. If mail option:
+  └─ 4. If mail option:
         └─ dispatchEvent("notification:mail", ..., { queue: "mail" })
             └─ BullMQ Worker sends email
 ```
+
+If no provider is registered and the shipped module is gone, `notify()` logs one warning and returns `null` instead of throwing.
 
 ## Usage Example: Controller
 
@@ -232,7 +325,7 @@ Both functions can broadcast data to users in real-time, but they serve differen
 
 |                     | `dispatchEvent`                                                                                                     | `notify`                                                                                      |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| **Persistence**     | No — fire-and-forget signal                                                                                         | Yes — inserts a row into the `notifications` table                                            |
+| **Persistence**     | No — fire-and-forget signal                                                                                         | Yes — stores through the notification provider                                                                 |
 | **Return value**    | `Promise<void>`                                                                                                     | Returns the normalized notification object with `id`, `type`, `title`, `body`, `readAt`, etc. |
 | **Broadcast scope** | Flexible — `{ all: true }`, `{ auth: true }`, `{ roles: [] }`, `{ users: [] }`, `{ rooms: [] }`, or any combination | Targeted — always to a single user via `broadcast: { users: [userId] }`                       |
 | **Email delivery**  | No — you would need to build the email dispatch yourself                                                            | Built-in — pass `mail: { subject, html }` to queue an email                                   |
@@ -324,7 +417,7 @@ const { user } = useAuth();
 const unread = ref(0);
 const items = ref<
   Array<{
-    id: number;
+    id: string;
     type: string;
     title: string;
     body: string | null;
@@ -807,4 +900,4 @@ For React, Svelte, Solid, Astro, or any other frontend framework, create equival
 - `PATCH /api/notification/read-all` — mark all as read
 - `DELETE /api/notification/{id}` — delete
 
-For real-time updates, connect to Socket.IO and listen for the `"notification.created"` event on the `user:{userId}` room.
+For real-time updates, connect to Socket.IO and listen for the `"notification.created"` event on the `user:{id}` room.

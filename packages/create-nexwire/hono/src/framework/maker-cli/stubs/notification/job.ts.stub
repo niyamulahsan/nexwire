@@ -1,8 +1,7 @@
-import { mail } from "@/framework/support/mail.js";
+import { mail, shouldQueue } from "@/framework/facade.js";
 import { logger } from "@/framework/support/logger.js";
-import { shouldQueue } from "@/framework/queue/queue.js";
 
-shouldQueue("{{module}}:mail", "mail", async (job) => {
+shouldQueue("notification:mail", "mail", async (job) => {
   const { to, subject, html } = job.data;
 
   await mail.sendMail({ to, subject, html });
@@ -10,4 +9,3 @@ shouldQueue("{{module}}:mail", "mail", async (job) => {
 
   return { ok: true };
 });
-

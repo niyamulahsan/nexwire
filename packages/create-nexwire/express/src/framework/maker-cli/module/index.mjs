@@ -39,8 +39,9 @@ export function registerModuleCommands(program, rawArgs) {
     });
   program
     .command("module:make-notification [name]")
-    .description("Generate notification backend module (controller, routes, job)")
+    .description("Generate the notification HTTP module, and the shared store the first time")
     .option("--path <panel>", "Nest the module under a panel folder (e.g. --path=admin)")
+    .option("--notifiable <type>", "Owner type recorded with each notification (default: user)")
     .option("--force", "Overwrite the files of a module that already exists")
     .allowUnknownOption(true)
     .action(async (name) => {

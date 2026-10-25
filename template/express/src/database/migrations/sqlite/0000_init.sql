@@ -1,16 +1,3 @@
-CREATE TABLE `notifications` (
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`user_id` integer NOT NULL,
-	`type` text NOT NULL,
-	`title` text NOT NULL,
-	`body` text,
-	`data` text,
-	`link` text,
-	`read_at` integer,
-	`created_at` integer DEFAULT (cast((julianday('now') - 2440587.5)*86400000 as integer)) NOT NULL,
-	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE cascade ON DELETE cascade
-);
---> statement-breakpoint
 CREATE TABLE `roles` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`name` text NOT NULL,
@@ -58,4 +45,19 @@ CREATE TABLE `users` (
 	FOREIGN KEY (`role_id`) REFERENCES `roles`(`id`) ON UPDATE cascade ON DELETE set null
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `users_email_unique` ON `users` (`email`);
+CREATE UNIQUE INDEX `users_email_unique` ON `users` (`email`);--> statement-breakpoint
+CREATE TABLE `notifications` (
+	`id` text PRIMARY KEY NOT NULL,
+	`notifiable_type` text DEFAULT 'user' NOT NULL,
+	`notifiable_id` text NOT NULL,
+	`type` text NOT NULL,
+	`title` text NOT NULL,
+	`body` text,
+	`data` text,
+	`link` text,
+	`read_at` integer,
+	`created_at` integer DEFAULT (cast((julianday('now') - 2440587.5)*86400000 as integer)) NOT NULL
+);
+--> statement-breakpoint
+CREATE INDEX `notifications_notifiable_read_idx` ON `notifications` (`notifiable_type`,`notifiable_id`,`read_at`);--> statement-breakpoint
+CREATE INDEX `notifications_notifiable_created_idx` ON `notifications` (`notifiable_type`,`notifiable_id`,`created_at`);

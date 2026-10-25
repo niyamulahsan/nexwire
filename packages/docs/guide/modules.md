@@ -64,7 +64,17 @@ bun maker module:make post --path=admin
 
 ### Notification module
 
-`module:make-notification [name]` scaffolds the notification backend — controller, schema, routes and a delivery job. Default name is `notification`. The Vue UI is manual: see [Notification](/guide/notification).
+A new project already ships `src/modules/notification/`: the table, the default storage provider, the `/api/notification/*` routes and the mail job. It is standalone — no auth foreign key and no import of `@/modules/auth` — so `notify()` works out of the box after `db:migrate`.
+
+`module:make-notification [name]` is only needed when you deleted that module or want a second HTTP surface (for example a panel-specific mount). Default name is `notification`.
+
+| Flag | Default | Effect |
+| --- | --- | --- |
+| `--path=<panel>` | — | Nest the module under a panel folder |
+| `--notifiable=<type>` | `user` | Owner type the generated controller writes |
+| `--force` | — | Overwrite a module that already exists |
+
+The command always writes the controller, schemas and routes. It writes the store — `database/models/notification.ts`, `providers/notification.ts`, `jobs/mail.ts` — only when no module already owns one, because the store is a singleton. A second notification module is another HTTP surface over the same table, not a second table and a second provider. The Vue UI is manual: see [Notification](/guide/notification).
 
 ## Adding Components
 

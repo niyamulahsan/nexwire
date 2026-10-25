@@ -94,13 +94,53 @@ registerAuthProvider(authProvider);
 
 | Method | Required | Purpose |
 | --- | --- | --- |
-| `getUserById(id)` | Yes | Loads a user. Extra fields are passed through to the auth context. |
+| `getUserById(id)` | Yes | Loads a user. `id` is `number | string`, and extra fields are passed through to the auth context. |
 | `findRefreshToken(jti)` | Yes | Loads a stored refresh token by its JWT id. |
 | `revokeRefreshToken(id)` | No | Revokes a refresh token. `deleteRefreshToken(id)` also works. |
 | `getAuthContext(user, payload)` | No | Shapes the object handlers receive as `auth`. |
-| `getUserContact(userId)` | No | Finds the email/name of a user — used by `notify()`. |
+| `getUserContact(userId)` | No | Finds the email/name of a user — used by `notify()`. Accepts `number | string`. |
+
+Every auth id in the contract is `number | string` so a provider backed by UUIDs is a first-class citizen.
 
 When no auth provider is registered, the framework falls back to the built-in one from `src/modules/auth`. Delete that module and register your own to take over completely — see [Authentication](./auth).
+
+## The notification contract
+
+`notification` is the storage contract `notify()` and `/api/notification/*` read through. The scaffold ships an implementation in `src/modules/notification/providers/notification.ts`, so you only need this key to replace storage — a different table, a remote service, a test double.
+
+```ts
+// src/providers/notification.ts
+import { registerNotificationProvider } from "@/framework/facade.js";
+import type { NotificationProvider } from "@/framework/facade.js";
+
+const notificationProvider: NotificationProvider = {
+  async create(target, input) {
+    // persist and return a NotificationRecord
+  },
+  async list(target, options) {},
+  async unreadCount(target) {},
+  async markRead(target, id) {},
+  async markAllRead(target) {},
+  async remove(target, id) {},
+  async deleteForTarget(target) {} // optional bulk cleanup
+};
+
+registerNotificationProvider(notificationProvider);
+```
+
+| Method | Required | Purpose |
+| --- | --- | --- |
+| `create(target, input)` | Yes | Stores one notification and returns it. |
+| `list(target, options)` | Yes | Returns `{ data, total, unread, page, perPage }`. |
+| `unreadCount(target)` | Yes | Returns the unread count. |
+| `markRead(target, id)` | Yes | Marks one notification read; returns whether it existed. |
+| `markAllRead(target)` | Yes | Marks every unread notification read; returns how many changed. |
+| `remove(target, id)` | Yes | Deletes one notification; returns whether it existed. |
+| `deleteForTarget(target)` | No | Removes everything owned by a target (useful when the owner is deleted). |
+
+A target is `{ type?: string; id: number | string }`; `type` defaults to `"user"` and the id is always passed through as-is, so numeric auth ids and UUIDs both work.
+
+Mail and realtime stay in the runtime: a custom provider only replaces storage, and `notify({ broadcast, mail })` keeps working. If the shipped module is deleted and nothing is registered, `notify()` warns once and returns `null`, and the HTTP handlers return `503`.
 
 ## Module providers
 
@@ -188,12 +228,32 @@ registerProvider("billing", {
 | `getAuthProvider()` | The registered auth provider, or `null`. |
 | `hasAuthProvider()` | Reports whether an auth provider is registered. |
 | `clearAuthProvider()` | Removes it — mainly useful in tests. |
+| `registerNotificationProvider(impl)` | Typed shorthand for the `notification` key. |
+| `getNotificationProvider()` | The registered notification provider, or `null`. |
+| `hasNotificationProvider()` | Reports whether a notification provider is registered. |
+| `clearNotificationProvider()` | Removes it — mainly useful in tests. |
+| `resolveAuthProvider()` | The registered auth provider, or the built-in one, or `null`. |
+| `resolveNotificationProvider()` | The registered notification provider, or the shipped store, or `null`. |
 | `loadProviders()` | Imports the provider files. Called by the framework at boot. |
 
 All of them are imported from the facade:
 
 ```ts
-import { registerProvider, getProvider, hasProvider, clearProvider, listProviders, registerAuthProvider, getAuthProvider, hasAuthProvider, clearAuthProvider } from "@/framework/facade.js";
+import {
+  registerProvider,
+  getProvider,
+  hasProvider,
+  clearProvider,
+  listProviders,
+  registerAuthProvider,
+  getAuthProvider,
+  hasAuthProvider,
+  clearAuthProvider,
+  registerNotificationProvider,
+  getNotificationProvider,
+  hasNotificationProvider,
+  clearNotificationProvider
+} from "@/framework/facade.js";
 ```
 
 ## Notes

@@ -1,8 +1,8 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/framework/database/connection.js";
-import type { AuthProvider } from "./contracts.js";
+import type { AuthProvider, NotificationProvider } from "./contracts.js";
 import { loadProviders } from "./loader.js";
-import { getAuthProvider } from "./registry.js";
+import { getAuthProvider, getNotificationProvider } from "./registry.js";
 
 let defaultProvider: AuthProvider | null = null;
 let defaultLoadAttempted = false;
@@ -26,16 +26,16 @@ async function loadDefaultProvider(): Promise<AuthProvider | null> {
     const refreshTokens = userMod.refreshTokens;
 
     defaultProvider = {
-      async getUserById(id: number) {
+      async getUserById(id: number | string) {
         try {
           const user = await (db.query.users.findFirst as any)?.({
-            where: eq(users.id, id),
+            where: eq(users.id, id as any),
             with: { role: true }
           });
           if (user) return user;
         } catch {}
         try {
-          const rows = await db.select().from(users).where(eq(users.id, id));
+          const rows = await db.select().from(users).where(eq(users.id, id as any));
           return rows?.[0] ?? null;
         } catch {
           return null;
@@ -55,14 +55,14 @@ async function loadDefaultProvider(): Promise<AuthProvider | null> {
           return null;
         }
       },
-      async deleteRefreshToken(tokenId: number) {
+      async deleteRefreshToken(tokenId: number | string) {
         try {
-          await db.delete(refreshTokens).where(eq(refreshTokens.id, tokenId));
+          await db.delete(refreshTokens).where(eq(refreshTokens.id, tokenId as any));
         } catch {}
       },
-      async revokeRefreshToken(tokenId: number) {
+      async revokeRefreshToken(tokenId: number | string) {
         try {
-          await db.delete(refreshTokens).where(eq(refreshTokens.id, tokenId));
+          await db.delete(refreshTokens).where(eq(refreshTokens.id, tokenId as any));
         } catch {}
       },
       async getAuthContext(user: any, payload?: any) {
@@ -87,7 +87,7 @@ async function loadDefaultProvider(): Promise<AuthProvider | null> {
           ...user
         };
       },
-      async getUserContact(userId: number) {
+      async getUserContact(userId: number | string) {
         try {
           const user = await this.getUserById(userId);
           if (!user) return null;
@@ -122,4 +122,39 @@ export async function resolveAuthProvider(): Promise<AuthProvider | null> {
   const def = await loadDefaultProvider();
   if (def) return def;
   return null;
+}
+
+let defaultNotificationLoadAttempted = false;
+
+/**
+ * Why: Loads the shipped notification store when nothing replaced it.
+ * When: `notify()` runs, or the notification controller serves a request.
+ * Where: Notification provider adapter.
+ * How: Provider files are loaded first, so anything a project registered wins.
+ *      If discovery did not run (a script calling `notify()` directly), the
+ *      built-in module is imported once as a fallback. A project that deleted
+ *      the module simply ends up with no provider.
+ */
+async function loadDefaultNotificationProvider(): Promise<void> {
+  if (defaultNotificationLoadAttempted) return;
+  defaultNotificationLoadAttempted = true;
+  try {
+    await import("@/modules/notification/providers/notification.js");
+  } catch {}
+}
+
+/**
+ * Why: Resolves the notification storage provider.
+ * When: `notify()` persists a notification; the HTTP handlers read it back.
+ * Where: Notification runtime and the generated notification controller.
+ * How: A registered provider always wins. Otherwise the default store from
+ *      `src/modules/notification` is used. Absent means the caller reports a
+ *      warning (runtime) or 503 (HTTP) instead of throwing.
+ */
+export async function resolveNotificationProvider(): Promise<NotificationProvider | null> {
+  await loadProviders();
+  const registered = getNotificationProvider();
+  if (registered) return registered;
+  await loadDefaultNotificationProvider();
+  return getNotificationProvider();
 }

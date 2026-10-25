@@ -143,7 +143,7 @@ Returns `401` if unauthenticated, `403` if wrong role.
 
 ## Custom Auth Provider
 
-The built-in auth module is optional. The framework never imports it directly — it asks an **auth provider** for the user behind a token. Replace that provider and you can delete `src/modules/auth/` entirely.
+The built-in auth module is optional. The framework never imports it directly — it asks an **auth provider** for the user behind a token. Replace that provider and you can delete `src/modules/auth/` entirely. Notifications no longer depend on auth at all: the notification module is standalone, so deleting auth leaves it untouched.
 
 Providers live in `src/providers/` and are imported automatically at boot. **There is no wiring step** — no edit to `app.ts`, no import of framework internals.
 
@@ -170,7 +170,7 @@ const authProvider: AuthProvider = {
     return { id: user.id, email: user.email, tenantId: user.tenantId };
   },
   async getUserContact(userId) {
-    // Optional. Used by `notify()` to find the email address of a user.
+    // Optional. Used by `notify()` to find the email address of a target.
     return { email: "user@example.com", name: "User" };
   }
 };
@@ -182,14 +182,15 @@ registerAuthProvider(authProvider);
 
 | Method | Required | Notes |
 | --- | --- | --- |
-| `getUserById(id)` | Yes | Return user object or `null`. Extra fields are passed through to the `auth` context. |
+| `getUserById(id)` | Yes | Return user object or `null`. `id` is `number \| string`. Extra fields are passed through to the `auth` context. |
 | `findRefreshToken(jti)` | Yes | Return token object or `null`. Check `revoked` and `expiresAt` in the middleware. |
-| `revokeRefreshToken(tokenId)` or `deleteRefreshToken(tokenId)` | No | Used on refresh token expiry/revocation. |
+| `revokeRefreshToken(tokenId)` or `deleteRefreshToken(tokenId)` | No | Used on refresh token expiry/revocation. Token ids are `number \| string`. |
 | `getAuthContext(user, payload)` | No | Override to shape `c.get("auth")` / `res.locals.auth`. If omitted, the middleware builds a flexible shape and spreads the user. |
-| `getUserContact(userId)` | No | Used by `notify()` for email. If omitted or returns `null`, notification falls back to the default `users` model or `mail.to`. |
+| `getUserContact(userId)` | No | Used by `notify()` for email. If omitted or returns `null`, the email is skipped; there is no users-model fallback. `userId` is `number \| string`. |
 
 **Notes:**
 - `registerAuthProvider` and the `AuthProvider` type come from `@/framework/facade.js` — the facade is the framework's public API. Never import from `@/framework/...` internals.
+- Every id in the contract is `number | string`, so a UUID-backed user table is fully supported without changes to the framework.
 - If no provider is registered, the adapter falls back to the built-in one from `@/modules/auth/database/models/user.js`. When that module was deleted too, `auth-middleware` logs a warning and lets the request through instead of crashing the app.
 - The middleware passes extra fields from your user/context object through, so custom checks (`auth.tenantId`, `auth.plan`, …) work anywhere.
 - You can keep your own user model and tables with different column names — map them inside your provider.

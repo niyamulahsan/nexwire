@@ -10,6 +10,7 @@ import {
   makeModel,
   makeModule,
   makeModuleProvider,
+  makeNotificationModule,
   makeRoute,
   makeSchedule,
   makeSchema,
@@ -322,6 +323,60 @@ describe.skipIf(!canChdir)("provider generators", () => {
 
     await expect(makeProvider("payment-gateway")).rejects.toThrow(/already exists/);
     await expect(makeProvider("payment-gateway", ["--force"])).resolves.not.toThrow();
+  });
+});
+
+describe.skipIf(!canChdir)("module:make-notification", () => {
+  const storeFiles = ["database/models/notification.ts", "providers/notification.ts", "jobs/mail.ts"];
+
+  async function exists(file: string) {
+    try {
+      await readFile(file, "utf8");
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  it("writes the HTTP surface and the store when no store exists", async () => {
+    await makeNotificationModule();
+
+    const root = path.join(workdir, "src", "modules", "notification");
+    for (const file of storeFiles) expect(await exists(path.join(root, file)), file).toBe(true);
+
+    const controller = await readFile(path.join(root, "controllers", "notification.ts"), "utf8");
+    expect(syntaxErrors("controller.ts", controller)).toEqual([]);
+    expect(controller).toContain('return { type: "user", id: auth.id };');
+    expect(controller).not.toMatch(/\{\{\s*\w+\s*\}\}/);
+
+    const routes = await readFile(path.join(root, "routes", "index.ts"), "utf8");
+    expect(routes).toContain('from "../controllers/notification.js"');
+    expect(routes).toContain('from "../schemas/notification.js"');
+
+    const provider = await readFile(path.join(root, "providers", "notification.ts"), "utf8");
+    expect(provider).toContain('import { notifications } from "@/modules/notification/database/models/notification.js";');
+    expect(provider).toContain("registerNotificationProvider(notificationProvider)");
+  });
+
+  it("reuses the existing store instead of creating a second table", async () => {
+    await makeNotificationModule();
+    await makeNotificationModule("alerts", ["--path=admin"]);
+
+    const root = path.join(workdir, "src", "modules", "admin", "alerts");
+    expect(await exists(path.join(root, "controllers", "alerts.ts"))).toBe(true);
+    expect(await exists(path.join(root, "routes", "index.ts"))).toBe(true);
+    for (const file of storeFiles) expect(await exists(path.join(root, file)), file).toBe(false);
+
+    const routes = await readFile(path.join(root, "routes", "index.ts"), "utf8");
+    expect(routes).toContain('from "../controllers/alerts.js"');
+  });
+
+  it("honours --notifiable and rejects an unsafe value", async () => {
+    await makeNotificationModule("alerts", ["--notifiable=team"]);
+    const controller = await readFile(path.join(workdir, "src", "modules", "alerts", "controllers", "alerts.ts"), "utf8");
+    expect(controller).toContain('return { type: "team", id: auth.id };');
+
+    await expect(makeNotificationModule("bad", ["--notifiable=Team"])).rejects.toThrow(/Invalid --notifiable/);
   });
 });
 

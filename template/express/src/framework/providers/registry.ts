@@ -1,4 +1,10 @@
-import { AUTH_PROVIDER_KEY, type AuthProvider, type ProviderKey } from "./contracts.js";
+import {
+  AUTH_PROVIDER_KEY,
+  type AuthProvider,
+  NOTIFICATION_PROVIDER_KEY,
+  type NotificationProvider,
+  type ProviderKey
+} from "./contracts.js";
 
 /**
  * Why: Holds the app-wide provider implementations in one place.
@@ -59,4 +65,24 @@ export function hasAuthProvider(): boolean {
 /** Removes the registered auth provider. Mainly useful in tests. */
 export function clearAuthProvider(): void {
   clearProvider(AUTH_PROVIDER_KEY);
+}
+
+/** Registers the storage provider `notify()` and `/api/notification/*` use. */
+export function registerNotificationProvider(provider: NotificationProvider): NotificationProvider {
+  return registerProvider(NOTIFICATION_PROVIDER_KEY, provider);
+}
+
+/** Returns the registered notification provider, or null when none was registered. */
+export function getNotificationProvider(): NotificationProvider | null {
+  return getProvider<NotificationProvider>(NOTIFICATION_PROVIDER_KEY);
+}
+
+/** Reports whether a notification provider is registered. */
+export function hasNotificationProvider(): boolean {
+  return hasProvider(NOTIFICATION_PROVIDER_KEY);
+}
+
+/** Removes the registered notification provider. Mainly useful in tests. */
+export function clearNotificationProvider(): void {
+  clearProvider(NOTIFICATION_PROVIDER_KEY);
 }

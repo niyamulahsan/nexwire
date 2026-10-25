@@ -21,18 +21,29 @@ export type {
   AuthProviderRefreshToken,
   AuthProviderUser,
   AuthUserContact,
-  AuthUserContext
+  AuthUserContext,
+  NotifiableTarget,
+  NotificationCreateInput,
+  NotificationListOptions,
+  NotificationPage,
+  NotificationProvider,
+  NotificationRecord
 } from "@/framework/providers/contracts.js";
+export { resolveAuthProvider, resolveNotificationProvider } from "@/framework/providers/adapter.js";
 export { loadProviders } from "@/framework/providers/loader.js";
 export {
   clearAuthProvider,
+  clearNotificationProvider,
   clearProvider,
   getAuthProvider,
+  getNotificationProvider,
   getProvider,
   hasAuthProvider,
+  hasNotificationProvider,
   hasProvider,
   listProviders,
   registerAuthProvider,
+  registerNotificationProvider,
   registerProvider
 } from "@/framework/providers/registry.js";
 export { queue, queueJob, shouldQueue } from "@/framework/queue/queue.js";

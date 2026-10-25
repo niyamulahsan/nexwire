@@ -1,17 +1,43 @@
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { NotificationProvider } from "@/framework/providers/contracts.js";
 import {
   clearAuthProvider,
+  clearNotificationProvider,
   clearProvider,
   getAuthProvider,
+  getNotificationProvider,
   getProvider,
   hasAuthProvider,
+  hasNotificationProvider,
   hasProvider,
   listProviders,
   registerAuthProvider,
+  registerNotificationProvider,
   registerProvider
 } from "@/framework/providers/registry.js";
+
+/** Minimal store implementation: the registry only cares that a contract is filled. */
+const notificationProvider: NotificationProvider = {
+  create: async () => ({
+    id: "1",
+    notifiableType: "user",
+    notifiableId: "1",
+    type: "info",
+    title: "Hello",
+    body: null,
+    data: null,
+    link: null,
+    readAt: null,
+    createdAt: new Date(0).toISOString()
+  }),
+  list: async () => ({ data: [], total: 0, unread: 0, page: 1, perPage: 20 }),
+  unreadCount: async () => 0,
+  markRead: async () => false,
+  markAllRead: async () => 0,
+  remove: async () => false
+};
 
 /**
  * The provider system is the framework's public extension point, so these
@@ -24,6 +50,7 @@ describe("provider registry", () => {
   afterEach(() => {
     clearProvider("payment");
     clearAuthProvider();
+    clearNotificationProvider();
   });
 
   it("registers and reads any implementation by key", () => {
@@ -72,6 +99,22 @@ describe("provider registry", () => {
 
     expect(getAuthProvider()).toBe(null);
     expect(hasAuthProvider()).toBe(false);
+  });
+
+  it("registers the notification provider under the notification key", () => {
+    registerNotificationProvider(notificationProvider);
+
+    expect(getNotificationProvider()).toBe(notificationProvider);
+    expect(hasNotificationProvider()).toBe(true);
+  });
+
+  it("clears the notification provider", () => {
+    registerNotificationProvider(notificationProvider);
+
+    clearNotificationProvider();
+
+    expect(getNotificationProvider()).toBe(null);
+    expect(hasNotificationProvider()).toBe(false);
   });
 });
 

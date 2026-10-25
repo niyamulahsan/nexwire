@@ -73,6 +73,8 @@ const STUBS = {
     },
     routeApi: "notification/route.api.ts.stub",
     routePlain: "notification/route.plain.ts.stub",
+    model: "notification/model.ts.stub",
+    provider: "notification/provider.ts.stub",
     job: "notification/job.ts.stub"
   },
   test: {
@@ -162,6 +164,28 @@ function parsePanelPath(flags) {
   return segments.join("/");
 }
 
+/**
+ * Parse `--notifiable=<type>` into the owner class written into the generated
+ * controller. Accepts both `--notifiable=user` and `--notifiable user`, and
+ * defaults to `user` so the common case needs no flag.
+ */
+function parseNotifiable(flags) {
+  const matches = flags
+    .map((flag, index) => ({ flag, index }))
+    .filter(({ flag }) => typeof flag === "string" && flag.startsWith("--notifiable"));
+  if (matches.length === 0) return "user";
+  if (matches.length > 1) throw new Error("--notifiable can only be given once.");
+
+  const [{ flag, index }] = matches;
+  let raw = flag.slice("--notifiable".length).replace(/^=/, "").trim();
+  if (!raw && typeof flags[index + 1] === "string" && !flags[index + 1].startsWith("--")) raw = flags[index + 1].trim();
+  if (!raw) throw new Error("--notifiable needs a value, e.g. --notifiable=user");
+  if (!/^[a-z0-9][a-z0-9_-]*$/.test(raw)) {
+    throw new Error(`Invalid --notifiable value "${raw}". Use lowercase letters, numbers, dashes and underscores.`);
+  }
+  return raw;
+}
+
 /** True when the path is a directory holding at least one entry. */
 async function dirHasFiles(target) {
   try {
@@ -170,6 +194,24 @@ async function dirHasFiles(target) {
   } catch {
     return false;
   }
+}
+
+/**
+ * Path of the notification store already shipped by any module, or "".
+ *
+ * The table/model/provider is a singleton: two modules shipping it would
+ * generate the same `notifications` table twice and register two providers for
+ * one contract. `module:make-notification` therefore writes the store only when
+ * no module owns it yet, and otherwise adds just another HTTP surface over it.
+ */
+async function findNotificationStore() {
+  const backendSrc = path.resolve(process.cwd(), "src");
+  const files = await glob("modules/**/database/models/notification.{ts,js}", {
+    cwd: backendSrc,
+    nodir: true,
+    windowsPathsNoEscape: true
+  });
+  return files.sort()[0] ? path.join(backendSrc, files.sort()[0]) : "";
 }
 
 /**
@@ -292,8 +334,8 @@ async function serviceFile(moduleName, controllerName, withModel) {
 
 /** Build the full default scaffold for module:make. */
 async function moduleFiles(moduleName, openApi) {
-    const name = leafName(moduleName);
-    const vars = moduleFileVars(moduleName, name);
+  const name = leafName(moduleName);
+  const vars = moduleFileVars(moduleName, name);
   const controllerStub = openApi ? STUBS.controller.openapi : STUBS.controller.plain;
   return {
     "facade.ts": await stub(STUBS.facade.named, vars),
@@ -309,15 +351,15 @@ async function moduleFiles(moduleName, openApi) {
  * module, so the controller and schema it just created are known to exist.
  */
 async function routeTemplate(moduleName, controllerName = moduleName) {
-    const controller = leafName(controllerName);
-    const routeStub = openApiEnabled() ? STUBS.route.api : STUBS.route.plain;
-    return await stub(routeStub, {
-      module: moduleName,
-      controller,
-      ClassName: pascal(controller),
-      ModuleClass: moduleLabel(moduleName)
-    });
-  }
+  const controller = leafName(controllerName);
+  const routeStub = openApiEnabled() ? STUBS.route.api : STUBS.route.plain;
+  return await stub(routeStub, {
+    module: moduleName,
+    controller,
+    ClassName: pascal(controller),
+    ModuleClass: moduleLabel(moduleName)
+  });
+}
 
 /**
  * Generate a barebone route file that wires to nothing. module:make-route uses
@@ -325,13 +367,13 @@ async function routeTemplate(moduleName, controllerName = moduleName) {
  */
 async function standaloneRouteTemplate(moduleName, routeName) {
   const routeStub = openApiEnabled() ? STUBS.route.standaloneApi : STUBS.route.standalonePlain;
-return await stub(routeStub, {
-      module: moduleName,
-      controller: routeName,
-      ClassName: pascal(routeName),
-      ModuleClass: moduleLabel(moduleName)
-    });
-  }
+  return await stub(routeStub, {
+    module: moduleName,
+    controller: routeName,
+    ClassName: pascal(routeName),
+    ModuleClass: moduleLabel(moduleName)
+  });
+}
 
 /** Generate a named model file for a module. */
 async function namedModelTemplate(moduleName, name, dialect) {
@@ -511,7 +553,7 @@ export async function makeRoute(rawModule, rawControllerOrFlag, extraFlags = [])
   try {
     await fs.access(routePath);
     exists = true;
-  } catch {}
+  } catch { }
   if (exists && !force)
     throw new Error(`Route file already exists: ${path.relative(process.cwd(), routePath)}. Re-run with --force to overwrite.`);
   await fs.mkdir(path.dirname(routePath), { recursive: true });
@@ -519,32 +561,52 @@ export async function makeRoute(rawModule, rawControllerOrFlag, extraFlags = [])
   console.log(`Route ready: ${path.relative(process.cwd(), routePath)}`);
 }
 
-/** Generate a notification module with controller, routes, and job. */
+/**
+ * Generate the notification HTTP surface, plus the shared store the first time.
+ *
+ * The controller/schema/routes are always written: they are what lets a project
+ * expose `/api/notification/*` for a panel. The model, provider and mail job are
+ * written only when no module already ships the store, because the store is a
+ * singleton — a second copy would create a duplicate `notifications` table and
+ * register a second provider for the same contract.
+ */
 export async function makeNotificationModule(rawName = "notification", flags = []) {
-    const { moduleName, leaf } = resolveModuleRef(rawName, flags);
-    const root = moduleRoot(moduleName);
-    const force = hasFlag(flags, "--force") || hasFlag(flags, "--yes");
-    if (!force && (await dirHasFiles(root))) {
-      throw new Error(`Module already exists: src/modules/${moduleName}. Re-run with --force to overwrite its files.`);
-    }
-    const openApi = openApiEnabled();
-
-    await writeFiles(root, {
-      [`controllers/${leaf}.ts`]: await stub(STUBS.notification.controller, {
-        module: moduleName
-      }),
-      [`schemas/${leaf}.ts`]: await stub(openApi ? STUBS.notification.schema.openapi : STUBS.notification.schema.plain, {
-        module: moduleName
-      }),
-      "routes/index.ts": await stub(openApi ? STUBS.notification.routeApi : STUBS.notification.routePlain, { module: moduleName }),
-      [`jobs/${leaf}.ts`]: await stub(STUBS.notification.job, { module: moduleName })
-    });
-
-    console.log(`Notification module ready: ${moduleName}`);
-    if (panelOf(moduleName)) console.log(`Panel: ${panelOf(moduleName)}  ->  /api/${moduleName}`);
-    console.log(`Route style: ${openApi ? "openapi" : "plain"}`);
-    console.log("See docs (packages/docs/guide/notification.md) for Vue UI integration.");
+  const { moduleName, leaf } = resolveModuleRef(rawName, flags);
+  const root = moduleRoot(moduleName);
+  const force = hasFlag(flags, "--force") || hasFlag(flags, "--yes");
+  if (!force && (await dirHasFiles(root))) {
+    throw new Error(`Module already exists: src/modules/${moduleName}. Re-run with --force to overwrite its files.`);
   }
+  const openApi = openApiEnabled();
+  const notifiable = parseNotifiable(flags);
+  const vars = { module: moduleName, leaf, notifiable };
+
+  const files = {
+    [`controllers/${leaf}.ts`]: await stub(STUBS.notification.controller, vars),
+    [`schemas/${leaf}.ts`]: await stub(openApi ? STUBS.notification.schema.openapi : STUBS.notification.schema.plain, vars),
+    "routes/index.ts": await stub(openApi ? STUBS.notification.routeApi : STUBS.notification.routePlain, vars)
+  };
+
+  const existingStore = await findNotificationStore();
+  const ownsStore = existingStore ? path.resolve(existingStore).startsWith(root + path.sep) : false;
+  const writesStore = !existingStore || (force && ownsStore);
+
+  if (writesStore) {
+    files["database/models/notification.ts"] = await stub(STUBS.notification.model, vars);
+    files["providers/notification.ts"] = await stub(STUBS.notification.provider, vars);
+    files["jobs/mail.ts"] = await stub(STUBS.notification.job, vars);
+  }
+
+  await writeFiles(root, files);
+
+  console.log(`Notification module ready: ${moduleName}`);
+  if (writesStore) console.log("Notification store included: model, provider, mail job");
+  else console.log(`Notification store reused: ${path.relative(process.cwd(), existingStore)}`);
+  if (panelOf(moduleName)) console.log(`Panel: ${panelOf(moduleName)}  ->  /api/${moduleName}`);
+  console.log(`Notifiable type: ${notifiable}`);
+  console.log(`Route style: ${openApi ? "openapi" : "plain"}`);
+  console.log("See docs (packages/docs/guide/notification.md) for usage and UI integration.");
+}
 
 /** Soft-delete a module by moving it to storage trash. */
 export async function deleteModule(rawName, flags = []) {
@@ -689,9 +751,7 @@ export async function makeController(rawModule, rawControllerOrFlag, extraFlags 
   const { name, flags } = parseNameArg(rawControllerOrFlag, extraFlags, "Controller name", leaf);
   const root = await assertModuleExists(moduleName);
   const lower = name.toLowerCase();
-  const hasService =
-    (await pathExists(path.join(root, "services", `${lower}.ts`))) ||
-    (await pathExists(legacyPath(root, "services", lower)));
+  const hasService = (await pathExists(path.join(root, "services", `${lower}.ts`))) || (await pathExists(legacyPath(root, "services", lower)));
   const content = await controllerFile(moduleName, name, openApiEnabled(), hasService);
   await writeFileSafe(path.join(root, `controllers/${lower}.ts`), content, flags, "Controller file");
 }
@@ -715,8 +775,7 @@ export async function makeService(rawModule, rawNameOrFlag, extraFlags = []) {
   const { name, flags } = parseNameArg(rawNameOrFlag, extraFlags, "Service name", leaf);
   const root = await assertModuleExists(moduleName);
   const lower = name.toLowerCase();
-  const withModel =
-    hasFlag(flags, "--with-model") || (await pathExists(path.join(root, "database", "models", `${lower}.ts`)));
+  const withModel = hasFlag(flags, "--with-model") || (await pathExists(path.join(root, "database", "models", `${lower}.ts`)));
   const content = await serviceFile(moduleName, name, withModel);
   await writeFileSafe(path.join(root, `services/${lower}.ts`), content, flags, "Service file");
 }
@@ -1005,7 +1064,7 @@ export async function runModuleMigrate(rawModuleName, rawArgs = []) {
   } finally {
     if (previousSchema == null) delete process.env.DRIZZLE_SCHEMA;
     else process.env.DRIZZLE_SCHEMA = previousSchema;
-    if (!keepTemp) await fs.rm(tempSchemaPath, { force: true }).catch(() => {});
+    if (!keepTemp) await fs.rm(tempSchemaPath, { force: true }).catch(() => { });
   }
 }
 
