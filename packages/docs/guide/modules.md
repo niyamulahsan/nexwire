@@ -64,9 +64,16 @@ bun maker module:make post --path=admin
 
 ### Notification module
 
-A new project already ships `src/modules/notification/`: the table, the default storage provider, the `/api/notification/*` routes and the mail job. It is standalone — no auth foreign key and no import of `@/modules/auth` — so `notify()` works out of the box after `db:migrate`.
+Notifications are opt-in. A new project has no `notifications` table and no `/api/notification/*` routes until you install the module:
 
-`module:make-notification [name]` is only needed when you deleted that module or want a second HTTP surface (for example a panel-specific mount). Default name is `notification`.
+```bash
+bun maker module:make-notification notification
+bun maker module:migrate notification
+```
+
+The first command writes `src/modules/notification/` — table model, default storage provider, controller, schemas, routes and mail job. The second creates the table. It is standalone (no auth foreign key and no import of `@/modules/auth`), and `notify()` works for numeric and string owner ids alike.
+
+A second notification module (for example a panel-specific mount) is generated with the same command. Default name is `notification`.
 
 | Flag | Default | Effect |
 | --- | --- | --- |
@@ -74,7 +81,7 @@ A new project already ships `src/modules/notification/`: the table, the default 
 | `--notifiable=<type>` | `user` | Owner type the generated controller writes |
 | `--force` | — | Overwrite a module that already exists |
 
-The command always writes the controller, schemas and routes. It writes the store — `database/models/notification.ts`, `providers/notification.ts`, `jobs/mail.ts` — only when no module already owns one, because the store is a singleton. A second notification module is another HTTP surface over the same table, not a second table and a second provider. The Vue UI is manual: see [Notification](/guide/notification).
+The command always writes the controller, schemas and routes. It writes the store — `database/models/notification.ts`, `providers/notification.ts`, `jobs/mail.ts` — only when no module already owns one, because the store is a singleton. When it writes the store it prints the `module:migrate` command for the new table. A second notification module is another HTTP surface over the same table, not a second table and a second provider. The Vue UI is manual: see [Notification](/guide/notification).
 
 ## Adding Components
 
@@ -526,7 +533,7 @@ import { sendNotification } from "@/modules/shared/notifications.js";
 | ---------------------------- | --------------------------------------------------------- |
 | `module:list`                | List all discovered modules                               |
 | `module:seed <module>`       | Run a module's seeders                                    |
-| `module:migrate <module>`    | Generate a module-only schema, create a migration, run it |
+| `module:migrate <module>`    | Generate and run a migration that includes the module     |
 | `module:delete <name>`       | Soft-delete to `src/storage/trash/modules/` (recoverable) |
 | `module:delete-notification` | Remove the notification backend module                    |
 | `module:trash:clean [name]`  | Permanently remove trash entries                          |

@@ -2,7 +2,7 @@
 
 Imported from the facade: `import { notify } from "@/framework/facade.js"`.
 
-Creates a user-visible notification through the registered notification provider, and optionally broadcasts it over Socket.IO and/or delivers it by email. The shipped `src/modules/notification` module exposes the CRUD endpoints under `/api/notification` and needs no setup beyond `db:migrate`. See [Notifications](./../guide/notification).
+Creates a user-visible notification through the registered notification provider, and optionally broadcasts it over Socket.IO and/or delivers it by email. Notifications are opt-in: generate the backend with `module:make-notification notification` and create its table with `module:migrate notification`. Until then `notify()` warns once and returns `null`. See [Notifications](./../guide/notification).
 
 ## Functions
 
@@ -118,7 +118,7 @@ channel.listen("notification.created", (payload) => {
 
 ```
 notify(target, { broadcast: true, mail: { ... } })
-  ├─ 1. resolveNotificationProvider() — registered provider, else the shipped store
+  ├─ 1. resolveNotificationProvider() — registered provider, else null
   ├─ 2. provider.create(target, input)
   ├─ 3. dispatchEvent("notification.created", normalized, { broadcast: { users: [target.id] } })
   │      └─ Socket.IO emits to room "user:<id>"

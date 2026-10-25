@@ -196,8 +196,7 @@ export function registerModuleCommands(program, rawArgs) {
     });
   program
     .command("module:migrate <module>")
-    .description("Generate module-only schema, generate migration, then run migrate")
-    .option("--keep-temp", "Keep temporary schema file after migration")
+    .description("Generate and run a migration that includes the module")
     .option("--path <panel>", "Address a module inside a panel folder (e.g. --path=admin)")
     .allowUnknownOption(true)
     .action(async (moduleName) => runModuleMigrate(moduleName, rawArgs));

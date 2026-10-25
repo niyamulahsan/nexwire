@@ -144,24 +144,31 @@ The generated `providers.ts` is where the module plugs its own implementations i
 
 ### `module:make-notification [name]`
 
-The standalone notification module ships in every new project, so this command is optional: use it when you deleted the module or want a second HTTP surface (for example under a panel). Default name is `notification`.
+Notifications are opt-in: this command creates the notification backend module, then `module:migrate` creates its table. Default name is `notification`.
 
-The command always writes the HTTP surface. It writes the store only when no module already ships one, because the table, model and provider are a singleton.
+The command always writes the HTTP surface. It writes the store the first time — the table, model and provider are a singleton — and prints the migration command to run:
 
-| File | Always | Purpose |
+```bash
+bun maker module:make-notification notification
+bun maker module:migrate notification
+```
+
+| File | Written | Purpose |
 | --- | --- | --- |
-| `controllers/notification.ts` | yes | 5 handlers: list, unreadCount, markRead, markAllRead, remove |
-| `schemas/notification.ts` | yes | Zod/OpenAPI schemas |
-| `routes/index.ts` | yes | 5 routes under `authMiddleware` |
-| `database/models/notification.ts` | first time | Polymorphic table, no auth foreign key |
-| `providers/notification.ts` | first time | Default Drizzle store, registers itself |
-| `jobs/mail.ts` | first time | Queue handler for `notification:mail` |
+| `controllers/notification.ts` | every run | 5 handlers: list, unreadCount, markRead, markAllRead, remove |
+| `schemas/notification.ts` | every run | Zod/OpenAPI schemas |
+| `routes/index.ts` | every run | 5 routes under `authMiddleware` |
+| `database/models/notification.ts` | first run | Polymorphic table, no auth foreign key |
+| `providers/notification.ts` | first run | Default Drizzle store, registers itself |
+| `jobs/mail.ts` | first run | Queue handler for `notification:mail` |
 
 | Option | Default | Description |
 | --- | --- | --- |
 | `--path=<panel>` | — | Nest the module under a panel folder, e.g. `--path=admin` |
 | `--notifiable=<type>` | `user` | Owner type recorded by the generated controller |
 | `--force` | — | Overwrite the files of a module that already exists |
+
+A second notification surface (for example a panel) reuses the existing store, so no second table is created and no migration is needed:
 
 ```bash
 bun maker module:make-notification alerts --path=admin --notifiable=team
@@ -580,7 +587,7 @@ bun maker module:delete posts --dry-run
 
 ### `module:delete-notification [name]`
 
-Remove the notification backend module (moves to trash). UI files are user-managed.
+Remove the notification backend module (moves to trash). UI files are user-managed. The `notifications` table stays in the database; remove it with a migration if you no longer need the data.
 
 ::: code-group
 
@@ -698,28 +705,24 @@ bun maker module:seed posts
 
 ### `module:migrate <module>`
 
-Generate a module-only schema, create a migration, and run it. Uses a temporary schema file that includes only the specified module's models.
+Regenerate `src/database/schema.ts` from every module model, create a migration, and run it. The full schema is used so the migration adds the module's tables without dropping tables owned by other modules. Run it after generating a module that owns a table, such as `module:make-notification`.
 
 ::: code-group
 
 ```bash [npm]
 npm run maker module:migrate posts
-npm run maker module:migrate posts -- --keep-temp
 ```
 
 ```bash [pnpm]
 pnpm maker module:migrate posts
-pnpm maker module:migrate posts --keep-temp
 ```
 
 ```bash [yarn]
 yarn maker module:migrate posts
-yarn maker module:migrate posts --keep-temp
 ```
 
 ```bash [bun]
 bun maker module:migrate posts
-bun maker module:migrate posts --keep-temp
 ```
 
 :::

@@ -50,7 +50,7 @@ function recordingProvider() {
 
 beforeAll(async () => {
   // Let provider discovery run once, then every test registers its own provider.
-  // Otherwise the shipped default provider would replace the fake mid-test.
+  // Otherwise a project provider would replace the fake mid-test.
   await loadProviders();
 });
 

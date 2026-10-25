@@ -124,37 +124,16 @@ export async function resolveAuthProvider(): Promise<AuthProvider | null> {
   return null;
 }
 
-let defaultNotificationLoadAttempted = false;
-
-/**
- * Why: Loads the shipped notification store when nothing replaced it.
- * When: `notify()` runs, or the notification controller serves a request.
- * Where: Notification provider adapter.
- * How: Provider files are loaded first, so anything a project registered wins.
- *      If discovery did not run (a script calling `notify()` directly), the
- *      built-in module is imported once as a fallback. A project that deleted
- *      the module simply ends up with no provider.
- */
-async function loadDefaultNotificationProvider(): Promise<void> {
-  if (defaultNotificationLoadAttempted) return;
-  defaultNotificationLoadAttempted = true;
-  try {
-    await import("@/modules/notification/providers/notification.js");
-  } catch {}
-}
-
 /**
  * Why: Resolves the notification storage provider.
  * When: `notify()` persists a notification; the HTTP handlers read it back.
  * Where: Notification runtime and the generated notification controller.
- * How: A registered provider always wins. Otherwise the default store from
- *      `src/modules/notification` is used. Absent means the caller reports a
- *      warning (runtime) or 503 (HTTP) instead of throwing.
+ * How: Provider files are loaded first, so a project can replace the store from
+ *      `src/providers/` or a module provider folder. The notification module is
+ *      opt-in, so an absent provider is a normal state: callers warn once
+ *      (runtime) or answer 503 (HTTP) instead of throwing.
  */
 export async function resolveNotificationProvider(): Promise<NotificationProvider | null> {
   await loadProviders();
-  const registered = getNotificationProvider();
-  if (registered) return registered;
-  await loadDefaultNotificationProvider();
   return getNotificationProvider();
 }

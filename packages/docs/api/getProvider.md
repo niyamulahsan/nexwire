@@ -16,7 +16,7 @@ Returns the implementation registered under a key, or `null` when there is none.
 | `hasNotificationProvider` | `() => boolean` | Reports whether a notification provider is registered |
 | `listProviders` | `() => string[]` | Lists every registered key |
 | `resolveAuthProvider` | `() => Promise<AuthProvider \| null>` | Registered auth provider, else the built-in one |
-| `resolveNotificationProvider` | `() => Promise<NotificationProvider \| null>` | Registered store, else the shipped notification module |
+| `resolveNotificationProvider` | `() => Promise<NotificationProvider \| null>` | Registered notification provider, else `null` |
 
 ## Use cases
 
@@ -59,7 +59,8 @@ it("uses the registered provider", async () => {
 ## Notes
 
 - `getProvider()` returns `null` for a key that was never registered — it never throws.
-- The built-in auth and notification implementations are **not** in the registry. They are resolved as fallbacks by `resolveAuthProvider()` / `resolveNotificationProvider()` when no provider was registered, so `getAuthProvider()` and `getNotificationProvider()` return `null` even though the shipped modules still work.
+- The built-in auth implementation is **not** in the registry. It is resolved as a fallback by `resolveAuthProvider()` when no provider was registered, so `getAuthProvider()` returns `null` even though the shipped auth module still works.
+- The notification module is opt-in and its provider registers itself when generated, so `getNotificationProvider()` is `null` until `module:make-notification` has run (or another provider was registered).
 - Provider files in `src/providers/` are imported automatically at boot.
 
 ## Related

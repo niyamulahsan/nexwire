@@ -106,7 +106,7 @@ When no auth provider is registered, the framework falls back to the built-in on
 
 ## The notification contract
 
-`notification` is the storage contract `notify()` and `/api/notification/*` read through. The scaffold ships an implementation in `src/modules/notification/providers/notification.ts`, so you only need this key to replace storage — a different table, a remote service, a test double.
+`notification` is the storage contract `notify()` and `/api/notification/*` read through. Notifications are opt-in: run `module:make-notification notification` to generate an implementation at `src/modules/notification/providers/notification.ts`, or register your own under this key to replace storage — a different table, a remote service, a test double.
 
 ```ts
 // src/providers/notification.ts
@@ -140,7 +140,7 @@ registerNotificationProvider(notificationProvider);
 
 A target is `{ type?: string; id: number | string }`; `type` defaults to `"user"` and the id is always passed through as-is, so numeric auth ids and UUIDs both work.
 
-Mail and realtime stay in the runtime: a custom provider only replaces storage, and `notify({ broadcast, mail })` keeps working. If the shipped module is deleted and nothing is registered, `notify()` warns once and returns `null`, and the HTTP handlers return `503`.
+Mail and realtime stay in the runtime: a custom provider only replaces storage, and `notify({ broadcast, mail })` keeps working. Without the generated module and without a registered provider, `notify()` warns once and returns `null`, and the HTTP handlers return `503`.
 
 ## Module providers
 
@@ -233,7 +233,7 @@ registerProvider("billing", {
 | `hasNotificationProvider()` | Reports whether a notification provider is registered. |
 | `clearNotificationProvider()` | Removes it — mainly useful in tests. |
 | `resolveAuthProvider()` | The registered auth provider, or the built-in one, or `null`. |
-| `resolveNotificationProvider()` | The registered notification provider, or the shipped store, or `null`. |
+| `resolveNotificationProvider()` | The registered notification provider, or `null`. |
 | `loadProviders()` | Imports the provider files. Called by the framework at boot. |
 
 All of them are imported from the facade:

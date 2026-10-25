@@ -5,7 +5,7 @@ import { databaseNameFromUrl, databaseUrl, detectDialect, parsedDatabaseUrl, sql
 import { packageScript, runCommand, runNodeScript } from "../utils/process.mjs";
 
 /** Detect SQL dialect from raw SQL content by matching against known syntax hints. */
-function detectMigrationDialectFromSql(sql = "") {
+export function detectMigrationDialectFromSql(sql = "") {
   const source = sql.toLowerCase();
   if (!source.trim()) return "unknown";
 
@@ -14,8 +14,11 @@ function detectMigrationDialectFromSql(sql = "") {
   const sqliteHints = ["autoincrement", "pragma"];
 
   if (postgresHints.some((hint) => source.includes(hint))) return "postgresql";
-  if (mysqlHints.some((hint) => source.includes(hint))) return "mysql";
+  // SQLite output quotes identifiers with backticks too, so the distinctive
+  // hints must be tested before the MySQL ones or every SQLite migration is
+  // misread as MySQL and the history is reset on the next generate.
   if (sqliteHints.some((hint) => source.includes(hint))) return "sqlite";
+  if (mysqlHints.some((hint) => source.includes(hint))) return "mysql";
   return "unknown";
 }
 

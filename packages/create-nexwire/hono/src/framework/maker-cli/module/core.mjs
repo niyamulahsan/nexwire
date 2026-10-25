@@ -600,8 +600,13 @@ export async function makeNotificationModule(rawName = "notification", flags = [
   await writeFiles(root, files);
 
   console.log(`Notification module ready: ${moduleName}`);
-  if (writesStore) console.log("Notification store included: model, provider, mail job");
-  else console.log(`Notification store reused: ${path.relative(process.cwd(), existingStore)}`);
+  if (writesStore) {
+    console.log("Notification store included: model, provider, mail job");
+    const panelFlag = panelOf(moduleName) ? ` --path=${panelOf(moduleName)}` : "";
+    console.log(`Next: bun maker module:migrate ${leaf}${panelFlag}`);
+  } else {
+    console.log(`Notification store reused: ${path.relative(process.cwd(), existingStore)}`);
+  }
   if (panelOf(moduleName)) console.log(`Panel: ${panelOf(moduleName)}  ->  /api/${moduleName}`);
   console.log(`Notifiable type: ${notifiable}`);
   console.log(`Route style: ${openApi ? "openapi" : "plain"}`);
@@ -1015,8 +1020,16 @@ export async function generateSchema(options = {}) {
   if (!options.silent) console.log(`Generated database schema with ${files.length} model file(s)`);
 }
 
-/** Generate a temporary schema file for a single module (used for module:generate/migrate). */
-async function generateModuleSchemaTemp(moduleName) {
+/**
+ * Generate and run migrations that include a module.
+ *
+ * Drizzle diffs the schema against the last snapshot, so generating from a
+ * module-only schema would emit `DROP TABLE` for every other module (auth
+ * included). The full schema is used instead: it adds the module's tables and
+ * keeps the rest of the database intact.
+ */
+export async function runModuleMigrate(rawModuleName, rawArgs = []) {
+  const { moduleName } = resolveModuleRef(rawModuleName, rawArgs);
   await assertModuleExists(moduleName);
   const backendSrc = path.resolve(process.cwd(), "src");
   const files = await glob(`modules/${moduleName}/database/models/*.{ts,js}`, {
@@ -1025,47 +1038,13 @@ async function generateModuleSchemaTemp(moduleName) {
     windowsPathsNoEscape: true
   });
   if (!files.length) throw new Error(`No model files found for module '${moduleName}'.`);
-  const exports = [];
-  const tempDir = path.resolve(process.cwd(), "src/storage/tmp");
-  await fs.mkdir(tempDir, { recursive: true });
-  // Flatten the panel path: "admin/testme" must not become a nested
-  // storage/tmp/schema.admin/testme.<ts>.ts path.
-  const slug = moduleName.replaceAll("/", "-");
-  const tempSchemaPath = path.join(tempDir, `schema.${slug}.${Date.now()}.ts`);
-  const tempSchemaDir = path.dirname(tempSchemaPath);
-  for (const file of files.sort()) {
-    const absoluteFile = path.join(backendSrc, file);
-    const relativePath = path
-      .relative(tempSchemaDir, absoluteFile)
-      .replace(/\\/g, "/")
-      .replace(/\.(ts|js)$/, ".ts");
-    const importPath = relativePath.startsWith(".") ? relativePath : `./${relativePath}`;
-    exports.push(`export * from "${importPath}";`);
-  }
-  await fs.writeFile(tempSchemaPath, `${exports.join("\n")}\n`);
-  return { tempSchemaPath, modelCount: files.length };
-}
-
-/** Generate and run migrations for a single module using a temporary schema. */
-export async function runModuleMigrate(rawModuleName, rawArgs = []) {
-  const { moduleName } = resolveModuleRef(rawModuleName, rawArgs);
   await syncMigrationDialect();
   await ensureMigrationMeta();
   await ensureDatabaseDirectory();
-  const keepTemp = rawArgs.includes("--keep-temp");
-  const { tempSchemaPath, modelCount } = await generateModuleSchemaTemp(moduleName);
-  const drizzleSchemaPath = `./${path.relative(process.cwd(), tempSchemaPath).replace(/\\/g, "/")}`;
-  const previousSchema = process.env.DRIZZLE_SCHEMA;
-  try {
-    process.env.DRIZZLE_SCHEMA = drizzleSchemaPath;
-    await runNodeScript(packageScript("drizzle-kit", "bin.cjs"), await drizzleGenerateArgs());
-    await runNodeScript(packageScript("drizzle-kit", "bin.cjs"), ["migrate"]);
-    console.log(`Module migration complete: ${moduleName} (${modelCount} model file(s))`);
-  } finally {
-    if (previousSchema == null) delete process.env.DRIZZLE_SCHEMA;
-    else process.env.DRIZZLE_SCHEMA = previousSchema;
-    if (!keepTemp) await fs.rm(tempSchemaPath, { force: true }).catch(() => { });
-  }
+  await generateSchema();
+  await runNodeScript(packageScript("drizzle-kit", "bin.cjs"), await drizzleGenerateArgs());
+  await runNodeScript(packageScript("drizzle-kit", "bin.cjs"), ["migrate"]);
+  console.log(`Module migration complete: ${moduleName} (${files.length} model file(s))`);
 }
 
 /** Generate a unit test file for a module. */

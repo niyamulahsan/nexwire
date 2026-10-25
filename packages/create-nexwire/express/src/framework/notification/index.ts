@@ -58,7 +58,7 @@ export async function notify(target: NotificationTarget, options: NotificationOp
     if (!missingProviderWarned) {
       missingProviderWarned = true;
       console.warn(
-        "[notification] skipped: no notification provider is registered. Keep src/modules/notification or register one in src/providers/."
+        '[notification] skipped: no notification provider is registered. Run "bun maker module:make-notification notification" then "bun maker module:migrate notification", or register a provider in src/providers/.'
       );
     }
     return null;
