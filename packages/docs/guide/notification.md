@@ -720,7 +720,7 @@ Create `src/resources/src/pages/notifications/index.vue`:
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
-import { useHead } from "@vueuse/head";
+import { useHead } from "@unhead/vue";
 import axios from "@/plugins/axios";
 import { pulse } from "@/plugins/pulse";
 import { useAuth } from "@/composables/useAuth";

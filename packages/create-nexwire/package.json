@@ -51,9 +51,9 @@
     "@socket.io/admin-ui": "^0.5",
     "@socket.io/bun-engine": "^0.1",
     "@socket.io/redis-adapter": "^8",
+    "@unhead/vue": "^3",
     "@vitejs/plugin-vue": "^6",
     "@vueuse/core": "^14",
-    "@vueuse/head": "^2",
     "axios": "^1",
     "bcryptjs": "^3",
     "bootstrap": "^5",
@@ -123,13 +123,13 @@
     "@socket.io/redis-adapter": {
       "optional": true
     },
+    "@unhead/vue": {
+      "optional": true
+    },
     "@vitejs/plugin-vue": {
       "optional": true
     },
     "@vueuse/core": {
-      "optional": true
-    },
-    "@vueuse/head": {
       "optional": true
     },
     "axios": {

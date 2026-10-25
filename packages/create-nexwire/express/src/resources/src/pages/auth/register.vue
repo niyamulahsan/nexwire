@@ -65,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { useHead } from "@vueuse/head";
+import { useHead } from "@unhead/vue";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import Button from "@/components/Button.vue";

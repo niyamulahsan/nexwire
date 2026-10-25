@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { useHead } from "@vueuse/head";
+import { useHead } from "@unhead/vue";
 import { onMounted, onUnmounted } from "vue";
 import Pagebar from "@/components/Pagebar.vue";
 import { useAuth } from "@/composables/useAuth";

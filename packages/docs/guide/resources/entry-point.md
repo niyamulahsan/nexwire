@@ -8,7 +8,7 @@
 import "@/plugins/axios";
 import { createApp } from "vue";
 import { createPinia } from "pinia";
-import { createHead } from "@vueuse/head";
+import { createHead } from "@unhead/vue/client";
 import { DialogPlugin } from "@/plugins/dialog";
 import { PulsePlugin } from "@/plugins/pulse";
 import { GumPlugin } from "@/plugins/gum";
@@ -43,7 +43,7 @@ app.mount("#app");
 | `axios` (side-effect import) | `@/plugins/axios`  | Configures axios defaults and 401 interceptor              |
 | Pinia                        | `pinia`            | State management via stores                                |
 | Vue Router                   | `@/router`         | Navigation, guards, lazy routes                            |
-| `@vueuse/head`               | `@vueuse/head`     | Reactive `<title>` and `<meta>` management                 |
+| `@unhead/vue`                | `@unhead/vue`      | Reactive `<title>` and `<meta>` management                 |
 | DialogPlugin                 | `@/plugins/dialog` | `$dialog.alert()`, `$dialog.confirm()`, `$dialog.prompt()` |
 | GumPlugin                    | `@/plugins/gum`    | Inertia-style page visits and form handling                |
 | PulsePlugin                  | `@/plugins/pulse`  | Socket.IO real-time channels                               |

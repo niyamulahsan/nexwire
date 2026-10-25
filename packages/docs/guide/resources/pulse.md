@@ -296,7 +296,7 @@ Since the auth store bootstraps asynchronously, use `onMounted` to ensure the us
 ```vue
 <script setup lang="ts">
 import { onMounted, onUnmounted } from "vue";
-import { useHead } from "@vueuse/head";
+import { useHead } from "@unhead/vue";
 import { pulse } from "@/plugins/pulse";
 import { useAuthStore } from "@/stores/auth";
 

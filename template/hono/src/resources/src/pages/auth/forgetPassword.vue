@@ -43,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { useHead } from "@vueuse/head";
+import { useHead } from "@unhead/vue";
 import { ref } from "vue";
 import Button from "@/components/Button.vue";
 import Input from "@/components/Input.vue";

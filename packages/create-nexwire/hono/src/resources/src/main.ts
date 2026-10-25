@@ -1,5 +1,5 @@
 import "@/plugins/axios";
-import { createHead } from "@vueuse/head";
+import { createHead } from "@unhead/vue/client";
 import { createPinia } from "pinia";
 import { createApp } from "vue";
 import { DialogPlugin } from "@/plugins/dialog";
