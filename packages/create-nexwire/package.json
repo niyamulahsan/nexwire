@@ -72,14 +72,14 @@
     "ioredis": "^5",
     "lodash-es": "^4",
     "luxon": "^3",
-    "maildev": "^2",
+    "maildev": "^3",
     "mysql2": "^3",
-    "nodemailer": "^9",
+    "nodemailer": "^10",
     "pinia": "^3",
     "pino": "^10",
     "postgres": "^3",
     "redis-commander": "^0.9.0",
-    "sass-embedded": "^1",
+    "sass": "^1",
     "socket.io": "^4",
     "socket.io-client": "^4",
     "stoker": "^2",
@@ -207,7 +207,7 @@
     "redis-commander": {
       "optional": true
     },
-    "sass-embedded": {
+    "sass": {
       "optional": true
     },
     "socket.io": {
