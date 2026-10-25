@@ -61,7 +61,7 @@
     "bullmq": "^5",
     "bullmq-durable": "^0.2",
     "chalk": "^5",
-    "commander": "^14",
+    "commander": "^15",
     "croner": "^10",
     "dotenv": "^17",
     "dotenv-expand": "^13",
