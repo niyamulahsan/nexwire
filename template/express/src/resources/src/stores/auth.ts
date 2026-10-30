@@ -3,15 +3,18 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import { type AuthUser, clearUser, setUser } from "@/composables/useAuth";
 
-type LoginPayload = { email: string; password: string; remember?: boolean };
+type LoginPayload = { email?: string; phone?: string; password: string; remember?: boolean };
+type VerifyEmailPayload = { email: string; token: string };
+type ForgotPayload = { email: string };
+
 type RegisterPayload = {
   name: string;
-  email: string;
+  email?: string;
+  phone?: string;
   password: string;
   password_confirmation: string;
 };
-type VerifyEmailPayload = { email: string; token: string };
-type ForgotPayload = { email: string };
+
 type ResetPayload = {
   email: string;
   token: string;
@@ -57,25 +60,42 @@ export const useAuthStore = defineStore("auth", () => {
     else clearUser();
   };
 
+  let bootstrapPromise: Promise<void> | null = null;
   const bootstrap = async () => {
     if (initialized.value) return;
 
-    for (let attempt = 1; attempt <= MAX_BOOTSTRAP_ATTEMPTS; attempt++) {
-      try {
-        const response = await axios.get<ApiResponse<AuthUser>>("/api/auth/me");
-        syncUser((response.data?.data || null) as AuthUser | null);
-        break;
-      } catch (error) {
-        const backendUnreachable = axios.isAxiosError(error) && !error.response;
-        if (!backendUnreachable || attempt === MAX_BOOTSTRAP_ATTEMPTS) {
-          syncUser(null);
-          break;
-        }
-        await sleep(BOOTSTRAP_BACKOFF_MS * 2 ** (attempt - 1));
-      }
+    // Reuse the same request if multiple navigations call bootstrap.
+    if (bootstrapPromise) {
+      return bootstrapPromise;
     }
 
-    initialized.value = true;
+    bootstrapPromise = (async () => {
+      for (let attempt = 1; attempt <= MAX_BOOTSTRAP_ATTEMPTS; attempt++) {
+        try {
+          const response = await axios.get<ApiResponse<AuthUser>>("/api/auth/me");
+
+          syncUser((response.data?.data || null) as AuthUser | null);
+          initialized.value = true;
+          return;
+        } catch (error) {
+          const backendUnreachable = axios.isAxiosError(error) && !error.response;
+
+          if (!backendUnreachable || attempt === MAX_BOOTSTRAP_ATTEMPTS) {
+            syncUser(null);
+            initialized.value = true;
+            return;
+          }
+
+          await sleep(BOOTSTRAP_BACKOFF_MS * 2 ** (attempt - 1));
+        }
+      }
+    })();
+
+    try {
+      await bootstrapPromise;
+    } finally {
+      bootstrapPromise = null;
+    }
   };
 
   const login = async (payload: LoginPayload) => {

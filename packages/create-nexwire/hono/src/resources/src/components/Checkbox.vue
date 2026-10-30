@@ -3,10 +3,13 @@
     <input
       :id="String(props.id)"
       v-model="model"
-      class="form-check-input shadow-none border-secondary"
+      class="form-check-input shadow-none"
       type="checkbox"
-      v-bind="$attrs" />
-    <label v-if="props.label" class="form-check-label" :for="String(props.id)">{{ props.label }}</label>
+      v-bind="$attrs"
+    />
+    <label v-if="props.label" class="form-check-label" :for="String(props.id)">{{
+      props.label
+    }}</label>
   </div>
 </template>
 

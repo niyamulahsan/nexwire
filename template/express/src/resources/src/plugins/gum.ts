@@ -50,7 +50,7 @@ type ValidationErrorPayload = {
 };
 
 function normalizeValidationErrors(payload?: ValidationErrorPayload): NormalizedErrors {
-  const normalized: NormalizedErrors = { ...(payload?.errors || {}) };
+  const normalized: NormalizedErrors = { ...payload?.errors };
 
   const issues = payload?.error?.issues;
   if (Array.isArray(issues)) {

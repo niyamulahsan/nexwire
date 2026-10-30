@@ -123,11 +123,13 @@ const updateModel = (e: Event) => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
   const shouldFocus = props.focus !== false && props.focus !== undefined;
   if (!shouldFocus) return;
 
-  nextTick(() => inputRef.value?.focus());
+  await nextTick();
+  // preventScroll: focusing inside a modal must not scroll the modal/page
+  inputRef.value?.focus({ preventScroll: true });
 });
 </script>
 

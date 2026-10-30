@@ -5,11 +5,20 @@
     "clientKind": "git",
     "useIgnoreFile": true
   },
+  "html": {
+    "experimentalFullSupportEnabled": true
+  },
   "formatter": {
     "indentStyle": "space",
     "indentWidth": 2,
     "lineWidth": 140,
     "bracketSameLine": true
+  },
+  "files": {
+    "includes": [
+      "**",
+      "!**/*.vue"
+    ]
   },
   "linter": {
     "rules": {

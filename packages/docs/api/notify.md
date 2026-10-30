@@ -22,11 +22,11 @@ Creates a user-visible notification through the registered notification provider
 | `link`      | `string`  | —        | Click-through URL                                        |
 | `data`      | `object`  | —        | Arbitrary JSON stored in the `data` column               |
 | `broadcast` | `boolean` | `false`  | Emit `"notification.created"` to the user's socket room  |
-| `mail`      | `object`  | —        | `{ subject?, html?, to? }` — sends email via the `mail` queue |
+| `mail`      | `object`  | —        | `{ subject?, html?, to? }` — sends email through the `mail` queue when Redis is available, directly otherwise |
 
 ### Recipient resolution
 
-When `mail` is set, the recipient is resolved in this order: `mail.to` → the auth provider's `getUserContact(id)` → skipped. There is no users-model fallback. See [Providers](./../guide/providers).
+When `mail` is set, the recipient is resolved in this order: `mail.to` → the auth provider's `getUserContact(id)` → skipped. There is no users-model fallback. See [Providers](./../guide/providers). `subject` defaults to the notification title, and `html` is generated from the title and body when omitted.
 
 ## Use cases
 
@@ -120,11 +120,12 @@ channel.listen("notification.created", (payload) => {
 notify(target, { broadcast: true, mail: { ... } })
   ├─ 1. resolveNotificationProvider() — registered provider, else null
   ├─ 2. provider.create(target, input)
-  ├─ 3. dispatchEvent("notification.created", normalized, { broadcast: { users: [target.id] } })
+  ├─ 3. dispatchEvent("notification.created", normalized, { broadcast: { users: [normalizedTarget.id] } })
   │      └─ Socket.IO emits to room "user:<id>"
   └─ 4. If mail option:
-         └─ dispatchEvent("notification:mail", ..., { queue: "mail" })
-             └─ BullMQ worker sends the email
+         ├─ Redis available → dispatchEvent("notification:mail", ..., { queue: "mail" })
+         │      └─ BullMQ worker sends the email
+         └─ Redis off → mail.sendMail({ to, subject, html }) directly
 ```
 
 ## `dispatchEvent` vs `notify`
@@ -133,8 +134,8 @@ notify(target, { broadcast: true, mail: { ... } })
 | ------------------- | --------------------------------------------------- | ------------------------------------------------------------------------- |
 | **Persistence**     | No — fire-and-forget signal                         | Yes — stores through the notification provider, returns the normalized record |
 | **Broadcast scope** | Flexible (`all`, `auth`, `roles`, `users`, `rooms`) | Always to a single user (`users: [userId]`)                               |
-| **Email delivery**  | No                                                  | Yes — via `mail: { subject, html }`                                       |
-| **Queue option**    | Yes                                                 | Yes — internally calls `dispatchEvent` with `{ queue: "mail" }` for email |
+| **Email delivery**  | No                                                  | Yes — via `mail: { subject, html, to? }`                                  |
+| **Queue option**    | Yes                                                 | Yes — internally calls `dispatchEvent` with `{ queue: "mail" }` when Redis is available |
 
 ## Notes
 

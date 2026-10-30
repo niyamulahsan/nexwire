@@ -4,38 +4,44 @@
       <label
         :for="inputId"
         class="d-flex align-items-center mb-1"
-        :class="{ 'd-none': !inputLabel }">
+        :class="{ 'd-none': !inputLabel }"
+      >
         <div class="position-relative">
           <span class="text-capitalize" v-html="inputLabel"></span>
           <span
             class="position-absolute text-danger rounded-circle bg-danger must"
-            :class="{ 'd-none': !props.must }"></span>
+            :class="{ 'd-none': !props.must }"
+          ></span>
         </div>
         <div
           class="text-end ms-auto text-primary fw-semibold"
           :class="{ 'd-none': !props.hood }"
           style="font-size: 12px; margin-top: 0.15rem"
-          v-html="hoodHtml"></div>
+          v-html="hoodHtml"
+        ></div>
       </label>
       <input
         ref="inputRef"
-        class="form-control"
+        class="form-control shadow-none"
         :value="props.modelValue"
         :maxlength="maxLengthAttr"
         :readonly="props.readonly"
         v-bind="$attrs"
         :autocomplete="inputAutocomplete"
-        @input="updateModel" />
+        @input="updateModel"
+      />
       <div
         class="position-absolute bottom-0 end-0 pe-1 text-secondary max"
-        :class="{ 'd-none': !max }">
+        :class="{ 'd-none': !max }"
+      >
         {{ maxCounter }}
       </div>
     </div>
     <div
       :id="`${inputId}Help`"
       class="form-text mt-1 text-danger"
-      :class="{ 'd-none': !props.err }">
+      :class="{ 'd-none': !props.err }"
+    >
       {{ props.err }}
     </div>
   </div>
@@ -45,11 +51,21 @@
 import { computed, nextTick, onMounted, ref, useAttrs } from "vue";
 import { browserDetect } from "@/plugins/browserDetect";
 
+defineOptions({ name: "Input", inheritAttrs: false });
+
 const { isFirefox } = browserDetect;
 
 const $attrs = useAttrs();
 const inputRef = ref<HTMLInputElement | null>(null);
-type InputCategory = "number" | "decimal" | "+decimal-" | "mobile" | "tax-period" | "bin" | "challan-number" | string;
+type InputCategory =
+  | "number"
+  | "decimal"
+  | "+decimal-"
+  | "mobile"
+  | "tax-period"
+  | "bin"
+  | "challan-number"
+  | string;
 
 interface InputProps {
   focus?: boolean;
@@ -63,7 +79,7 @@ interface InputProps {
 
 const props = withDefaults(defineProps<InputProps>(), {
   err: false,
-  modelValue: ""
+  modelValue: "",
 });
 
 const topclass = computed(() => ($attrs.topclass as string | undefined) || "mb-2");
@@ -86,7 +102,9 @@ const inputAutocomplete = computed(() => {
 
 const maxLengthAttr = computed<number | undefined>(() => max.value ?? undefined);
 
-const hoodHtml = computed(() => (props.hood === false || props.hood == null ? "" : String(props.hood)));
+const hoodHtml = computed(() =>
+  props.hood === false || props.hood == null ? "" : String(props.hood),
+);
 
 const maxCounter = computed(() => {
   if (max.value == null) {
@@ -185,7 +203,7 @@ const updateModel = (e: Event) => {
     let digits = raw.replace(/[^\d]/g, "").slice(0, 9);
 
     // always prefix V
-    let formatted = "V" + digits;
+    let formatted = `V${digits}`;
 
     emit("update:modelValue", (target.value = formatted));
   } else if (props.category === "challan-number") {
@@ -201,11 +219,13 @@ const updateModel = (e: Event) => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
   const shouldFocus = props.focus !== false && props.focus !== undefined;
   if (!shouldFocus) return;
 
-  nextTick(() => inputRef.value?.focus());
+  await nextTick();
+  // preventScroll: focusing inside a modal must not scroll the modal/page
+  inputRef.value?.focus({ preventScroll: true });
 });
 </script>
 

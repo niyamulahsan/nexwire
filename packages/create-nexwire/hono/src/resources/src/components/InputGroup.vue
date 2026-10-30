@@ -85,13 +85,9 @@ const max = computed<number | null>(() => {
 });
 
 const maxLengthAttr = computed<number | undefined>(() => max.value ?? undefined);
-const maxCounter = computed(() =>
-  max.value == null ? "" : max.value - String(props.modelValue).length
-);
+const maxCounter = computed(() => (max.value == null ? "" : max.value - String(props.modelValue).length));
 
-const hoodHtml = computed(() =>
-  props.hood === false || props.hood == null ? "" : String(props.hood)
-);
+const hoodHtml = computed(() => (props.hood === false || props.hood == null ? "" : String(props.hood)));
 const hoodClass = computed(() => [
   "text-uppercase w-50 text-end text-primary fw-semibold",
   props.half ? "w-50" : "w-100",
@@ -127,11 +123,13 @@ const updateModel = (e: Event) => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
   const shouldFocus = props.focus !== false && props.focus !== undefined;
   if (!shouldFocus) return;
 
-  nextTick(() => inputRef.value?.focus());
+  await nextTick();
+  // preventScroll: focusing inside a modal must not scroll the modal/page
+  inputRef.value?.focus({ preventScroll: true });
 });
 </script>
 

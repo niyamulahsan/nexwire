@@ -40,7 +40,7 @@ src/resources/
 │   ├── layouts/            # Page layouts (dashboard, auth)
 │   ├── pages/              # Route-level page components
 │   ├── components/         # Reusable UI components
-│   ├── helpers/            # Utility functions (nformatter, utils)
+│   ├── helpers/            # Utility functions (assets, nformatter, utils)
 │   └── assets/             # SCSS theme, CSS, images
 ```
 
@@ -57,4 +57,4 @@ src/resources/
 | [Stores](/guide/resources/stores)           | Auth store and admin-ui Pinia store                                  |
 | [Composables](/guide/resources/composables) | `useAuth` composable                                                 |
 | [Components](/guide/resources/components)   | DataTable, Select, Datepicker, Button, Input, Modal, Toast, and more |
-| [Helpers](/guide/resources/helpers)         | Number formatting and utility functions                              |
+| [Helpers](/guide/resources/helpers)         | Asset URLs, number formatting and utility functions                  |

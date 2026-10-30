@@ -6,46 +6,53 @@
           <span class="text-capitalize mb-1" v-html="inputLabel"></span>
           <span
             class="position-absolute text-danger rounded-circle bg-danger must"
-            :class="{ 'd-none': !props.must }"></span>
+            :class="{ 'd-none': !props.must }"
+          ></span>
         </div>
         <div
           class="text-end ms-auto text-primary align-self-center"
           :class="{ 'd-none': !props.hood }"
           style="font-size: 12px; margin-top: 0.15rem"
-          v-html="hoodHtml"></div>
+          v-html="hoodHtml"
+        ></div>
       </label>
 
-      <div class="input-group mb-3">
+      <div class="input-group border-0 mb-3">
         <input
           ref="inputRef"
-          class="form-control border-0"
+          class="form-control shadow-none"
           :type="showPassword ? 'text' : 'password'"
           :value="props.modelValue"
           :maxlength="maxLengthAttr"
           :readonly="props.readonly"
           v-bind="$attrs"
-          @input="updateModel" />
+          @input="updateModel"
+        />
         <button
-          class="input-group-text p-0 border-0 border-start border-1 position-relative z-1"
+          class="input-group-text p-0 position-relative z-1"
           type="button"
-          @click="togglePassword">
+          @click="togglePassword"
+        >
           <i
             class="py-2 px-3"
             :class="showPassword ? 'bi bi-eye' : 'bi bi-eye-slash'"
-            style="font-size: 15px"></i>
+            style="font-size: 15px"
+          ></i>
         </button>
       </div>
       <!-- <input class="form-control" v-model="model" :maxlength="max" v-bind="$attrs"> vue3.3 (2nd way)/3.4 -->
       <div
         class="position-absolute bottom-0 end-0 pe-1 text-secondary max"
-        :class="{ 'd-none': !max }">
+        :class="{ 'd-none': !max }"
+      >
         {{ maxCounter }}
       </div>
     </div>
     <div
       :id="`${inputId}Help`"
       class="form-text mt-1 text-danger"
-      :class="{ 'd-none': !props.err }">
+      :class="{ 'd-none': !props.err }"
+    >
       {{ props.err }}
     </div>
   </div>
@@ -81,7 +88,7 @@ interface InputPasswordProps {
 
 const props = withDefaults(defineProps<InputPasswordProps>(), {
   err: false,
-  modelValue: ""
+  modelValue: "",
 });
 
 const topclass = computed(() => ($attrs.topclass as string | undefined) || "mb-3");
@@ -96,7 +103,7 @@ const max = computed<number | null>(() => {
 const maxLengthAttr = computed<number | undefined>(() => max.value ?? undefined);
 
 const hoodHtml = computed(() =>
-  props.hood === false || props.hood == null ? "" : String(props.hood)
+  props.hood === false || props.hood == null ? "" : String(props.hood),
 );
 
 const maxCounter = computed(() => {
@@ -179,18 +186,18 @@ const updateModel = (e: Event) => {
 const showPassword = ref(false);
 const togglePassword = () => (showPassword.value = !showPassword.value);
 
-onMounted(() => {
+onMounted(async () => {
   const shouldFocus = props.focus !== false && props.focus !== undefined;
   if (!shouldFocus) return;
 
-  nextTick(() => inputRef.value?.focus());
+  await nextTick();
+  // preventScroll: focusing inside a modal must not scroll the modal/page
+  inputRef.value?.focus({ preventScroll: true });
 });
 </script>
 
 <style lang="scss" scoped>
 input {
-  border-color: #cccccc;
-
   &:read-only {
     background-color: #f8f8f8;
   }
