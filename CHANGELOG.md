@@ -1,6 +1,6 @@
 # Changelog
 
-## [4.2.5] — 2026-10-26
+## [4.2.5] — 2026-10-30
 
 ### Fixed
 
@@ -9,6 +9,7 @@
 ### Added
 
 - **Template (both engines) / Scaffolder**: `npm run typecheck:ui` (`vue-tsc --noEmit -p src/resources/tsconfig.json`) and `vue-tsc ^3.3.13` as a dev dependency. The root `tsc --noEmit` excludes `src/resources`, and the Vite build strips types without checking them, so the 4.2.4 head regression shipped even though the backend typecheck was green. `build:ui` now runs the UI typecheck first, so a red squiggle in `src/resources` fails the build instead of reaching npm.
+- **Template (both engines) / Scaffolder**: `src/resources/src/helpers/assets.ts` adds a default `asset()` helper that resolves an image path to the URL Vite emits, so paths computed at runtime work in both dev and production. It accepts `@/...`, `/...`, `../...` and full `http(s)`/`data:` URLs: `@/` and `/` normalize to `/src/...`, `../` is matched against the glob keys by suffix, and an unknown path warns and returns the input unchanged. The helper eagerly globs `png`, `jpg`, `jpeg`, `svg`, `webp` and `gif` under `/src`, so every matching image is hashed and copied by the build. It is UI-only (`import.meta.glob`) and documented in `guide/resources/helpers.md`; the resources index lists it.
 
 ## [4.2.4] — 2026-10-25
 
