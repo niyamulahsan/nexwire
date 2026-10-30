@@ -1,10 +1,11 @@
 # Changelog
 
-## [4.2.5] — 2026-10-30
+## [4.2.5] — 2026-10-31
 
 ### Fixed
 
 - **Template (both engines) / Scaffolder**: the UI head instance sets the title template through `createHead({ init: [...] })` again. 4.2.4 passed `titleTemplate` directly to `createHead`, which `@unhead/vue@3` no longer reads from its options: it type-errors in the editor (`'titleTemplate' does not exist in type 'CreateClientHeadOptions'`, plus an implicit-`any` for the callback) and is silently ignored at runtime, so every page rendered its bare title (`Login`) without the `| nexwire` suffix. The documented v3 form, `init`, restores both: titles render as `Login | nexwire` again and the two editor errors are gone. The `entry-point` guide is updated with the same snippet.
+- **Template (both engines) / Scaffolder**: the UI Vite config resolves `root` from the config file itself (`fileURLToPath(new URL(".", import.meta.url))`) instead of the relative `"src/resources"`. The relative value depended on the process working directory, so Vite+ reported a Vitest error when it loaded the config from another directory. Dev, build and the UI typecheck now resolve the same project wherever the tool is launched.
 
 ### Added
 

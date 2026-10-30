@@ -20,7 +20,7 @@ export default defineConfig({
     __SOCKET_ENABLED__: socketEnabled,
     __API_URL__: JSON.stringify(apiUrl)
   },
-  root: "src/resources",
+  root: fileURLToPath(new URL(".", import.meta.url)),
   cacheDir: path.join(cacheBase, "nexwire", "vite-cache", "resources"),
   plugins: [vue()],
   css: {
