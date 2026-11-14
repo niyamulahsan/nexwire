@@ -19,20 +19,20 @@ export type RegisterResult =
   | { kind: "email_exists"; message: string }
   | { kind: "verification_required"; message: string }
   | {
-      kind: "registered";
-      message: string;
-      data: {
-        user: ReturnType<typeof sanitizeUser>;
-        access_token: string;
-        refresh_token: string;
-        token_type: "Bearer";
-      };
+    kind: "registered";
+    message: string;
+    data: {
+      user: ReturnType<typeof sanitizeUser>;
+      access_token: string;
+      refresh_token: string;
+      token_type: "Bearer";
     };
+  };
 
 const VERIFY_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
 export const registerService = {
-  register: async (req: FastifyRequest, reply: FastifyReply, body: RegisterType): Promise<RegisterResult> => {
+  async register(req: FastifyRequest, reply: FastifyReply, body: RegisterType): Promise<RegisterResult> {
     const defaultRole = await db.query.roles.findFirst({
       where: eq(roles.name, "user")
     });

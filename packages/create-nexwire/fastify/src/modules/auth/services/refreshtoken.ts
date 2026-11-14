@@ -13,23 +13,23 @@ export type RefreshTokenResult =
   | { kind: "expired"; message: string }
   | { kind: "user_not_found"; message: string }
   | {
-      kind: "refreshed";
-      message: string;
-      data: {
-        user: ReturnType<typeof sanitizeUser>;
-        access_token: string;
-        refresh_token: string;
-        token_type: "Bearer";
-      };
-      cookies: {
-        accessToken: string;
-        refreshToken: string;
-        refreshExpiry?: number;
-      };
+    kind: "refreshed";
+    message: string;
+    data: {
+      user: ReturnType<typeof sanitizeUser>;
+      access_token: string;
+      refresh_token: string;
+      token_type: "Bearer";
     };
+    cookies: {
+      accessToken: string;
+      refreshToken: string;
+      refreshExpiry?: number;
+    };
+  };
 
 export const refreshTokenService = {
-  refreshToken: async (body: RefreshTokenType): Promise<RefreshTokenResult> => {
+  async refreshToken(body: RefreshTokenType): Promise<RefreshTokenResult> {
     const payload = await jwt.verifyToken(body.refresh_token, "refresh");
 
     if (!payload?.jti || typeof payload.jti !== "string") {

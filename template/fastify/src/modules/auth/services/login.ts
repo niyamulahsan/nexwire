@@ -12,18 +12,18 @@ export type LoginResult =
   | { kind: "invalid_credentials"; message: string }
   | { kind: "email_not_verified"; message: string }
   | {
-      kind: "logged_in";
-      message: string;
-      data: {
-        user: ReturnType<typeof sanitizeUser>;
-        access_token: string;
-        refresh_token: string;
-        token_type: "Bearer";
-      };
+    kind: "logged_in";
+    message: string;
+    data: {
+      user: ReturnType<typeof sanitizeUser>;
+      access_token: string;
+      refresh_token: string;
+      token_type: "Bearer";
     };
+  };
 
 export const loginService = {
-  login: async (req: FastifyRequest, reply: FastifyReply, body: LoginType): Promise<LoginResult> => {
+  async login(req: FastifyRequest, reply: FastifyReply, body: LoginType): Promise<LoginResult> {
     const user = await db.query.users.findFirst({
       where: eq(users.email, body.email),
       with: { role: true }

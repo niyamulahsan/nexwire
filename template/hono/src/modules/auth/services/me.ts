@@ -8,13 +8,13 @@ import { sanitizeUser } from "@/modules/auth/helpers/auth.js";
 export type MeResult =
   | { kind: "not_found"; message: string }
   | {
-      kind: "found";
-      message: string;
-      data: ReturnType<typeof sanitizeUser>;
-    };
+    kind: "found";
+    message: string;
+    data: ReturnType<typeof sanitizeUser>;
+  };
 
 export const meService = {
-  me: async (userId: number): Promise<MeResult> => {
+  async me(userId: number): Promise<MeResult> {
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId),
       with: { role: true }

@@ -10,7 +10,7 @@ export type LogoutResult = {
 };
 
 export const logoutService = {
-  logout: async (req: FastifyRequest, reply: FastifyReply): Promise<LogoutResult> => {
+  async logout(req: FastifyRequest, reply: FastifyReply): Promise<LogoutResult> {
     try {
       await revokeCurrentRefreshToken(req);
     } catch (err) {

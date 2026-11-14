@@ -8,7 +8,7 @@ export const {{ServiceName}} = {
    * When: Called by the controller's index() handler.
    * Where: GET /{{controller}} route.
    */
-  list: async () => {
+  async list() {
     return db.select().from({{tableVariable}});
   },
 
@@ -17,7 +17,7 @@ export const {{ServiceName}} = {
    * When: Called by the controller's show/update/destroy handlers.
    * Where: Reused across GET/PUT/DELETE /{{controller}}/{id} routes.
    */
-  findOne: async (id: number) => {
+  async findOne(id: number) {
     const [row] = await db
       .select()
       .from({{tableVariable}})
@@ -31,7 +31,7 @@ export const {{ServiceName}} = {
    * When: Called by the controller's store() handler.
    * Where: POST /{{controller}} route.
    */
-  create: async (data: Record<string, unknown>) => {
+  async create(data: Record<string, unknown>) {
     const [row] = await db.insert({{tableVariable}}).values(data).returning();
     return row;
   },
@@ -41,7 +41,7 @@ export const {{ServiceName}} = {
    * When: Called by the controller's update() handler.
    * Where: PUT/PATCH /{{controller}}/{id} route.
    */
-  update: async (id: number, data: Record<string, unknown>) => {
+  async update(id: number, data: Record<string, unknown>) {
     const [row] = await db
       .update({{tableVariable}})
       .set(data)
@@ -55,7 +55,7 @@ export const {{ServiceName}} = {
    * When: Called by the controller's destroy() handler.
    * Where: DELETE /{{controller}}/{id} route.
    */
-  remove: async (id: number) => {
+  async remove(id: number) {
     const [row] = await db
       .delete({{tableVariable}})
       .where(eq({{tableVariable}}.id, id))

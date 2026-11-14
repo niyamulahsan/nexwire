@@ -14,7 +14,7 @@ export type ForgotPasswordResult = {
 const TOKEN_TTL_MS = 15 * 60 * 1000;
 
 export const forgotPasswordService = {
-  forgotPassword: async (body: ForgotPasswordType): Promise<ForgotPasswordResult> => {
+  async forgotPassword(body: ForgotPasswordType): Promise<ForgotPasswordResult> {
     const now = new Date();
 
     // Cleanup + replace happen atomically so a crash mid-flow can't leave

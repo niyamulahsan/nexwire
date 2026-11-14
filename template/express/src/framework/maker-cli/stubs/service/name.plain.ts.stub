@@ -16,7 +16,7 @@ export const {{ServiceName}} = {
   * When: Consumed directly by the controller as `{{ServiceName}}.list()`, etc.
   * Where: Wired into the module's controller handlers.
   */
-  list: async () => {
+  async list() {
     void db;
     return [];
   },
@@ -28,7 +28,7 @@ export const {{ServiceName}} = {
    *
    * TODO: query the model by id and return the row, or null when missing.
    */
-  findOne: async (_id: number) => {
+  async findOne(_id: number) {
     return null;
   },
 
@@ -39,7 +39,7 @@ export const {{ServiceName}} = {
    *
    * TODO: insert the validated payload and return the created row.
    */
-  create: async (_data: Record<string, unknown>) => {
+  async create(_data: Record<string, unknown>) {
     return null;
   },
 
@@ -50,7 +50,7 @@ export const {{ServiceName}} = {
    *
    * TODO: update by id, refresh updatedAt, and return the row, or null when missing.
    */
-  update: async (_id: number, _data: Record<string, unknown>) => {
+  async update(_id: number, _data: Record<string, unknown>) {
     return null;
   },
 
@@ -61,7 +61,7 @@ export const {{ServiceName}} = {
    *
    * TODO: delete by id and return the removed row, or null when missing.
    */
-  remove: async (_id: number) => {
+  async remove(_id: number) {
     return null;
   },
 };

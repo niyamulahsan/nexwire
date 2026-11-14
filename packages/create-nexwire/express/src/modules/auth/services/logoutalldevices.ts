@@ -10,7 +10,7 @@ export type LogoutAllDevicesResult = {
 };
 
 export const logoutAllDevicesService = {
-  logoutAllDevices: async (userId: number): Promise<LogoutAllDevicesResult> => {
+  async logoutAllDevices(userId: number): Promise<LogoutAllDevicesResult> {
     await db.delete(refreshTokens).where(eq(refreshTokens.userId, userId));
 
     return {

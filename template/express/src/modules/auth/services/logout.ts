@@ -10,7 +10,7 @@ export type LogoutResult = {
 };
 
 export const logoutService = {
-  logout: async (req: Request, res: Response): Promise<LogoutResult> => {
+  async logout(req: Request, res: Response): Promise<LogoutResult> {
     try {
       await revokeCurrentRefreshToken(req, res);
     } catch (err) {

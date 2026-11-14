@@ -13,7 +13,7 @@ export type VerifyEmailResult =
   | { kind: "verified"; message: string };
 
 export const verifyEmailService = {
-  verifyEmail: async (body: VerifyEmailType): Promise<VerifyEmailResult> => {
+  async verifyEmail(body: VerifyEmailType): Promise<VerifyEmailResult> {
     if (!authConfig.requireEmailVerification) {
       return {
         kind: "not_required",

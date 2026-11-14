@@ -9,7 +9,7 @@ import type { ResetPasswordType } from "@/modules/auth/schemas/auth.js";
 export type ResetPasswordResult = { kind: "invalid_token"; message: string } | { kind: "reset"; message: string };
 
 export const resetPasswordService = {
-  resetPassword: async (body: ResetPasswordType): Promise<ResetPasswordResult> => {
+  async resetPassword(body: ResetPasswordType): Promise<ResetPasswordResult> {
     const user = await db.query.users.findFirst({
       where: eq(users.email, body.email)
     });
