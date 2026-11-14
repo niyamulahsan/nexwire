@@ -16,8 +16,15 @@ The file is generated per engine because each engine has a native way of doing
 the same thing: a Hono controller is a `Handler` and returns `c.json(...)`, an
 Express controller is `(req, res, next)` and returns `res.status(...).json(...)`,
 and a Fastify controller receives a typed `request` and a `reply`. The shared
-rules — directory-based discovery, the `@/` alias, schema-derived types, facades
-— are identical in all three.
+rules — directory-based discovery, the `@/` alias, schema-derived types, facades,
+pagination, the response envelope, jobs and realtime — are identical in all
+three.
+
+The file is written as a strict contract, not a tutorial: thirteen numbered
+sections (`§0 Non-negotiables` through `§13 Before you say "done"`), each a
+**Do** / **Never** list so an agent can follow it without interpreting prose.
+`§0` overrides everything else, and the closing checklist restates what must be
+true before a change is called done.
 
 ::: tip Agents read it automatically
 Most coding agents (OpenCode, Cursor, Codex, Claude Code, …) look for
@@ -45,22 +52,57 @@ These are the conventions described in [Conventions](/guide/conventions) and
 [Modules](/guide/modules), restated as the short list an agent needs:
 
 1. **Never edit `src/framework/**`.** It is the framework, not your application.
-2. **Directory = meaning.** Files are discovered by folder, not by filename.
+2. **Directory = meaning.** Files are discovered by folder, not by filename. A
+   file in a folder the framework does not scan is invisible.
 3. **Name your location.** The first line of every source file is a comment with
-   its engine-relative path, followed by one blank line.
-4. **Import through `@/`.** Never `./` or `../` inside `src/modules/**`; import
-   the framework only from `@/framework/facade.js`.
-5. **Schemas are the source of truth.** Declare each request shape once in
-   `schemas/` and derive its type (`z.input<typeof XSchema>`) on the next line.
-6. **Modules talk through facades.** Another module's public API is its
-   `facade.ts` — nothing else.
-7. **Scaffold with `maker`.** Use `npm run maker module:*` so files land in the
+   its engine-relative path, followed by one blank line. `maker` writes it for
+   you.
+4. **Import through `@/`.** Never `../` across folders; a same-folder sibling
+   import is fine. In the UI, `@/` is `src/resources/src/`.
+5. **Import the framework only from `@/framework/facade.js`** — never from a
+   deep `@/framework/<deep>/…` path.
+6. **Schemas are the source of truth for input.** Declare each request shape once
+   in `schemas/` and derive its type (`z.input<typeof XSchema>`) on the next line.
+   A response schema is optional.
+7. **Modules talk through facades.** Another module's public API is its
+   `facade.ts` — nothing else. A module never imports its own facade, and a
+   facade never imports another facade.
+8. **Scaffold with `maker`.** Use `npm run maker module:*` so files land in the
    right place. `maker` has a wide surface (modules, database, runtime, testing,
    deploy) — run `npm run maker -- --help` to find the right command instead of
    guessing, and `npm run maker -- <command> --help` for its options. The `--`
    lets npm forward the flag. See the [CLI reference](/cli/reference).
-8. **helper = computes, service = does.** Pure logic in `helpers/`, everything
+9. **helper = computes, service = does.** Pure logic in `helpers/`, everything
    that touches the database, files or network in `services/`.
+
+## Backend rules
+
+Beyond the conventions above, the contract pins the shape of an endpoint and
+where side effects live:
+
+- **Every list endpoint returns a paginator's `PaginatedResult`.** Use
+  `paginateModel` / `paginate` / `paginateTable` / `paginateQuery` — never a
+  hand-written `LIMIT`/`OFFSET`. `paginate` and `paginateModel` read the page
+  params from the request, so the service that calls them takes the request
+  context as its first argument (`c` on Hono, `req` on Express, `request` on
+  Fastify). See [Pagination](/guide/database#pagination).
+- **Every controller answers with `HttpStatusCodes.<NAME>` and the
+  `{ message, data }` envelope.** No service builds the HTTP response — a
+  service may return a result object carrying an `HttpStatusCodes` value, but the
+  controller is the only place that calls `c.json(...)`,
+  `res.status(...).json(...)` or `reply.send(...)`.
+- **Realtime is `dispatchEvent` / `broadcast` on the server and `pulse` on the
+  client** — never a raw `WebSocket`, `EventSource` or polling loop. See
+  [Realtime](/guide/realtime).
+- **Jobs live in `jobs/` and schedules in `console/` or `schedules/`.** Every
+  `dispatchEvent(..., { queue })` name must have a matching `shouldQueue`. See
+  [Events & Queue](/guide/events-queue) and [Scheduler](/guide/scheduler).
+- **Input is strict; output is flexible.** `body`, `params` and `query` are always
+  a schema — that is the trust boundary. A **response schema is optional and never
+  required**: it documents the shape, it is not a security control. On Hono and
+  Express it feeds the OpenAPI document only; on Fastify, declaring one opts into
+  serialization (undeclared fields are stripped, and a mismatch is a `500`), so
+  omit it unless you want that filtering.
 
 ## Frontend rules
 
@@ -90,6 +132,10 @@ code drifts most:
   paired with the backend's `dispatchEvent(...)`, cleaned up in `onUnmounted`;
   never a raw `WebSocket`, `EventSource` or polling loop. See
   [Pulse](/guide/resources/pulse).
+- **Pass data and handlers down as props.** A page owns state and the network
+  calls; child components (forms, tables, modals) are dumb — they receive data
+  (`:data="rows"`) and typed handler functions (`:edit="edit"`) as props, and
+  never import a store, axios, or `dialog`/`toast`/`pulse`.
 - **Pure functions go in `helpers/`**, shared reactive state in `composables/`.
 
 The project's `AGENTS.md` spells all of this out; the
