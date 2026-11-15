@@ -109,7 +109,7 @@ Every visit method accepts the same options object:
 | `routePath`      | `string`                                          | `route.path`       | Destination path when navigating                               |
 | `replace`        | `boolean`                                         | `false`            | Use `router.replace` instead of `router.push`                  |
 | `preserveState`  | `boolean`                                         | `method !== "get"` | When `false`, clears `useGumRemember` keys for the destination |
-| `preserveScroll` | `boolean`                                         | `false`            | Restore `window.scrollY` after the call                        |
+| `preserveScroll` | `boolean`                                         | `false`            | Restore `window.scrollY` after the call, re-applying it until the page settles |
 | `skipFetch`      | `boolean`                                         | `false`            | Skip the network call — navigate only                          |
 | `fetcher`        | `(payload) => Promise<unknown>`                   | —                  | Delegate the network call (e.g. a store method)                |
 | `onBefore`       | `() => boolean \| Promise<boolean>`               | —                  | Return `false` to cancel                                       |
@@ -835,22 +835,25 @@ Two rules for this version:
 
 Do **not** combine `getWith` navigation with `watch(route.query)` — both fetch, so each navigation fires two requests.
 
-### Built-in `DataTable` caveat
+### Built-in `DataTable` and fetcher mode
 
-The template's `DataTable`, `Pagination` and `SelectOption` components navigate with `gum.get(..., { skipFetch: true })` — they change the URL and rely on the page watcher to fetch. The backend `paginate()` helper only shapes the response (`path`, `current_page`, `last_page`, `per_page`, `total`); it does not trigger a fetch, so it does not remove the need for the watcher. If you use them:
+The template's `DataTable` (with `Pagination` and `SelectOption`) supports both styles:
 
-- Keep `watch(route.query)` → `store.list(...)` for the listing (store-owned mutations are still fine).
-- Do **not** drop the watcher and use `getWith`, or pagination/search clicks will only update the URL and never fetch.
-- Do **not** keep the watcher **and** use `getWith` for navigation, or every click fetches twice.
+- **Fetcher mode (`:fetcher="store.index"`) — preferred.** The controls call the store action through `gum.getWith` and still push the URL, so links stay shareable. Load the first page once (`onMounted`) and **do not** also `watch(route.query)`, or each navigation fetches twice.
+- **URL mode (default)** — the fallback when there is no store action: the controls call `gum.get(..., { query, routePath, skipFetch: true })`, rewriting `?page=&size=&search=` and relying on the page's `watch(route.query)` → `store.list(...)` to fetch. Keep the watcher.
 
-| Concern                       | URL-based                                     | Store-owned (`*With`)                                       |
-| ----------------------------- | --------------------------------------------- | ----------------------------------------------------------- |
-| Who knows the URL             | Component                                     | Store                                                       |
-| GET/listing                   | `gum.get(url, { skipFetch: true })` + watcher | `gum.getWith({ fetcher })` + no watcher (custom pagination) |
-| Submit                        | `gum.form.post(url, ...)`                     | `gum.form.postWith({ fetcher })`                            |
-| Delete                        | `gum.delete(url, ...)`                        | `gum.deleteWith({ fetcher })`                               |
-| Refresh after mutation        | Required in `onSuccess`                       | Optional — only if the store does not update itself         |
-| Works with built-in DataTable | Yes                                           | Yes, but keep the watcher for listing                       |
+Either way the controls preserve the rest of `route.query` and merge an optional `:filters` prop last, so filters survive search, page-size and pagination clicks. The backend `paginate()` helper only shapes the response (`path`, `current_page`, `last_page`, `per_page`, `total`); it does not trigger a fetch.
+
+Both modes pass `preserveScroll: true`, so a page click keeps the reader where they are. Because a listing often swaps its table for a shorter loading skeleton, `restoreScroll` re-applies the saved `window.scrollY` until the document settles (or the user scrolls), and the router's `scrollBehavior` skips its scroll-to-top on a same-path query change — the two together stop a page click from dropping the reader at the top.
+
+| Concern                       | URL-based                                     | Store-owned (`*With`)                                   |
+| ----------------------------- | --------------------------------------------- | ------------------------------------------------------- |
+| Who knows the URL             | Component                                     | Store                                                   |
+| GET/listing                   | `gum.get(url, { skipFetch: true })` + watcher | `gum.getWith({ fetcher })` + no watcher                 |
+| Submit                        | `gum.form.post(url, ...)`                     | `gum.form.postWith({ fetcher })`                        |
+| Delete                        | `gum.delete(url, ...)`                        | `gum.deleteWith({ fetcher })`                           |
+| Refresh after mutation        | Required in `onSuccess`                       | Optional — only if the store does not update itself     |
+| Works with built-in DataTable | Yes                                           | Yes — pass `:fetcher`, drop the watcher                 |
 
 Never mix both styles for the same call on one page — one path through the store and one bypassing it will leave the store state out of sync with the URL.
 

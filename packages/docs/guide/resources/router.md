@@ -65,8 +65,11 @@ export const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior: (_to, _from, savedPosition) => {
+  scrollBehavior: (to, from, savedPosition) => {
     if (savedPosition) return savedPosition;
+    // Query-only changes (search / page / size on the same page) keep the reader
+    // where they are; a same-path navigation must not force a jump to the top.
+    if (to.path === from.path) return false;
     return { top: 0 };
   },
 });
@@ -88,6 +91,10 @@ router.beforeEach(async (to) => {
 
 export default router;
 ```
+
+### Scroll behavior
+
+On a **path change** the router jumps to the top; on a **query-only change** (the same page with new `?page=`/`?size=`/`?search=`) it leaves the scroll position alone. That second rule is what lets the built-in `DataTable` keep your place while it paginates — without it, every page click would yank the reader back to the top. See [Gum → preserveScroll](/guide/resources/gum) for the component-side half of the same behavior.
 
 ## Route structure
 

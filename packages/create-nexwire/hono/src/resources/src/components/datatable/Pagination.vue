@@ -12,25 +12,41 @@
         <ul class="pagination justify-content-center justify-content-md-end">
           <!-- First -->
           <li :class="['page-item', { disabled: noPreviousPage }]">
-            <button type="button" class="page-link" :aria-disabled="noPreviousPage ? 'true' : 'false'"
-              :tabindex="noPreviousPage ? -1 : 0" @click.prevent="!noPreviousPage && loadPage(1)">
+            <button
+              type="button"
+              class="page-link"
+              :aria-disabled="noPreviousPage ? 'true' : 'false'"
+              :tabindex="noPreviousPage ? -1 : 0"
+              @click.prevent="!noPreviousPage && loadPage(1)"
+            >
               <i class="bi bi-chevron-double-left"></i>
             </button>
           </li>
 
           <!-- Prev -->
           <li :class="['page-item', { disabled: noPreviousPage }]">
-            <button type="button" class="page-link" :aria-disabled="noPreviousPage ? 'true' : 'false'"
+            <button
+              type="button"
+              class="page-link"
+              :aria-disabled="noPreviousPage ? 'true' : 'false'"
               :tabindex="noPreviousPage ? -1 : 0"
-              @click.prevent="!noPreviousPage && loadPage(props.data.current_page - 1)">
+              @click.prevent="!noPreviousPage && loadPage(props.data.current_page - 1)"
+            >
               <i class="bi bi-chevron-left"></i>
             </button>
           </li>
 
           <li class="page-item">
             <div class="input-group input-group-sm">
-              <Input v-model="page.page" type="text" category="number" topclass="m-0" class="text-center"
-                style="width: 100px" @keyup.enter="loadPage(page.page)" />
+              <Input
+                v-model="page.page"
+                type="text"
+                category="number"
+                topclass="m-0"
+                class="text-center"
+                style="width: 100px"
+                @keyup.enter="loadPage(page.page)"
+              />
             </div>
           </li>
 
@@ -40,16 +56,26 @@
 
           <!-- Next -->
           <li :class="['page-item', { disabled: noNextPage }]">
-            <button type="button" class="page-link" :aria-disabled="noNextPage ? 'true' : 'false'"
-              :tabindex="noNextPage ? -1 : 0" @click.prevent="!noNextPage && loadPage(props.data.current_page + 1)">
+            <button
+              type="button"
+              class="page-link"
+              :aria-disabled="noNextPage ? 'true' : 'false'"
+              :tabindex="noNextPage ? -1 : 0"
+              @click.prevent="!noNextPage && loadPage(props.data.current_page + 1)"
+            >
               <i class="bi bi-chevron-right"></i>
             </button>
           </li>
 
           <!-- Last -->
           <li :class="['page-item', { disabled: noNextPage }]">
-            <button type="button" class="page-link" :aria-disabled="noNextPage ? 'true' : 'false'"
-              :tabindex="noNextPage ? -1 : 0" @click.prevent="!noNextPage && loadPage(props.data.last_page)">
+            <button
+              type="button"
+              class="page-link"
+              :aria-disabled="noNextPage ? 'true' : 'false'"
+              :tabindex="noNextPage ? -1 : 0"
+              @click.prevent="!noNextPage && loadPage(props.data.last_page)"
+            >
               <i class="bi bi-chevron-double-right"></i>
             </button>
           </li>
@@ -61,10 +87,8 @@
 
 <script setup lang="ts">
 import { computed, reactive, watchEffect } from "vue";
-import { useRoute } from "vue-router";
 import Input from "@/components/Input.vue";
 import { formatCompactNumber } from "@/helpers/nformatter";
-import { useGum } from "@/plugins/gum";
 
 interface PaginationData {
   current_page: number;
@@ -74,20 +98,21 @@ interface PaginationData {
   path: string;
 }
 
+interface NavigateOverrides {
+  page?: number;
+  size?: string | number;
+  search?: string;
+}
+
 interface PaginationProps {
   data: PaginationData;
-  selectedoption?: string | number;
-  search?: string;
+  navigate: (overrides?: NavigateOverrides) => void;
   variant?: string;
 }
 
 const props = withDefaults(defineProps<PaginationProps>(), {
-  search: "",
   variant: "dark"
 });
-
-const gum = useGum();
-const route = useRoute();
 
 const page = reactive({ page: 1, from: 0, to: 0, total: 0 });
 
@@ -106,13 +131,7 @@ const loadPage = (pageNo: string | number) => {
   if (p < 1) p = 1;
   if (p > last) p = last;
 
-  return gum.get(props.data.path, {
-    query: { page: p, size: props.selectedoption, search: props.search },
-    routePath: route.path,
-    preserveState: true,
-    preserveScroll: true,
-    skipFetch: true
-  });
+  return props.navigate({ page: p });
 };
 
 const nFormatter = formatCompactNumber;

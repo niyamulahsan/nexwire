@@ -15,29 +15,24 @@
 
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import { useRoute } from "vue-router";
-import { useGum } from "@/plugins/gum";
 
-interface DataPage {
-  path: string;
-  current_page: number;
+interface NavigateOverrides {
+  page?: number;
+  size?: string | number;
+  search?: string;
 }
 
 interface SelectOptionProps {
-  data: DataPage;
-  search?: string;
+  navigate: (overrides?: NavigateOverrides) => void;
   isOptions?: boolean;
   option?: Array<string | number>;
   selectedoption?: string | number;
 }
 
 const props = withDefaults(defineProps<SelectOptionProps>(), {
-  search: "",
   isOptions: true,
   option: () => []
 });
-const gum = useGum();
-const route = useRoute();
 
 // select option and pass SelectOption component
 const selectedoption = ref<string | number | undefined>(props.selectedoption);
@@ -53,13 +48,7 @@ const selectOption = (e: Event) => {
   const target = e.target as HTMLSelectElement;
   selectedoption.value = target.value;
 
-  return gum.get(props.data.path, {
-    query: { page: props.data.current_page, size: selectedoption.value, search: props.search },
-    routePath: route.path,
-    preserveState: true,
-    preserveScroll: true,
-    skipFetch: true
-  });
+  return props.navigate({ size: selectedoption.value });
 };
 </script>
 

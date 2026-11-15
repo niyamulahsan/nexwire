@@ -543,7 +543,7 @@ dumb: they receive data and function references as props.
 <!-- ./src/resources/src/pages/circle/index.vue -->
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
-import { onMounted, onUnmounted, ref, watch } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import { pulse } from "@/plugins/pulse";
 import { useCircleStore } from "@/stores/circle";
@@ -573,9 +573,11 @@ const del = async (ids: (string | number)[]) => {
   await fetchCircles();
 };
 
-watch(() => route.query, fetchCircles, { immediate: true });
-
+// Fetcher mode: the table runs its own search / page / size fetches through
+// `:fetcher`, so load once here and do NOT also watch `route.query`.
 onMounted(() => {
+  fetchCircles();
+
   const ch = pulse.channel("circle");
   const handler = () => fetchCircles();
   ch.listen("circle.changed", handler);
@@ -591,7 +593,7 @@ onMounted(() => {
     </div>
     <div class="col-12 col-lg-8">
       <CircleTable :data="circles" :search="String(route.query.search || '')" :option="[10, 25, 50]" :edit="edit"
-        :del="del" />
+        :del="del" :fetcher="circleStore.index" />
     </div>
   </div>
 </template>
@@ -607,13 +609,14 @@ const props = defineProps<{
   data: Record<string, any> | null;
   search: string;
   option: (string | number)[];
+  fetcher: (params: Record<string, unknown>) => Promise<unknown>;
   edit: (value: number) => void;
   del: (value: (string | number)[]) => void;
 }>();
 </script>
 
 <template>
-  <DataTable :data="props.data" :search="props.search" :option="props.option" @remove="props.del">
+  <DataTable :data="props.data" :search="props.search" :option="props.option" :fetcher="props.fetcher" @remove="props.del">
     <template #thead>
       <th>Name</th>
       <th class="text-end">Actions</th>
@@ -646,10 +649,20 @@ Rules:
   array — because the component reads `data.path`, `data.current_page` and
   `data.per_page` to drive its search, page-size select and pagination. `option`
   is the page-size list. The page never builds rows.
-- The `DataTable`'s built-in search, page-size select and pagination are
-  URL-based: they call `gum.get(..., { skipFetch: true })` to rewrite
-  `?page=&size=&search=` and rely on the page's `watch(() => route.query, ...)`
-  to re-fetch. Pass `search` down as well — the footer reuses it when paging.
+- The `DataTable`'s built-in search, page-size select and pagination **preserve
+  the URL query**: they override only `page`/`size`/`search` and merge an optional
+  `:filters` prop last, so filters in the URL survive a search or a page change.
+  **Prefer fetcher mode** whenever the page has a store action:
+  `:fetcher="store.index"` calls the store through `gum.getWith` and still pushes
+  the URL, so the table owns its own fetches — give the page a single `onMounted`
+  load and do **not** also `watch(route.query)`, or each navigation fetches twice.
+  Fall back to **URL mode** (the default, no `:fetcher`) only when there is no
+  store action: it calls `gum.get(..., { skipFetch: true })` to rewrite the query
+  and relies on the page's `watch(() => route.query, ...)` to re-fetch — pass
+  `search` down so the footer reuses it.
+- Both modes keep the reader in place on a page click (`preserveScroll: true`),
+  and the router does not scroll to the top on a same-path query change. Do not
+  re-implement this per page.
 - A dumb child never imports a Pinia store, `@/plugins/axios`, a service, or
   `useGum`, and never calls `dialog` / `toast` / `pulse`. Those belong to the page.
 
@@ -659,6 +672,8 @@ Never:
 - Pass an entire store object (`:store="store"`) into a child.
 - Type a handler prop as `Function` or `any`.
 - Re-emit an event the page handles unchanged — that is what a function prop is for.
+- Pass `:fetcher` to `DataTable` and keep a `watch(route.query)` on the page — both
+  fetch, so each navigation fires twice.
 
 ## 11. The `@/` alias — enforced
 

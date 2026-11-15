@@ -61,8 +61,11 @@ export const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior: (_to, _from, savedPosition) => {
+  scrollBehavior: (to, from, savedPosition) => {
     if (savedPosition) return savedPosition;
+    // Query-only changes (search / page / size on the same page) keep the reader
+    // where they are; a same-path navigation must not force a jump to the top.
+    if (to.path === from.path) return false;
     return { top: 0 };
   }
 });

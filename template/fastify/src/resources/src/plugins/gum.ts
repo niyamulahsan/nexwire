@@ -141,10 +141,30 @@ async function runBefore(onBefore?: LifecycleHooks["onBefore"]) {
 }
 
 async function restoreScroll(enabled: boolean, y: number) {
-  if (!enabled) return;
+  if (!enabled || y <= 0) return;
   await nextTick();
-  // Double rAF: survives one layout pass (images/fonts shifting content).
-  requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo({ top: y, behavior: "instant" as ScrollBehavior })));
+  // Restore once, then keep re-applying while the document is still settling —
+  // e.g. a list page swapping a loading skeleton for the real table, which makes
+  // the document shorter and would otherwise clamp the target out of reach. The
+  // loop stops as soon as the position is reached, the user scrolls, or a short
+  // deadline passes, so it never fights a deliberate scroll.
+  let stop = false;
+  const cancel = () => {
+    stop = true;
+  };
+  window.addEventListener("wheel", cancel, { passive: true, once: true });
+  window.addEventListener("touchstart", cancel, { passive: true, once: true });
+  const deadline = performance.now() + 800;
+  const apply = () => {
+    window.scrollTo({ top: y, behavior: "instant" as ScrollBehavior });
+    if (stop || Math.abs(window.scrollY - y) < 1 || performance.now() > deadline) {
+      window.removeEventListener("wheel", cancel);
+      window.removeEventListener("touchstart", cancel);
+      return;
+    }
+    requestAnimationFrame(apply);
+  };
+  requestAnimationFrame(apply);
 }
 
 function startRecentTimer(target: { recentlySuccessful: { value: boolean } }) {

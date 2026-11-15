@@ -8,9 +8,8 @@
           <SelectOption
             :is-options="props.optionable"
             :option="props.option"
-            :data="dataForOption"
             :selectedoption="selectedoption"
-            :search="searchdata"
+            :navigate="navigate"
           />
         </div>
         <div class="col-12 col-md-9">
@@ -70,7 +69,7 @@
       </div>
     </div>
     <div class="card-footer" :class="{ 'd-none': props.data.total <= props.data.data?.length }">
-      <Pagination :data="props.data" :selectedoption="selectedoption" :search="searchdata" />
+      <Pagination :data="props.data" :navigate="navigate" />
     </div>
   </div>
 </template>
@@ -91,11 +90,6 @@ interface DataRow {
   [key: string]: any;
 }
 
-interface DataPage {
-  path: string;
-  current_page: number;
-}
-
 interface DataTableProps {
   data: any;
   search?: string;
@@ -106,6 +100,8 @@ interface DataTableProps {
   searchable?: boolean;
   optionable?: boolean;
   disabled?: boolean;
+  filters?: Record<string, unknown>;
+  fetcher?: (params: Record<string, unknown>) => Promise<unknown>;
 }
 
 const props = withDefaults(defineProps<DataTableProps>(), {
@@ -115,7 +111,8 @@ const props = withDefaults(defineProps<DataTableProps>(), {
   countable: true,
   searchable: true,
   optionable: true,
-  disabled: false
+  disabled: false,
+  filters: () => ({})
 });
 const gum = useGum();
 const route = useRoute();
@@ -150,27 +147,55 @@ const remove = () => {
 
 // for change data size show
 const selectedoption = ref<string | number | undefined>(undefined);
-const dataForOption = computed<DataPage>(() => ({
-  path: props.data.path,
-  current_page: props.data.current_page
-}));
 const tableRows = computed<DataRow[]>(() => (props.loop ? props.loop : props.data.data));
 
 // search data
 const searchdata = ref(props.search || "");
-const searchMe = debounce(() => {
-  const isSearching = !!searchdata.value && searchdata.value.trim() !== "";
-  gum.get(props.data.path, {
-    query: {
-      page: isSearching ? 1 : props.data.current_page,
-      size: selectedoption.value,
-      search: searchdata.value
-    },
+
+/**
+ * The single navigation entry point for every built-in control (search,
+ * page-size, pagination). It rebuilds the query from the current URL, overrides
+ * the three built-ins (`page`, `size`, `search`) and merges `filters` last, so
+ * extra query params are preserved instead of being wiped.
+ *
+ * - URL mode (default): rewrites `?page=&size=&search=` and relies on the
+ *   page's `watch(() => route.query, …)` to re-fetch (`skipFetch: true`).
+ * - Fetcher mode (`:fetcher`): calls the fetcher with the same query and keeps
+ *   the URL in sync. The page must NOT also watch `route.query`, or each
+ *   navigation fetches twice.
+ */
+const navigate = (overrides: { page?: number; size?: string | number; search?: string } = {}) => {
+  const query: Record<string, unknown> = {
+    ...route.query,
+    page: overrides.page ?? props.data.current_page,
+    size: overrides.size ?? selectedoption.value,
+    search: overrides.search ?? searchdata.value,
+    ...props.filters
+  };
+
+  const fetcher = props.fetcher;
+  if (fetcher) {
+    return gum.getWith({
+      fetcher: () => fetcher(query),
+      query,
+      routePath: route.path,
+      preserveState: true,
+      preserveScroll: true
+    });
+  }
+
+  return gum.get(route.path, {
+    query,
     routePath: route.path,
     preserveState: true,
     preserveScroll: true,
     skipFetch: true
   });
+};
+
+const searchMe = debounce(() => {
+  const isSearching = !!searchdata.value && searchdata.value.trim() !== "";
+  navigate({ page: isSearching ? 1 : props.data.current_page, search: searchdata.value });
 }, 500);
 
 // watch instantce

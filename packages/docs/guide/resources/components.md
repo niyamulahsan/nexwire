@@ -54,6 +54,8 @@ import DataTableSkeleton from "@/components/datatable/DataTableSkeleton.vue";
 | `searchable` | `boolean`              | `true`   | Show search input in header                                                            |
 | `optionable` | `boolean`              | `true`   | Show "Show X entries" dropdown                                                         |
 | `disabled`   | `boolean`              | `false`  | Disable all interactive elements                                                       |
+| `filters`    | `Record<string, unknown>` | `{}`  | Extra query params merged into every navigation (win over `page`/`size`/`search`)       |
+| `fetcher`    | `(params) => Promise<unknown>` | — | Store-owned fetch. When set, the controls call it and keep the URL in sync              |
 
 ### Slots
 
@@ -265,10 +267,47 @@ Multiple columns with nested object access:
 </template>
 ```
 
+### Filters and fetcher mode
+
+The built-in search, page-size and pagination controls **preserve the current URL query** — they only override `page`, `size` and `search`. So filters that live in the URL (`?divisionId=3`) survive a search, a page-size change, or a page click.
+
+**Filters in the URL** need no prop — put them in the query and read them back in your watcher:
+
+```ts
+watch(
+  () => route.query,
+  () =>
+    store.fetchPosts({
+      page: Number(route.query.page || 1),
+      size: Number(route.query.size || 10),
+      search: String(route.query.search || ""),
+      divisionId: route.query.divisionId,
+    }),
+  { immediate: true },
+);
+```
+
+**Filters passed as a prop** (kept out of the URL) go through `:filters` and are merged last, so they always win:
+
+```vue
+<DataTable :data="posts" :filters="{ divisionId }" :option="[10, 25, 50]" />
+```
+
+**Fetcher mode (preferred).** When the page has a store action, hand it to the table — `:fetcher="store.index"`. The controls call the store directly and keep the URL in sync, so links stay shareable and back/forward still work, and the table owns its own search / page-size / pagination fetches:
+
+```vue
+<DataTable :data="posts" :fetcher="store.index" :option="[10, 25, 50]" />
+```
+
+> Do **not** combine `:fetcher` with `watch(route.query)` — both fetch, so every click fires two requests. With `:fetcher`, drop the watcher and load the first page once (`onMounted`). See [Gum](/guide/resources/gum).
+
+**URL mode** is the fallback when the page has no store action: the controls only rewrite the URL and your `watch(() => route.query, ...)` does the fetching.
+
 ### Key points
 
 - **Pass all three: `data`, `search` and `option`.** `data` must be the paginator's object (`{ data, current_page, last_page, per_page, total, path }`), never a bare array — the component reads `data.path`, `data.current_page` and `data.per_page`. `option` is the page-size list (`:option="[10, 25, 50]"`); the active size is resolved by matching `data.per_page` against it.
-- **Search, page size and pagination are internal but URL-based.** They call `gum.get(..., { skipFetch: true })`, which only rewrites the URL (`?page=&size=&search=`) — no request is made. Your page's `watch(() => route.query, ...)` performs the fetch, so keep it (see [Gum](/guide/resources/gum)). The `search` prop seeds the search input *and* is forwarded to the footer, so paging keeps the term — pass `:search="String(route.query.search || '')"`.
+- **Search, page size and pagination preserve the URL query.** **Prefer fetcher mode** whenever the page has a store action: `:fetcher="store.index"` makes the table call the store itself (through `gum.getWith`) and still updates the URL — give the page a single `onMounted` load and drop `watch(route.query)`, or each navigation fetches twice. URL mode is the fallback when there is no store action: the controls call `gum.get(..., { skipFetch: true })` to rewrite `?page=&size=&search=` while keeping every other param, and your page's `watch(() => route.query, ...)` performs the fetch. Pass `:search="String(route.query.search || '')"` so the term is seeded and paging keeps it.
+- **The scroll position is kept on a page click.** Both modes pass `preserveScroll: true`, and the table re-applies the saved position until the document settles — so swapping the rows for a shorter loading skeleton no longer drops you at the top. The router cooperates by not scrolling on a same-path query change.
 - **No sort functionality.** DataTable does not sort rows client-side. If you need sorted data, sort it server-side before passing to the `data` prop.
 - **Use `DataTableSkeleton` while loading** — show it when your data is null/empty, then swap to `DataTable` once data arrives.
 - **`removable` controls checkboxes.** When `false`, no checkboxes or trash button appear. The parent can also conditionally pass `:removable="hasRole('admin')"` to restrict bulk delete to certain roles.
