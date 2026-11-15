@@ -267,9 +267,9 @@ Multiple columns with nested object access:
 
 ### Key points
 
+- **Pass all three: `data`, `search` and `option`.** `data` must be the paginator's object (`{ data, current_page, last_page, per_page, total, path }`), never a bare array — the component reads `data.path`, `data.current_page` and `data.per_page`. `option` is the page-size list (`:option="[10, 25, 50]"`); the active size is resolved by matching `data.per_page` against it.
+- **Search, page size and pagination are internal but URL-based.** They call `gum.get(..., { skipFetch: true })`, which only rewrites the URL (`?page=&size=&search=`) — no request is made. Your page's `watch(() => route.query, ...)` performs the fetch, so keep it (see [Gum](/guide/resources/gum)). The `search` prop seeds the search input *and* is forwarded to the footer, so paging keeps the term — pass `:search="String(route.query.search || '')"`.
 - **No sort functionality.** DataTable does not sort rows client-side. If you need sorted data, sort it server-side before passing to the `data` prop.
-- **Search is internal.** The component has its own search input that calls `gum.get()` with the current `data.path`. The `search` prop only sets the initial value.
-- **Pagination is internal.** Page/size changes are handled inside the component — it calls `gum.get()` to fetch the requested page.
 - **Use `DataTableSkeleton` while loading** — show it when your data is null/empty, then swap to `DataTable` once data arrives.
 - **`removable` controls checkboxes.** When `false`, no checkboxes or trash button appear. The parent can also conditionally pass `:removable="hasRole('admin')"` to restrict bulk delete to certain roles.
 

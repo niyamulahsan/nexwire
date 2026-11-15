@@ -606,7 +606,8 @@ onMounted(() => {
       <CircleForm ref="formRef" @saved="fetchCircles" />
     </div>
     <div class="col-12 col-lg-8">
-      <CircleTable :data="circles" :search="String(route.query.search || '')" :edit="edit" :del="del" />
+      <CircleTable :data="circles" :search="String(route.query.search || '')" :option="[10, 25, 50]" :edit="edit"
+        :del="del" />
     </div>
   </div>
 </template>
@@ -615,15 +616,32 @@ onMounted(() => {
 ```vue
 <!-- ./src/resources/src/pages/circle/CircleTable.vue -->
 <script setup lang="ts">
+import Button from "@/components/Button.vue";
 import DataTable from "@/components/datatable/index.vue";
 
 const props = defineProps<{
-  data: Record<string, any> | any[] | null;
+  data: Record<string, any> | null;
   search: string;
+  option: (string | number)[];
   edit: (value: number) => void;
   del: (value: (string | number)[]) => void;
 }>();
 </script>
+
+<template>
+  <DataTable :data="props.data" :search="props.search" :option="props.option" @remove="props.del">
+    <template #thead>
+      <th>Name</th>
+      <th class="text-end">Actions</th>
+    </template>
+    <template #tbody="{ td }">
+      <td>{{ td.name }}</td>
+      <td class="text-end">
+        <Button icon="bi bi-pencil-square" @click="props.edit(td.id)" />
+      </td>
+    </template>
+  </DataTable>
+</template>
 ```
 
 Rules:
@@ -638,8 +656,16 @@ Rules:
 - Bulk selection lives in the child (the `DataTable`'s `remove` event hands the
   array to the `del` prop). The page owns the confirm dialog, the toast and the
   store call.
-- `DataTable` receives `data`, `search` and `option` and renders its slots. The
-  page never builds rows.
+- `DataTable` needs all three of `data`, `search` and `option`, and renders its
+  slots. `data` must be the paginator's object
+  (`{ data, current_page, last_page, per_page, total, path }`) — never a bare
+  array — because the component reads `data.path`, `data.current_page` and
+  `data.per_page` to drive its search, page-size select and pagination. `option`
+  is the page-size list. The page never builds rows.
+- The `DataTable`'s built-in search, page-size select and pagination are
+  URL-based: they call `gum.get(..., { skipFetch: true })` to rewrite
+  `?page=&size=&search=` and rely on the page's `watch(() => route.query, ...)`
+  to re-fetch. Pass `search` down as well — the footer reuses it when paging.
 - A dumb child never imports a Pinia store, `@/plugins/axios`, a service, or
   `useGum`, and never calls `dialog` / `toast` / `pulse`. Those belong to the page.
 

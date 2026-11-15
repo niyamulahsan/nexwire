@@ -643,7 +643,7 @@ watch(
     <input v-model="searchText" placeholder="Search" @keyup.enter="applySearch" />
     <button type="button" @click="openCreate">New post</button>
 
-    <DataTable :data="posts">
+    <DataTable :data="posts" :search="search" :option="[10, 25, 50]" :searchable="false">
       <template #thead>
         <th>Title</th>
         <th />

@@ -1,5 +1,11 @@
 # Changelog
 
+## [4.4.4] — 2026-11-15
+
+### Fixed
+
+- **Template (Hono, Express, Fastify) + docs**: the `AGENTS.md` §10 contract example for `DataTable` now passes all three props the built-in search/page-size needs. The example `CircleTable` previously passed only `:data` + `:search`, so a project generated from the contract shipped a table whose search box and "Show N entries" select silently did nothing — they rewrite the URL (`?page=&size=&search=`) with `gum.get(..., { skipFetch: true })` and expect the page's `watch(() => route.query, ...)` to re-fetch. The example now passes `:option="[10, 25, 50]"`, types `data` as the paginator object (`Record<string, any> | null`, not `| any[]`) — the component reads `data.path`, `data.current_page` and `data.per_page` — and the child renders `<DataTable :data :search :option @remove>`. The §10 rule text now states the three props and the URL-based behaviour. `guide/resources/components.md` documents the same three-prop requirement and the URL-based search/page-size/pagination caveat, and `guide/resources/gum.md`'s simplified example now passes `:search` and `:option`. Shared sections stay byte-identical across the three engines; only the header block and `§5` differ, and every template↔scaffolder `AGENTS.md` pair is byte-identical (`hono` SHA-256 `5c73a52e778af6b7…`, `express` `c0b650b6c458d1ca…`, `fastify` `f441419925726535…`).
+
 ## [4.4.3] — 2026-11-15
 
 ### Changed
