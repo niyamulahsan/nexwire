@@ -1,5 +1,11 @@
 # Changelog
 
+## [4.4.5] — 2026-11-18
+
+### Added
+
+- **Template (Hono, Express, Fastify)**: `authMiddleware` now accepts an `Authorization: Bearer <token>` access token, so a non-browser client — a desktop app, a CLI, a mobile app — authenticates against the same protected routes as the browser SPA. The header is read **first** and the access cookie stays the fallback, so a request with neither credential is still `401` and the browser flow is unchanged. The rest of the flow already existed: `POST /api/auth/login` and `POST /api/auth/register` return `{ access_token, refresh_token, token_type: "Bearer" }` in the response body, and `POST /api/auth/refresh-token` already validates a refresh token sent in the body — the guard was the only missing piece, so no other server code changed. A bearer client refreshes explicitly by posting its `refresh_token` to `/api/auth/refresh-token` when a protected request comes back `401`, and stores the rotated pair. The middleware file is engine-native (Express reads `req.headers.authorization`, Fastify `request.headers.authorization`, Hono `c.req.header("Authorization")`), so the three engines differ only by that accessor, as before; each template copy is byte-identical to its scaffolder copy (`express` SHA-256 `9698A3B6D6582CD71ACA303E3D84B6B6CD7FF934B31B71B15396054237A684C2`, `fastify` `35D33B1EFA1E1F0516E60E5376502EB2CE094DC27BD552B7002C6253B17F9CDE`, `hono` `556CE1F4BC25E49C5CDCA9D973C5205E9A67C2FDA193D37C18C903455FD8E309`). `guide/auth.md` gains a "Bearer tokens (non-browser clients)" section and its middleware flow diagram now shows the header.
+
 ## [4.4.4] — 2026-11-15
 
 ### Added

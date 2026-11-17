@@ -12,7 +12,11 @@ export async function authMiddleware(c: Context, next: Next) {
     return await next();
   }
 
-  const accessToken = await cookie.getAuth(c);
+  // Bearer token first (non-browser clients: desktop apps, scripts, mobile).
+  // The cookie stays the fallback for the browser SPA.
+  const header = c.req.header("Authorization") ?? "";
+  const bearer = header.toLowerCase().startsWith("bearer ") ? header.slice(7).trim() : "";
+  const accessToken = bearer || (await cookie.getAuth(c));
 
   if (accessToken) {
     const accessPayload: any = await jwt.verifyToken(accessToken, "access");

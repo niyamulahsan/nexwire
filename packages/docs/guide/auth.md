@@ -100,12 +100,13 @@ export const create = async (request: FastifyRequest, reply: FastifyReply) => {
 
 What the request gets:
 
-| Request                                            | Result                                                                              |
-| -------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Valid access token                                 | `200` — handler runs with `auth` set                                                |
-| Expired access token + valid refresh token         | A new access token is set as a cookie, then the handler runs                        |
-| No valid token, or a revoked/expired refresh token | `401` — cookies are cleared, the handler never runs                                 |
-| No auth provider at all                            | Warning logged, `next()` runs unauthenticated — see [degraded mode](#degraded-mode) |
+| Request                                                         | Result                                                                              |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Valid `Authorization: Bearer <token>` header                    | `200` — handler runs with `auth` set (the header wins over any cookie)              |
+| Valid access cookie                                             | `200` — handler runs with `auth` set                                                |
+| Expired access cookie + valid refresh cookie                    | A new access token is set as a cookie, then the handler runs                        |
+| No valid credential, or a revoked/expired refresh token         | `401` — cookies are cleared, the handler never runs                                 |
+| No auth provider at all                                         | Warning logged, `next()` runs unauthenticated — see [degraded mode](#degraded-mode) |
 
 Order matters: `authMiddleware` before `requireRole`, because `requireRole` reads what `authMiddleware` wrote. See [Middleware](./middleware#order-matters).
 
@@ -114,7 +115,10 @@ Order matters: `authMiddleware` before `requireRole`, because `requireRole` read
 ```
 request
   │
-  ├─ access cookie present?
+  ├─ Authorization: Bearer <token> header present?
+  │    └─ use it as the access token (the cookie is not consulted)
+  │
+  ├─ otherwise, access cookie present?
   │    ├─ verify JWT
   │    ├─ provider.getUserById(payload.id)
   │    ├─ provider.getAuthContext(user, payload)?   ← optional shape override
@@ -133,10 +137,12 @@ request
 
 Details worth knowing:
 
+- The `Authorization: Bearer` header is checked **first**. A request that sends both a header and a cookie uses the header; a request with neither is `401`.
 - Only the **access** token is re-minted on refresh. The refresh token is not rotated on every request.
 - A refresh token that is past `expiresAt` is deleted through `deleteRefreshToken` (or revoked through `revokeRefreshToken`).
 - If `getUserById()` returns `null` for a token that verifies, the request is treated as unauthenticated: `401` and both cookies are cleared.
 - If `getAuthContext()` is implemented, its return value is what handlers receive. Without it, the middleware builds `{ ...payload, id, email, roleId, role, ...user }`.
+- The refresh step reads the **refresh cookie**, so it only applies to cookie clients. A bearer client refreshes explicitly — see [Bearer tokens](#bearer-tokens-non-browser-clients).
 
 ### Degraded mode
 
@@ -150,6 +156,55 @@ and calls `next()` without setting `auth`.
 
 ::: warning Not a security boundary
 That fallback exists so deleting the auth module does not crash every route. It is **unauthenticated pass-through**: a protected handler still runs. If a deployment can reach this state, the handler must check for a missing `auth` itself. With a provider present, an unauthenticated request is always `401`.
+:::
+
+## Bearer tokens (non-browser clients)
+
+The browser SPA authenticates with cookies, but a desktop app, a CLI, a mobile app or a server-to-server script has no cookie jar. Those clients send a standard bearer header instead:
+
+```
+Authorization: Bearer <access_token>
+```
+
+`authMiddleware` reads that header **first** on every protected route, so the same routes, the same `auth` object and the same `requireRole()` checks serve both kinds of client. No route or config change is needed — the guard already accepts it.
+
+### Sign in and store the pair
+
+`POST /api/auth/login` (and `/register`) returns the tokens **in the response body**, not only as cookies:
+
+```json
+{
+  "message": "User logged in successfully",
+  "data": {
+    "user": { "id": 1, "name": "Jane", "email": "user@example.com", "roleId": 2, "role": { "id": 2, "name": "user" } },
+    "access_token": "eyJ...",
+    "refresh_token": "eyJ...",
+    "token_type": "Bearer"
+  }
+}
+```
+
+Store both. The access token is short-lived; the refresh token is the long-lived credential.
+
+### Refresh explicitly
+
+The middleware's silent refresh reads the **refresh cookie**, so it does not fire for a bearer client. Instead, when a protected request answers `401`, the client refreshes itself:
+
+```
+POST /api/auth/refresh-token
+Content-Type: application/json
+
+{ "refresh_token": "<refresh_token>" }
+```
+
+The response has the same shape as login, and the pair **rotates** — store both new values and retry the original request once. A `401` from the refresh endpoint itself means the refresh token is expired or revoked: sign the user out.
+
+### Logout
+
+`POST /api/auth/logout` is protected, so a bearer client calls it with its header. The shipped handler revokes the refresh token it finds in the **cookie**, so a bearer client's logout clears nothing server-side — its refresh token stays valid until it expires. A client that only drops its stored tokens has signed out locally but not revoked them. To revoke for real, call `POST /api/auth/logout-all`, which deletes every refresh token for the user, or lower `refreshExpirySeconds` in `src/config/jwt.ts`.
+
+::: tip One guard, two clients
+Bearer is additive: the cookie path is untouched, so adding a desktop or mobile client never changes how the SPA signs in. If you want bearer **only** (no cookies), delete the `cookie.setAuth` / `cookie.setRefresh` calls from the auth controllers — the response body already carries the tokens.
 :::
 
 ## Roles
@@ -193,18 +248,18 @@ if (hasRole(auth, ["admin"])) {
 
 ## Token system
 
-Auth uses two JWTs, both signed with HS256 and stored in httpOnly cookies.
+Auth uses two JWTs, both signed with HS256. The browser SPA receives them as httpOnly cookies; a non-browser client sends the access token as a bearer header and the refresh token in the body of `/refresh-token`.
 
-|                         | Access token                       | Refresh token                                                                                |
-| ----------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------- |
-| Default lifetime        | 15 minutes (`accessExpirySeconds`) | 1 hour (`refreshExpirySeconds`), 30 days with "remember me" (`refreshRememberExpirySeconds`) |
-| Secret                  | `JWT_ACCESS_SECRET`                | `JWT_REFRESH_SECRET`                                                                         |
-| Cookie                  | `{cookie.name}_access`             | `{cookie.name}_refresh`                                                                      |
-| Sent by the client      | Automatically, on every request    | Automatically; read only when the access token fails                                         |
-| Tracked in the database | No                                 | Yes — `refresh_tokens` by `jti` (unique JWT id)                                              |
-| Revocable               | No — expires on its own            | Yes — logout, logout-all, password reset                                                     |
+|                         | Access token                                            | Refresh token                                                                                |
+| ----------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Default lifetime        | 15 minutes (`accessExpirySeconds`)                      | 1 hour (`refreshExpirySeconds`), 30 days with "remember me" (`refreshRememberExpirySeconds`) |
+| Secret                  | `JWT_ACCESS_SECRET`                                     | `JWT_REFRESH_SECRET`                                                                         |
+| Cookie                  | `{cookie.name}_access`                                  | `{cookie.name}_refresh`                                                                      |
+| Sent by the client      | Cookie automatically, or `Authorization: Bearer <token>` | Cookie automatically, or `{ refresh_token }` in the body of `POST /api/auth/refresh-token`  |
+| Tracked in the database | No                                                      | Yes — `refresh_tokens` by `jti` (unique JWT id)                                              |
+| Revocable               | No — expires on its own                                 | Yes — logout, logout-all, password reset                                                     |
 
-The client never implements refresh logic. When the access token expires, the next request refreshes it transparently.
+The cookie client never implements refresh logic: when the access token expires, the next request refreshes it transparently. A bearer client refreshes itself on `401` — see [Bearer tokens](#bearer-tokens-non-browser-clients).
 
 Verify a token yourself:
 
@@ -239,7 +294,7 @@ Every auth cookie is `httpOnly`, `sameSite: "Lax"` (`"None"` and `secure` for cr
 | `{cookie.name}_access`  | Access JWT  | `accessExpirySeconds`                                                      |
 | `{cookie.name}_refresh` | Refresh JWT | `refreshExpirySeconds`, or `refreshRememberExpirySeconds` on "remember me" |
 
-Because they are `httpOnly`, browser JavaScript cannot read them — the client authenticates by simply sending the request. See [Cookie](./support/cookie) for the facade.
+Because they are `httpOnly`, browser JavaScript cannot read them — the client authenticates by simply sending the request. See [Cookie](./support/cookie) for the facade. A non-browser client that has no cookie jar sends the access token as a bearer header instead — see [Bearer tokens](#bearer-tokens-non-browser-clients).
 
 ## Auth module map
 

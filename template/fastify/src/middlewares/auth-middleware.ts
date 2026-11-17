@@ -23,7 +23,11 @@ export async function authMiddleware(request: FastifyRequest, reply: FastifyRepl
     return;
   }
 
-  const accessToken = await cookie.getAuth(request);
+  // Bearer token first (non-browser clients: desktop apps, scripts, mobile).
+  // The cookie stays the fallback for the browser SPA.
+  const header = request.headers.authorization ?? "";
+  const bearer = header.toLowerCase().startsWith("bearer ") ? header.slice(7).trim() : "";
+  const accessToken = bearer || (await cookie.getAuth(request));
 
   if (accessToken) {
     const accessPayload: any = await jwt.verifyToken(accessToken, "access");
