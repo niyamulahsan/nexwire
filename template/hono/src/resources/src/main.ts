@@ -13,7 +13,9 @@ import router from "./router";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "@/assets/scss/custom.scss";
-import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import * as bootstrap from "bootstrap";
+
+(window as any).bootstrap = bootstrap;
 
 const app = createApp(App);
 const pinia = createPinia();

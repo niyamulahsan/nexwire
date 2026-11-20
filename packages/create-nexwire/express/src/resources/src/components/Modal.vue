@@ -33,8 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { Modal } from "bootstrap";
-import { onMounted, ref } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 
 interface ModalProps {
   id: string;
@@ -48,16 +47,22 @@ const props = withDefaults(defineProps<ModalProps>(), {
 });
 
 const modal = ref<HTMLElement | null>(null);
-let bsModal: Modal | null = null;
+let bsModal: any = null;
 
 onMounted(() => {
-  if (modal.value) {
-    bsModal = new Modal(modal.value);
+  const BootstrapModal = (window as any).bootstrap?.Modal;
+  if (modal.value && BootstrapModal) {
+    bsModal = new BootstrapModal(modal.value);
   }
 });
 
 const open = () => bsModal?.show();
 const close = () => bsModal?.hide();
+
+onBeforeUnmount(() => {
+  bsModal?.dispose?.();
+  bsModal = null;
+});
 
 defineExpose({ open, close });
 </script>

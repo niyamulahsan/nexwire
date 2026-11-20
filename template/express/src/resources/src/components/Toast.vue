@@ -24,7 +24,6 @@
 </template>
 
 <script setup lang="ts">
-import Toast from "bootstrap/js/dist/toast.js";
 import { ref } from "vue";
 
 defineOptions({ name: "Toast", inheritAttrs: false });
@@ -45,8 +44,8 @@ const toastme = (msg: string, bg: string) => {
   if (!notify.value) {
     return;
   }
-  const toast = Toast.getOrCreateInstance(notify.value);
-  toast.show();
+  const BootstrapToast = (window as any).bootstrap?.Toast;
+  BootstrapToast?.getOrCreateInstance(notify.value).show();
 };
 
 defineExpose({ toastme });
